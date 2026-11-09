@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import dataclasses
 import functools
 import io
 import json
@@ -234,6 +235,97 @@ def scale_mujoco_cameras(scale: float) -> Callable[[], int]:
     return lambda: scaled[0]
 
 
+# --------------------------------------------------------------------- rollout
+
+
+@dataclasses.dataclass
+class Rollout:
+    """A dataset run's program at one commit, loaded and ready to roll out."""
+
+    env: Any
+    approach: Any
+    cfg: Any
+    row: pd.Series
+    commits: pd.DataFrame
+    pos: int
+    source: str
+    scaled: bool
+
+
+@contextlib.contextmanager
+def open_rollout(
+    data: Path, run_id: str, commit: int = -1, scale: float = 1.0
+) -> Iterator[Rollout]:
+    """Build the env and the program of ``run_id`` at ``commit`` (-1 = last).
+
+    The approach is rebuilt the way ``run_experiment.py`` and the results viewer do
+    (``AgenticApproach`` with ``load_dir``); no agent is run. The env is closed and
+    the exported commit removed on exit.
+    """
+    if not RUN_ID.fullmatch(run_id):
+        raise SystemExit("run_id must look like <method>/<env>/seed<N>")
+    row, commits = load_tables(data, run_id)
+    pos = commit if commit >= 0 else len(commits) + commit
+    if not 0 <= pos < len(commits):
+        raise SystemExit(f"This run has commits 0..{len(commits) - 1}")
+    _, env_short, run_seed = run_id.split("/")
+    exp_id = str(row.experiment_id)
+    blackbox, strict = "__blackbox__" in exp_id, "__strict" in exp_id
+    with tempfile.TemporaryDirectory() as tmp:
+        load_dir, source = materialize(data, row, commits, pos, Path(tmp))
+        with initialize_config_dir(version_base=None, config_dir=str(CONF_ROOT)):
+            cfg = compose(
+                config_name="config",
+                overrides=[
+                    "approach=agentic",
+                    f"++approach.load_dir={load_dir}",
+                    f"++approach.output_dir={tmp}/out",
+                    f"approach.blackbox={blackbox}",
+                    f"approach.blackbox_strict={strict}",
+                    "primitive_level=none",
+                    "mcp_tools=[]",
+                    f"environment={env_config_name(env_short)}",
+                    f"replicate_seed={run_seed.removeprefix('seed')}",
+                ],
+            )
+        scaled = scale_mujoco_cameras(scale) if scale != 1 else None
+        env = instantiate(cfg.environment)
+        try:
+            approach = instantiate(
+                cfg.approach,
+                action_space=env.action_space,
+                observation_space=env.observation_space,
+                seed=cfg.replicate_seed,
+                env_description_path=None,
+                mcp_tools=(),
+                env=env,
+                env_cfg=json.dumps({}),
+                max_steps=cfg.max_steps,
+                eval_timeout=cfg.eval_timeout,
+                _partial_=True,
+            )(primitives=build_primitives(env, cfg.primitives))
+            approach.train()  # loads load_dir/sandbox/approach.py; no agent is run
+            yield Rollout(
+                env=env,
+                approach=approach,
+                cfg=cfg,
+                row=row,
+                commits=commits,
+                pos=pos,
+                source=source,
+                scaled=bool(scaled and scaled()),
+            )
+        finally:
+            env.close()
+
+
+def max_steps_for(rollout: Rollout, count: int | None) -> int:
+    """The step budget of an episode, which grows with a pinned object count."""
+    if count is not None and hasattr(rollout.env, "max_steps_for_count"):
+        return rollout.env.max_steps_for_count(count)
+    return rollout.cfg.max_steps
+
+
 # ------------------------------------------------------------------------ main
 
 
@@ -256,82 +348,41 @@ def main() -> None:
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
-    if not RUN_ID.fullmatch(args.run_id):
-        raise SystemExit("run_id must look like <method>/<env>/seed<N>")
-    row, commits = load_tables(args.data, args.run_id)
 
     if args.list:
+        row, commits = load_tables(args.data, args.run_id)
         cols = ["commit_index", "time", "subject", "reeval_solve_rate"]
         with pd.option_context("display.width", 200, "display.max_colwidth", 90):
             print(commits[cols].to_string(index=False))
         print(f"\nFinal solve rate: {row.solve_rate}")
         return
 
-    pos = args.commit if args.commit >= 0 else len(commits) + args.commit
-    if not 0 <= pos < len(commits):
-        raise SystemExit(f"This run has commits 0..{len(commits) - 1}")
-    commit = commits.iloc[pos]
     method, env_short, run_seed = args.run_id.split("/")
-    exp_id = str(row.experiment_id)
-    blackbox, strict = "__blackbox__" in exp_id, "__strict" in exp_id
-    print(f"{args.run_id}  ({row.model}; blackbox={blackbox}, strict={strict})")
-    print(f"commit {pos}/{len(commits) - 1}: {commit.subject}")
-    print(f"solve rate: this commit {commit.reeval_solve_rate}, final {row.solve_rate}")
-
     out_dir = args.out / method / env_short / run_seed
-    out_dir.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as tmp:
-        load_dir, source = materialize(args.data, row, commits, pos, Path(tmp))
-        print(f"program from {source}")
-        # Rebuild the approach the way run_experiment.py and the results viewer do.
-        with initialize_config_dir(version_base=None, config_dir=str(CONF_ROOT)):
-            cfg = compose(
-                config_name="config",
-                overrides=[
-                    "approach=agentic",
-                    f"++approach.load_dir={load_dir}",
-                    f"++approach.output_dir={tmp}/out",
-                    f"approach.blackbox={blackbox}",
-                    f"approach.blackbox_strict={strict}",
-                    "primitive_level=none",
-                    "mcp_tools=[]",
-                    f"environment={env_config_name(env_short)}",
-                    f"replicate_seed={run_seed.removeprefix('seed')}",
-                ],
-            )
-        scaled = scale_mujoco_cameras(args.scale) if args.scale != 1 else None
-        env = instantiate(cfg.environment)
-        if scaled is not None and not scaled():
+    with open_rollout(args.data, args.run_id, args.commit, args.scale) as ro:
+        pos, commit = ro.pos, ro.commits.iloc[ro.pos]
+        print(f"{args.run_id}  ({ro.row.model})")
+        print(f"commit {pos}/{len(ro.commits) - 1}: {commit.subject}")
+        print(
+            f"solve rate: this commit {commit.reeval_solve_rate}, "
+            f"final {ro.row.solve_rate}"
+        )
+        print(f"program from {ro.source}")
+        if args.scale != 1 and not ro.scaled:
             print(
                 f"note: --scale only applies to the MuJoCo (dynamic 3D) envs; "
                 f"{env_short} renders at its native size"
             )
-        approach = instantiate(
-            cfg.approach,
-            action_space=env.action_space,
-            observation_space=env.observation_space,
-            seed=cfg.replicate_seed,
-            env_description_path=None,
-            mcp_tools=(),
-            env=env,
-            env_cfg=json.dumps({}),
-            max_steps=cfg.max_steps,
-            eval_timeout=cfg.eval_timeout,
-            _partial_=True,
-        )(primitives=build_primitives(env, cfg.primitives))
-        approach.train()  # loads load_dir/sandbox/approach.py; no agent is run
-
-        max_steps = cfg.max_steps
-        if args.count is not None and hasattr(env, "max_steps_for_count"):
-            max_steps = env.max_steps_for_count(args.count)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        max_steps = max_steps_for(ro, args.count)
         writer = open_mp4_writer if args.format == "mp4" else open_video_writer
         for seed in args.instances:
             part = out_dir / f"commit{pos}_inst{seed}.{args.format}.part"
             try:
                 with writer(part, fps=args.fps) as append_frame:
                     metrics, _, _ = run_episode(
-                        env,
-                        approach,
+                        ro.env,
+                        ro.approach,
                         seed,
                         max_steps,
                         render=True,
@@ -347,7 +398,6 @@ def main() -> None:
             video = part.with_name(f"commit{pos}_inst{seed}{suffix}.{args.format}")
             part.replace(video)
             print(f"  instance {seed}: {metrics}\n    -> {video}")
-        env.close()
 
 
 if __name__ == "__main__":
