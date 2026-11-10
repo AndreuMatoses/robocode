@@ -28,6 +28,12 @@ recording.
 | `experiments/contacts/record.py` | CLI: roll out a run/commit on fixed instances, write trace + video + diagram |
 | `experiments/contacts/replay.py` | Renders from recorded `qpos`, no policy: episode video, labelled diagram, contact-highlight video, ghost overlay |
 | `experiments/contacts/trace.py` | Loads a trace and summarises it per entity pair (used by the viewer) |
+| `experiments/contacts/commits.py` | Which commits of a run change the policy (hash of `approach.py`, the sandbox modules it imports and the data files it names); cached as `<run>/commits.json` |
+| `experiments/contacts/histories.py` | Shared strategy vocabulary of a scenario (one identifier per distinct solved contact-mode sequence), run histories on a common axis, and the distance matrix between the versions of two runs |
+| `experiments/contacts/strategy.py` | Contact-mode sequence of a trace (labels, filters, debounce) and two distances: Jaccard on the pair set, edit distance on the mode sequence. `Definition` = what counts as one strategy (which contacts, which names, which order), with presets |
+| `experiments/contacts/diversity.py` | Final policies of a scenario: number of strategies, effective number (2^entropy), mean pairwise distance, within/between-method distance with a permutation test, 2-D map (classical MDS), episode length per method and per strategy |
+| `experiments/contacts/metrics.py` | Six distances between two strategies (mode edit, elastic mode, pair set, contact duty, timeline overlap, time-warped), their rank correlations, the number of strategies against the threshold, and what is behind each number for one pair of runs |
+| `experiments/contacts/repeat.py` | Repeatability of a strategy definition: the final policy of each run on several start scenes; within-policy and between-run distances, the thresholds they give, and the probability that two runs are farther apart than one policy is from itself |
 | `experiments/contacts/catalog.py` | Scenario tags (simulator, robot, dimension, dynamics) and thumbnails |
 | `experiments/contacts/viewer.py`, `static/` | The contact viewer (stdlib HTTP server, vanilla JS) |
 
@@ -48,15 +54,242 @@ Design points worth knowing:
 
 ## State
 
-- Recorded: all 35 tossing3d runs (7 methods × 5 seeds), final commit, instance 0.
-  30 solved; the five `sol` runs did not. Nothing else is recorded.
+- Recorded: all 350 runs of the 10 MuJoCo scenarios (7 methods × 5 seeds), final
+  commit, instance 0, with video.
+- Recorded, commit histories: all 10 scenarios, instance 0, every commit that changes
+  the policy plus one unchanged commit per streak (`--commits sample`), no video:
+  7 551 traces for 12 151 commits (5 957 policy versions). Logs:
+  `outputs/contact_record_logs/tossing3d_commits.log` and `all_commits.log`.
+- 38 policy versions have no trace (shown as "no trace"): 37 do not load (a `None`
+  path, an import outside the sandbox allowlist, a syntax error, a module that the
+  agent's environment did not have either, e.g. `threadpoolctl`), and
+  `opus55-source/sweepsimple3d/seed42@1` hit the 30-minute limit of the batch (a
+  retry without a limit was stopped after 10 hours). The
+  other commit at the limit, `opus5-source/rearrange3d/seed24@1`, was recorded
+  alone without a limit: 50 minutes of policy time for 1 000 steps, unsolved.
+- Determinism check: 1 625 of the 1 632 re-recorded unchanged commits gave exactly
+  the same trace. The 7 others have an identical policy (only logs and probe scripts
+  differ); 4 of them still have the same mode sequence, 3 differ by an edit distance
+  of 0.12–0.17, and none flips solved/unsolved. One of them
+  (`opus55/sortclutteredblocks3d/seed444@20`, 296 steps in the batch run) gave 321
+  steps in three later recordings on the idle machine, the same as `@21`. So a
+  replay is not always bit-exact; the cause is not found (the batch ran 24 jobs on
+  32 cores at a load of about 65).
+- Entity names checked on every scenario: one scene signature per scenario, no
+  unnamed entity.
+- Evolution page (`#/e/<run>`, the "history" link of the run matrix): solve rate,
+  strategy change and distance to the final strategy per commit; one strip of
+  contact modes per policy version.
 - Viewer works: index with thumbnails and tag filters; scenario page (run matrix,
   overlaid timelines with per-seed shades and force lines, labelled diagram, ghost
   video with a save button); run page (video and timeline with a shared playhead,
   diagram lighting up entities in contact, per-surface contact-point plots).
 - Not exercised: the viewer's "Record missing" button and the run page's "contact
   highlight" toggle (the commands they launch work from the terminal).
-- Not built: diversity metrics, evolution-across-commits view.
+- Histories page (`#/h/<scenario>`, linked from the scenario page): one lane per
+  run, coloured by strategy identifier, x axis = fraction of the commits or time
+  elapsed since the first commit; per-method table (first solve, settled, final
+  strategies); strategy table; distance matrix for two picked runs.
+- A strategy ends at the robot's last contact (`Options.trim_tail`): what the thrown
+  cube touches afterwards depends on when the episode stops. With this, the solved
+  tossing3d episodes have 34 distinct mode sequences; the most frequent is in 14 runs.
+- Strategy classes on the histories page ("one strategy ="): similar mode sequences
+  (complete-linkage clusters at edit distance 0.35; 19 classes in tossing3d), the
+  exact sequence (34), or the same set of contact pairs (12).
+- Strategy definition (`strategy.Definition`, the "One strategy =" bar of the
+  histories and diversity pages; the page prints the definition in one sentence).
+  Contacts: all pairs / robot pairs only. Names: as named / copies merged
+  (`bin_red` = `bin_yellow`, `shelf2` = `shelf3`) / kind only (object, fixture,
+  world; gripper, arm, base). Order: mode sequence / each mode once in order of
+  first occurrence / each pair once in order of first occurrence / set of pairs.
+  Same when: equal, or within a distance (0.2, 0.35, 0.5; complete linkage).
+  Presets: detailed, object-agnostic, robot skeleton, contact set.
+  Finger links: always count (default) / not while a pad holds
+  (`Definition.fingers = "pad_first"`, `Options.pad_first`). The gripper has two
+  kinds of parts: the *pads* (the two friction boxes at each fingertip) and the
+  *finger* links (driver, coupler, spring link, follower). With "not while a pad
+  holds", a finger link on a thing does not count while a pad of either side is on
+  that same thing (same entity; the drawer face and its handle are two things). A
+  finger link alone (a push or a sweep) still counts. Effect on the final policies
+  (instance 0, detailed definition): in tossing3d all finger-object contact time is
+  inside a pad contact on the same object and the mean edit distance drops from
+  0.43 to 0.33 (11 → 9 strategies at 0.35); in rearrange3d 95 % is inside (0.63 →
+  0.59, 17 → 15). In the other eight scenarios the mean distance changes by 0.01
+  at most and the count at 0.35 does not change; in sweepintodrawer3d and
+  constrainedcupboard3d only about a quarter of the finger contact time is inside
+  a pad contact, so the finger contacts there are mostly pushes. The run page and
+  the evolution page take no definition and still show the finger links.
+- **Tuned definition (preset "tuned", the default of the pages).** All pairs, names
+  as given (see *Names* below; the test below was run with copies merged), full
+  mode sequence, finger links not while a pad holds, elastic mode
+  distance (`warp`), same strategy within 0.25, merge gap 0.3 s. It is the result
+  of a repeatability test (`repeat.py`), not of a look at the videos:
+  - *Data.* The final policy of all 350 runs was recorded on instances 1, 2 and 3
+    too (`record --commit -1 --instances 1 2 3 --no-video`; 1 050 episodes,
+    `outputs/contact_record_logs/final_instances_1_2_3*.log`). A *within* pair is
+    one policy on two start scenes; a *between* pair is two runs on two start
+    scenes. Only scenes with the same number of objects are compared: the object
+    count changes with the instance in constrainedcupboard3d (2/3), dynamicshelf3d
+    (1/2), dynamo3d (1/3) and sweepsimple3d (1/5), and another count is another
+    task (in dynamo3d with one object most policies have no contact at all).
+  - *Criterion.* A definition is good when a policy is the same strategy as
+    itself on another start scene. The threshold is the distance below which 90 %
+    of the within pairs fall. The AUC is the probability that a between pair is
+    farther apart than a within pair; it is used only to compare definitions of
+    one family, because it rewards anything that identifies a policy (the contact
+    duty has the highest AUC, 0.87–0.89, because it sees the speed of a policy).
+  - *Distance.* The plain edit distance charges a full edit for a short extra mode
+    that only adds one contact pair (pad on the floor, palm on the cube). Such
+    modes come and go between two start scenes of one policy. The elastic mode
+    distance (`strategy.warp_distance`: dynamic time warping over the modes, not
+    over time; a matched pair of modes costs their Jaccard distance; mean cost
+    along the best alignment) charges only the Jaccard difference. 90 % of the
+    within pairs are within 0.23 with the elastic distance and within 0.47 with the
+    edit distance (pooled over the ten scenarios). At 0.35 the edit distance
+    splits one policy from itself in 23 % of the within pairs. The first default
+    of this branch (edit distance, names as given, finger links always, merge gap
+    0.05 s, threshold 0.35) did so in 34 %; the tuned definition does so in 8 %.
+  - *Threshold.* With the elastic distance the 90 % value is 0.13–0.30 in nine
+    scenarios (dynamo3d 0.42), so one threshold serves all: at 0.25, 92 % of the
+    within pairs are one strategy (per scenario 0.87–1.00; dynamo3d 0.80). On
+    instance 0 it gives 3 / 4 / 5 / 6 / 9 / 13 / 4 / 17 / 6 / 7 strategies
+    (balancebeam, constrainedcupboard, dynamicshelf, dynamo, rearrange, scooppour,
+    sortclutteredblocks, sweepintodrawer, sweepsimple, tossing). The many
+    strategies of sweepintodrawer3d and scooppour3d are real: the AUC there is
+    0.95–0.97, so the runs differ far more from each other than one policy from
+    itself. In dynamo3d the AUC is 0.58: the runs are not more different from each
+    other than one policy is from itself, so the strategies there are not reliable.
+  - *Definition.* Copies merged is better than as named (sortclutteredblocks3d:
+    AUC 0.79 against 0.61, the block colours change with the instance); kind only
+    is too coarse (rearrange3d 0.67); the full sequence is better than the
+    first-occurrence orders. The finger rule is neutral in this test (mean AUC
+    0.852 with the rule, 0.858 without; 92 % of the within pairs at 0.25 in both
+    cases), because the elastic distance already makes an extra finger pair cheap.
+    It is on in the preset as a choice of meaning, not as a result of the test.
+  - *Names.* The preset keeps the names as given (a choice of the user): on one
+    instance all runs see the same objects, so the names say which object a run
+    handles first. Against copies merged, nine scenarios do not change (rearrange3d
+    has 10 strategies and not 9). sortclutteredblocks3d changes: its block names
+    change with the instance, so only 22 % of its within pairs are within 0.25
+    (96 % with copies merged), the AUC is 0.63 (0.80), and instance 0 has 12
+    strategies (4). Pooled, 83 % of the within pairs are within 0.25 (92 %). Use
+    "copies merged" for sortclutteredblocks3d when the order of the block colours
+    is not part of the strategy, and for a comparison across instances.
+  - *Robot on the floor.* Without the robot-world pairs (pad on the floor) the AUC
+    drops from 0.852 to 0.813 (tossing3d 0.80 to 0.64). These contacts are a
+    repeatable property of a policy, not noise, so they stay in. What made them a
+    problem was the full edit that the edit distance charged for them.
+  - *Debounce.* Of the raw gaps between two contacts of one pair, 86 % are below
+    5 ms and 96 % below 30 ms (contact chatter); few are between 0.2 s and 1 s
+    (about 100 in each of the bins 0.2–0.3, 0.3–0.5 and 0.5–1 s, against 523 in
+    0.1–0.2 s and 771 above 2 s); a long gap is a new contact. The merge gap is now 0.3 s (`Options.gap`, was 0.05): the
+    mean AUC goes from 0.845 to 0.852 (edit distance: 0.837 to 0.848, and its mean
+    within distance from 0.24 to 0.19); 0.1 s to 1 s all give 0.849–0.852. The
+    other times stay: a longer shortest contact changes nothing or lowers the AUC
+    (0.834 at 0.3 s), and so does a longer shortest mode (0.852 at 0.05 s, 0.845 at
+    0.1 s, 0.833 at 0.2 s); with the old gap a shortest mode of 0.2 s also removed
+    the base impacts of dynamo3d, which last 10–50 ms. The impulse of a contact
+    (mean normal force × time, `Options.keep_impulse`) separates those impacts
+    well (above 3 N s; most other short contacts are below) but gives the same
+    result as the present force rule, so it is off by default. An impact that is
+    kept by one of the two rules now counts as a contact of at least the shortest
+    mode time, so that its mode is not absorbed.
+  - *Base contacts.* Every robot part counts in every scenario (base, arm, palm,
+    finger links, pads). The base touches something in a few runs only: tossing3d
+    2 of 30 runs (the barrier, 1 s in total), rearrange3d 5 of 32 (the base stays
+    against a fixture, 367 s in total), dynamo3d all runs (the task).
+  The definition bar has the distance (edit, elastic, timeline overlap) and, in a
+  second row, the debounce times. The explorer page `#/m/<scenario>` has a
+  repeatability panel: the within and between distances of the selected distance,
+  the 50 / 80 / 90 % values (buttons set the slider) and the AUC.
+- Distance explorer: `#/m/<scenario>` (link on the diversity page). The distance of
+  the strategy classes is **not** a plain Jaccard distance: it is an edit distance
+  between the two contact-mode sequences, where to replace a mode costs the Jaccard
+  distance between the two modes, divided by the length of the longer sequence
+  (only the definition "set of pairs" reduces to Jaccard). The page puts it next to
+  five other distances (`metrics.py`): the elastic mode distance (see the tuned
+  definition above), pair set, contact duty (weighted Jaccard of
+  the fraction of time each pair is in contact), timeline overlap (temporal IoU) and
+  a time-warped mode distance (DTW). A slider sets a distance: the page shows the
+  three pairs of runs nearest to it, each with the contact pairs over time, the
+  aligned mode sequences with the cost of each column, and the arithmetic of every
+  distance; the histogram of all pair distances; the number of strategies against
+  the threshold for every metric; a scatter of two metrics (click a dot for the
+  pair) and their Spearman correlations. A ghost video of the two runs can be
+  rendered from each pair.
+  First numbers (final policies, instance 0, detailed definition, merge gap
+  0.05 s as it was then):
+  - The scales differ. Mean distance in tossing3d: edit 0.43, set 0.32, duty 0.27,
+    overlap 0.28, dtw 0.12. One threshold does not fit all: 0.35 gives 11 / 5 / 4 /
+    7 / 2 strategies there.
+  - duty and overlap order the pairs nearly the same (Spearman 0.81–0.99 over the
+    ten scenarios); one of them is enough.
+  - edit and set agree least in sortclutteredblocks3d (0.40) and most in
+    scooppour3d (0.85): with many objects the order carries information that the
+    set does not have.
+  - The edit distance has the largest mean in 6 of 10 scenarios (a tie with set
+    in one; timeline overlap is larger in dynamo3d, sweepintodrawer3d and
+    sweepsimple3d). It can be 0.33 for two runs with the same pair set and a
+    time-warped distance of 0.00: a short extra mode costs a full edit.
+  - Not built: metrics on geometry (contact location on the object, end-effector
+    path), sliders for the debounce thresholds and for the edit costs.
+- Diversity pages: `#/d` (all scenarios × methods, one metric at a time, and how
+  often the source-access method is higher / equal / lower than its counterpart)
+  and `#/d/<scenario>` (tiles, map of the final strategies, run × run distance
+  matrix, method × method mean distance, per-method table, episode length per
+  method or per strategy, strategy table). The population is the final policy of
+  each run that solves instance 0.
+- Optimality: on the 10 MuJoCo scenarios the reward is −1 per step (checked on the
+  recorded traces), so total reward = −episode length; one step is 0.1 s. The pages
+  show the episode length of the final policy, of the first policy version that
+  solves the instance, and the compute time of the policy during the episode.
+- First numbers (detailed definition, instance 0): the mean distance between two
+  runs of one method is below the distance between runs of different methods in
+  all 10 scenarios (permutation p < 0.05 in 7), so the method explains part of the
+  strategy. Under the detailed definition a method's 5 runs are mostly 4–5
+  different strategies in the multi-object scenarios; the robot-skeleton and
+  kind-only definitions bring that down (dynamo3d: 4 strategies for 34 runs).
+- Not built: the finer distances (contact location, force profile, DTW); diversity
+  over all solved policy versions (what an agent explored), only the final ones.
+- The diversity pages were tested through the DOM (content, no script error, no
+  overflow, marks inside their plots) and looked at in screenshots of tossing3d and
+  of the overview. For some hours the headless Chromium used for screenshots
+  produced no frames on this machine; it worked again later and the cause is not
+  known.
+- Ghost video of the final policies (diversity page of a scenario): the runs in one
+  scene, one translucent robot per run, coloured by strategy or by method. The runs
+  are the shortest episode of each strategy, of each method, or all final policies
+  that solve the instance. No run is the reference (`replay ghost --equal`). An
+  object or a drawer is ghosted only while its pose differs between the runs. All
+  runs start together and a finished run holds its last pose, so the video compares
+  motion from the start of the episode, not matching phases. The camera is the
+  scenario's; a robot can leave the frame (sweepintodrawer3d). Strategies after the
+  12th most common are grey. 30 runs of tossing3d render in about 3 s.
+  For the diversity inside a strategy, the same panel has two more choices of runs:
+  "all runs of one strategy" (pick the strategy; one video) and "all runs of each
+  strategy, one video for each (grid)" (one tile per strategy with 2 or more runs;
+  a checkbox adds the strategies with one run; "Play all from the start" restarts
+  the tiles together). There the colour is per run or per method. The strategies
+  are those of the definition bar, so a change of the definition or the threshold
+  changes the tiles. A ghost video that is newer than its traces and than
+  `replay.py` is reused and not rendered again (`viewer.start_job`).
+- Strategy classes saturate on the multi-object scenarios: similar / exact / pairs
+  give 89 / 212 / 94 classes in sortclutteredblocks3d and 47 / 110 / 41 in
+  sweepintodrawer3d, where the most frequent class holds 2 of 35 runs. A mode
+  sequence there has tens of modes and encodes the order in which the objects are
+  handled, so nearly every run is its own class and "distinct final strategies per
+  method" is mostly 4–5 of 5. The tossing3d observation "source access gives more
+  final variety" does not hold across scenarios. A coarser representation (collapse
+  repeats per object, ignore the object identity) or a continuous measure (mean
+  pairwise distance within / across methods) is needed before comparing methods.
+- Known limits of the pilot (written before the tuned definition above, which
+  replaces the first guesses of the merge gap and of the threshold): the debounce
+  thresholds in `strategy.Options` are first
+  guesses and some traces still flicker between two modes; a tossing3d sequence has
+  only 5–8 modes, so one changed mode moves the edit distance by 0.2 or more; mode
+  colours repeat after 12 modes; unsolved episodes get no strategy identifier;
+  elapsed time is wall time between commits; the grouping threshold (0.35) is a
+  first guess, checked by eye on tossing3d only.
 - Lint: only `black`, `isort` and a basic `ruff` pass were run; the repo's `mypy` and
   `pylint` (`./run_ci_checks.sh`, needs the `develop` extra) were not.
 - `things_to_fix.md` (repo root, untracked on purpose) lists dataset/viewer issues to
@@ -107,11 +340,24 @@ uv run python -m experiments.contacts.catalog
 uv run python -m experiments.contacts.record '*/tossing3d/*' --instances 0
 # other options: --commit k, --count c (pin object count), --force
 
+# record the history of each run: every commit that changes the policy (+ a sample
+# of unchanged ones as a determinism check), traces only, 16 at a time
+uv run python -m experiments.contacts.record '*/tossing3d/*' --commits sample \
+    --instances 0 --no-video --jobs 16
+
+# strategy over the commits in the terminal; mode sequence of one trace
+uv run python -m experiments.contacts.strategy evolution 'opus55/tossing3d/*'
+uv run python -m experiments.contacts.strategy show <trace dir>
+
 # viewer at http://127.0.0.1:8010
 uv run python -m experiments.contacts.viewer
 
 # renders from traces
 uv run python -m experiments.contacts.replay ghost <trace dir> <trace dir> ... -o out.mp4
+
+# more start scenes of the final policies, for the repeatability test (repeat.py)
+uv run python -m experiments.contacts.record '*/tossing3d/*' --commit -1 --instances 1 2 3 --no-video --jobs 12
+#   --all-bodies: ghost the objects too; --equal: no solid reference run; --alpha 0.3
 uv run python -m experiments.contacts.replay contact <trace dir> -o out.mp4
 ```
 
@@ -119,6 +365,7 @@ Output layout (`outputs/contact_traces/`):
 
 ```
 <method>/<env>/seed<N>/commit<k>/inst<seed>[_count<c>]/  trace.npz, meta.json, video.mp4
+<method>/<env>/seed<N>/commits.json     policy key of every commit (commits.py)
 _scenarios/<env>/thumb.png
 _scenarios/<env>/inst<seed>[_count<c>]/   <view>.png, <view>_ids.png, diagram.json
 _scenarios/<env>/ghosts/<hash>.mp4
@@ -132,8 +379,10 @@ in Claude Code this needs the allow rule
 
 1. Record more of tossing3d (instances 1, 2; a pinned 2-cube instance) and check that
    the method differences seen on instance 0 hold.
-2. Record the other nine MuJoCo scenarios; check entity naming on each.
-3. Diversity metrics (see "Planned analysis" below; nothing is implemented yet).
+2. Pick the strategy definition to report (see the definition bar; the choice
+   changes the counts, much less the mean distances).
+3. Find why a replay is sometimes not bit-exact (see the determinism check in
+   "State"); record a few commits several times with and without load.
 4. Evolution view and metrics across commits (same section).
 5. Later: 2D (pymunk) and PyBullet scenarios need their own contact readers.
 

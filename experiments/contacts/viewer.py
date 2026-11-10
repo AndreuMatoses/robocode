@@ -15,10 +15,12 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import functools
 import hashlib
 import json
 import mimetypes
 import queue
+import re
 import subprocess
 import sys
 import threading
@@ -28,9 +30,17 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from experiments.contacts import catalog
+from experiments.contacts import (
+    catalog,
+    diversity,
+    histories,
+    metrics,
+    repeat,
+    strategy,
+)
+from experiments.contacts.commits import load_versions
 from experiments.contacts.trace import load_meta, summarise, trace_dirs, trace_id
-from experiments.render_run import DEFAULT_DATA, REPO
+from experiments.render_run import DEFAULT_DATA, REPO, RUN_ID
 from experiments.results_viewer import Handler as _BaseHandler
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -107,6 +117,12 @@ def _worker() -> None:
         job.finished_at = time.time()
         summarise.cache_clear()
         load_meta.cache_clear()
+        strategy.pair_intervals.cache_clear()
+        strategy.mode_sequence.cache_clear()
+        strategy.strategy_key.cache_clear()
+        _diversity.cache_clear()
+        _metrics.cache_clear()
+        _repeat.cache_clear()
 
 
 def _python(module: str, *args: str) -> list[str]:
@@ -125,6 +141,11 @@ def start_job(body: dict[str, Any]) -> Job:
         args += ["--data", str(CONFIG.data), "--out", str(traces)]
         label = f"record {len(body['runs'])} run(s)"
         return _enqueue("record", label, _python("record", *args), None)
+    if kind == "video":
+        directory = _trace_dir(body["trace"])
+        out = directory / "video.mp4"
+        cmd = _python("replay", "video", str(directory), "-o", str(out))
+        return _enqueue("video", "episode video", cmd, _file_url(out))
     if kind == "contact":
         directory = _trace_dir(body["trace"])
         out = directory / "contact.mp4"
@@ -133,8 +154,8 @@ def start_job(body: dict[str, Any]) -> Job:
     if kind == "ghost":
         dirs = [_trace_dir(t) for t in body["traces"]]
         colours = [str(c) for c in body.get("colours", [])]
-        all_bodies = bool(body.get("all_bodies"))
-        key = json.dumps([body["traces"], colours, all_bodies])
+        all_bodies, equal = bool(body.get("all_bodies")), bool(body.get("equal"))
+        key = json.dumps([body["traces"], colours, all_bodies, equal])
         digest = hashlib.sha1(key.encode()).hexdigest()[:12]
         meta = load_meta(dirs[0])
         out = (
@@ -146,7 +167,21 @@ def start_job(body: dict[str, Any]) -> Job:
         )
         cmd = _python("replay", "ghost", *map(str, dirs), "-o", str(out))
         cmd += ["--colours", *colours] + (["--all-bodies"] if all_bodies else [])
-        return _enqueue("ghost", f"ghost video of {len(dirs)}", cmd, _file_url(out))
+        cmd += ["--equal"] if equal else []
+        label = f"ghost video of {len(dirs)}"
+        # A video that is newer than its traces and than the renderer is reused.
+        sources = [d / "trace.npz" for d in dirs] + [
+            Path(__file__).with_name("replay.py")
+        ]
+        if out.exists() and all(
+            s.exists() and s.stat().st_mtime < out.stat().st_mtime for s in sources
+        ):
+            with _LOCK:
+                job = Job(f"job{len(JOBS) + 1}", "ghost", label, cmd, _file_url(out))
+                job.state, job.log = "done", "reused the video of an earlier render"
+                JOBS[job.job_id] = job
+            return job
+        return _enqueue("ghost", label, cmd, _file_url(out))
     raise ValueError(f"unknown job kind {kind!r}")
 
 
@@ -184,6 +219,7 @@ def _trace_row(directory: Path) -> dict[str, Any]:
         "crashed": metrics.get("crashed"),
         "num_steps": metrics.get("num_steps"),
         "object_count": metrics.get("object_count"),
+        "has_video": (directory / "video.mp4").exists(),
         "has_contact_video": (directory / "contact.mp4").exists(),
     }
 
@@ -252,6 +288,271 @@ def scenario_detail(name: str) -> dict[str, Any]:
     }
 
 
+def evolution_detail(run_id: str, instance: str, level: str) -> dict[str, Any]:
+    """The contact strategy of one run at each of its recorded commits.
+
+    One row per commit of the run. A commit whose policy equals an earlier one
+    (``same_as``) reuses that commit's trace unless it was recorded itself, in which
+    case ``identical`` says whether the two recordings agree exactly.
+    """
+    if level not in ("class", "entity", "surface"):
+        raise ValueError(f"unknown level {level!r}")
+    if not RUN_ID.fullmatch(run_id) or not re.fullmatch(
+        r"inst\d+(_count\d+)?", instance
+    ):
+        raise ValueError("run must look like <method>/<env>/seed<N>")
+    opts = strategy.Options(level=level)
+    versions = load_versions(CONFIG.data, CONFIG.traces, run_id)
+    root = CONFIG.traces / run_id
+
+    def directory(commit: int | None) -> Path | None:
+        if commit is None:
+            return None
+        path = root / f"commit{commit}" / instance
+        return path if (path / "meta.json").exists() else None
+
+    own = {v["commit"]: directory(v["commit"]) for v in versions}
+    recorded = [c for c, d in own.items() if d is not None]
+    final = own[max(recorded)] if recorded else None
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    prev: Path | None = None  # trace of the previous policy version
+    for v in versions:
+        mine, first = own[v["commit"]], directory(v["same_as"])
+        new_version = v["same_as"] == v["commit"]
+        shown = mine or first
+        row: dict[str, Any] = {
+            **{k: v[k] for k in ("commit", "sha", "subject", "time", "key")},
+            "same_as": v["same_as"],
+            "files": v["files"],
+            "solve_rate": v["reeval_solve_rate"],
+            "status": v["reeval_status"],
+            "recorded": mine is not None,
+            "trace": trace_id(CONFIG.traces, shown) if shown else None,
+        }
+        if mine is not None and first is not None and mine != first:
+            row["identical"] = strategy.identical_raw(mine, first)
+            row["d_same"] = round(strategy.sequence_distance(mine, first, opts), 4)
+        if shown is not None:
+            metrics = load_meta(shown)["metrics"]
+            pairs = strategy.pairs_used(shown, opts)
+            row.update(
+                solved=bool(metrics.get("solved")),
+                crashed=metrics.get("crashed"),
+                num_steps=metrics.get("num_steps"),
+                modes=strategy.describe(shown, opts)["modes"],
+                num_pairs=len(pairs),
+                new_pairs=sorted(pairs - seen),
+            )
+            if final is not None:
+                row["d_final"] = round(
+                    strategy.sequence_distance(shown, final, opts), 4
+                )
+                row["p_final"] = round(strategy.pair_distance(shown, final, opts), 4)
+            if (new_version or mine is not None) and prev is not None and prev != shown:
+                row["d_prev"] = round(strategy.sequence_distance(prev, shown, opts), 4)
+                row["p_prev"] = round(strategy.pair_distance(prev, shown, opts), 4)
+            seen |= pairs
+            prev = shown
+        rows.append(row)
+    meta = load_meta(final) if final else {}
+    return {
+        "run_id": run_id,
+        "environment": run_id.split("/")[1],
+        "method": run_id.split("/")[0],
+        "instance": instance,
+        "level": level,
+        "duration": max(
+            [r["modes"][-1]["end"] for r in rows if r.get("modes")], default=0.0
+        ),
+        "run_solve_rate": meta.get("run_solve_rate"),
+        "options": dataclasses.asdict(opts),
+        "commits": rows,
+    }
+
+
+def _check(level: str, instance: str, *run_ids: str) -> strategy.Options:
+    if level not in ("class", "entity", "surface"):
+        raise ValueError(f"unknown level {level!r}")
+    if not re.fullmatch(r"inst\d+(_count\d+)?", instance):
+        raise ValueError(f"bad instance {instance!r}")
+    if not all(RUN_ID.fullmatch(r) for r in run_ids):
+        raise ValueError("run must look like <method>/<env>/seed<N>")
+    return strategy.Options(level=level)
+
+
+def _versions(run_id: str) -> list[dict[str, Any]]:
+    return load_versions(CONFIG.data, CONFIG.traces, run_id)
+
+
+def _scenario_runs(name: str) -> list[str]:
+    """Run ids of a scenario, ordered by method then seed."""
+    table = catalog.runs_table(CONFIG.data)
+    rows = table[(table.environment == name) & (table.num_commits > 0)]
+    order = {m: i for i, m in enumerate(METHOD_ORDER)}
+    return sorted(
+        rows.run_id.tolist(),
+        key=lambda r: (
+            order.get(r.split("/")[0], 99),
+            int(r.rsplit("seed", 1)[-1]),
+        ),
+    )
+
+
+Grouping = tuple[strategy.Definition, str, float]
+
+
+def _definition(query: dict[str, str]) -> Grouping:
+    """The strategy definition, grouping and threshold of a request."""
+    times = {
+        field: float(query[field])
+        for field in ("gap", "min_duration", "min_mode")
+        if query.get(field) not in (None, "")
+    }
+    defn = strategy.Definition(
+        query.get("scope", "all"),
+        query.get("identity", "keep"),
+        query.get("order", "sequence"),
+        query.get("fingers", "all"),
+        query.get("metric", "edit"),
+        **times,
+    )
+    group, tau = query.get("group", "similar"), float(query.get("tau", 0.35))
+    if group not in ("exact", "similar", "pairs") or not 0.0 < tau <= 1.0:
+        raise ValueError("group must be exact or similar, tau in (0, 1]")
+    return defn, group, tau
+
+
+def definitions() -> dict[str, Any]:
+    """The choices of a strategy definition, with their descriptions."""
+    return {
+        "scope": strategy.SCOPES,
+        "identity": strategy.IDENTITIES,
+        "order": strategy.ORDERS,
+        "fingers": strategy.FINGERS,
+        "metric": strategy.DISTANCES,
+        "times": {
+            field: getattr(strategy.Options(), field)
+            for field in ("gap", "min_duration", "min_mode")
+        },
+        "presets": strategy.PRESETS,
+    }
+
+
+def scenario_histories(
+    name: str, instance: str, level: str, grouping: Grouping
+) -> dict[str, Any]:
+    """Strategy histories of every run of a scenario (see ``histories.py``)."""
+    opts = _check(level, instance)
+    defn, group, tau = grouping
+    out = histories.scenario_histories(
+        CONFIG.traces, _scenario_runs(name), instance, opts, _versions, group, tau, defn
+    )
+    out["name"] = name
+    out["methods"] = [
+        m for m in METHOD_ORDER if any(r["method"] == m for r in out["runs"])
+    ]
+    return out
+
+
+@functools.lru_cache(maxsize=256)
+def _diversity(
+    name: str, instance: str, level: str, grouping: Grouping
+) -> dict[str, Any]:
+    opts = _check(level, instance)
+    defn, group, tau = grouping
+    table = catalog.runs_table(CONFIG.data)
+    rows = table[table.environment == name]
+    reported = {
+        row.run_id: {
+            "solve_rate": (
+                None if row.solve_rate != row.solve_rate else float(row.solve_rate)
+            ),
+            "mean_eval_steps": (
+                None
+                if row.mean_eval_steps != row.mean_eval_steps
+                else float(row.mean_eval_steps)
+            ),
+        }
+        for row in rows.itertuples()
+    }
+    out = diversity.scenario_diversity(
+        CONFIG.traces,
+        _scenario_runs(name),
+        instance,
+        opts,
+        _versions,
+        defn,
+        group,
+        tau,
+        reported,
+    )
+    out["name"] = name
+    out["method_order"] = [
+        m for m in METHOD_ORDER if any(r["method"] == m for r in out["runs"])
+    ]
+    return out
+
+
+def scenario_diversity(
+    name: str, instance: str, level: str, grouping: Grouping
+) -> dict[str, Any]:
+    """Diversity and optimality of the final policies (see ``diversity.py``)."""
+    return _diversity(name, instance, level, grouping)
+
+
+@functools.lru_cache(maxsize=64)
+def _metrics(
+    name: str, instance: str, level: str, defn: strategy.Definition
+) -> dict[str, Any]:
+    out = metrics.scenario_metrics(
+        CONFIG.traces,
+        _scenario_runs(name),
+        instance,
+        _check(level, instance),
+        _versions,
+        defn,
+    )
+    out["name"] = name
+    out["method_order"] = [
+        m for m in METHOD_ORDER if any(r["method"] == m for r in out["runs"])
+    ]
+    return out
+
+
+@functools.lru_cache(maxsize=64)
+def _repeat(name: str, level: str, defn: strategy.Definition) -> dict[str, Any]:
+    """Repeatability of the final policies over the recorded instances."""
+    out = repeat.scenario_repeatability(
+        CONFIG.traces, _scenario_runs(name), _check(level, "inst0"), _versions, defn
+    )
+    out["name"] = name
+    return out
+
+
+def diversity_overview(instance: str, level: str, grouping: Grouping) -> dict[str, Any]:
+    """``diversity.summary`` of every scenario with recorded commit histories."""
+    names = sorted(
+        {p.parents[1].name for p in CONFIG.traces.glob("*/*/*/commits.json")}
+    )
+    scenarios = []
+    for name in names:
+        detail = _diversity(name, instance, level, grouping)
+        if detail["runs"]:
+            scenarios.append({"name": name, **diversity.summary(detail)})
+    defn, group, tau = grouping
+    return {
+        "instance": instance,
+        "level": level,
+        "group": group,
+        "tau": tau,
+        "definition": dataclasses.asdict(defn),
+        "definition_text": defn.text(group, tau),
+        "methods": METHOD_ORDER,
+        "scenarios": scenarios,
+    }
+
+
 # --------------------------------------------------------------------- server
 
 
@@ -274,6 +575,81 @@ class Handler(_BaseHandler):
                 self._json(scenario_detail(query["name"]))
             elif path == "/api/trace":
                 self._json(summarise(_trace_dir(query["id"])))
+            elif path == "/api/evolution":
+                self._json(
+                    evolution_detail(
+                        query["run"],
+                        query.get("instance", "inst0"),
+                        query.get("level", "class"),
+                    )
+                )
+            elif path == "/api/histories":
+                self._json(
+                    scenario_histories(
+                        query["name"],
+                        query.get("instance", "inst0"),
+                        query.get("level", "class"),
+                        _definition(query),
+                    )
+                )
+            elif path == "/api/diversity":
+                self._json(
+                    scenario_diversity(
+                        query["name"],
+                        query.get("instance", "inst0"),
+                        query.get("level", "class"),
+                        _definition(query),
+                    )
+                )
+            elif path == "/api/diversity_overview":
+                self._json(
+                    diversity_overview(
+                        query.get("instance", "inst0"),
+                        query.get("level", "class"),
+                        _definition(query),
+                    )
+                )
+            elif path == "/api/definitions":
+                self._json(definitions())
+            elif path == "/api/metrics":
+                self._json(
+                    _metrics(
+                        query["name"],
+                        query.get("instance", "inst0"),
+                        query.get("level", "class"),
+                        _definition(query)[0],
+                    )
+                )
+            elif path == "/api/repeatability":
+                self._json(
+                    _repeat(
+                        query["name"],
+                        query.get("level", "class"),
+                        _definition(query)[0],
+                    )
+                )
+            elif path == "/api/metric_pair":
+                opts = _check(query.get("level", "class"), "inst0")
+                self._json(
+                    metrics.pair_detail(
+                        _trace_dir(query["a"]),
+                        _trace_dir(query["b"]),
+                        opts,
+                        _definition(query)[0],
+                    )
+                )
+            elif path == "/api/history_pair":
+                instance, level = query.get("instance", "inst0"), query.get(
+                    "level", "class"
+                )
+                opts = _definition(query)[0].options(
+                    _check(level, instance, query["a"], query["b"])
+                )
+                self._json(
+                    histories.history_pair(
+                        CONFIG.traces, query["a"], query["b"], instance, opts, _versions
+                    )
+                )
             elif path == "/api/job":
                 self._json(dataclasses.asdict(JOBS[query["id"]]))
             elif path == "/api/jobs":
@@ -286,6 +662,8 @@ class Handler(_BaseHandler):
                 self._err(404, "not found")
         except (KeyError, FileNotFoundError) as exc:
             self._err(404, f"not found: {exc}")
+        except ValueError as exc:
+            self._err(400, f"bad request: {exc}")
 
     def do_POST(self) -> None:  # noqa: N802  pylint: disable=invalid-name
         """Start a job."""

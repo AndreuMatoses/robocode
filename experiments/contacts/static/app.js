@@ -312,34 +312,112 @@ function timelineControls(opts, onChange) {
     ...cats);
 }
 
-// where on the surface: scatter of contact points in the face's own 2D frame
-function surfacePlot(points, face, type, offset, label) {
-  const axes = { "x": [1, 2], "y": [0, 2], "z": [0, 1] }[face[1]] || [0, 1];
-  const names = "xyz", size = 120, pad = 14;
-  const svg = s("svg", { width: size + 2 * pad, height: size + 2 * pad + 14 });
-  svg.append(s("rect", { x: pad, y: pad, width: size, height: size, fill: "none", stroke: "var(--line)" }),
-    s("text", { x: pad, y: size + 2 * pad + 8 }, `${label}  ${type} ${face}  (${names[axes[0]]}, ${names[axes[1]]})`));
-  const peak = Math.max(1e-9, ...points.map((p) => p[1]));
-  for (const p of points) {
-    const u = p[offset + axes[0]], v = p[offset + axes[1]];
-    if (Math.abs(u) > 1.5 || Math.abs(v) > 1.5) continue;
-    svg.append(s("circle", { cx: pad + ((u + 1) / 2) * size, cy: pad + ((1 - v) / 2) * size,
-      r: 1.5 + 3 * Math.sqrt(p[1] / peak), fill: "var(--accent)", "fill-opacity": 0.45 }));
+// ---------------------------------------------------------- surface plots
+const prettyFace = (face) => face.replace("-", "−");
+const plotAxes = (face) => ({ "x": [1, 2], "y": [0, 2], "z": [0, 1] }[face[1]] || [0, 1]);
+function faceTitle(type, face, geom) {
+  const part = `${type} ${geom}`;
+  if (type === "plane") return `${part} · top`;
+  if (face === "surface") return `${part} · whole surface, seen along z`;
+  if (face === "side") return `${part} · side wall, seen along z`;
+  if (type === "box") return `${part} · ${prettyFace(face)} face`;
+  return `${part} · ${prettyFace(face)} cap`;
+}
+// A small picture of the geom in its true proportions, with the touched face filled.
+function shapeGlyph(type, face, extent, color) {
+  const W = 66, H = 58, svg = s("svg", { class: "glyph", width: W, height: H });
+  if (type !== "box" && type !== "cylinder" && type !== "capsule") return null;
+  const big = Math.max(...extent), e = extent.map((v) => Math.max(v / big, 0.16));
+  const k = 10.5, cx = W / 2, cy = H / 2 + 2;
+  const pr = (x, y, z) => [cx + (x - y) * 0.866 * k, cy + (x + y) * 0.5 * k - z * k];
+  const pts = (list) => list.map((q) => pr(...q).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const fill = { fill: color, "fill-opacity": 0.6, stroke: color };
+  const sign = face[0] === "-" ? -1 : 1, axis = "xyz".indexOf(face[1]);
+  const marks = [];
+  if (type === "box") {
+    const c = (i, j, l) => [i * e[0], j * e[1], l * e[2]];
+    const edges = [];
+    for (const i of [-1, 1]) for (const j of [-1, 1]) {
+      edges.push([c(-1, i, j), c(1, i, j)], [c(i, -1, j), c(i, 1, j)], [c(i, j, -1), c(i, j, 1)]);
+    }
+    for (const [p, q] of edges) marks.push(s("polyline", { class: "wire", points: pts([p, q]) }));
+    if (axis >= 0) {
+      const corner = (u, v) => { const q = [0, 0, 0]; q[axis] = sign * e[axis]; q[(axis + 1) % 3] = u * e[(axis + 1) % 3]; q[(axis + 2) % 3] = v * e[(axis + 2) % 3]; return q; };
+      const poly = s("polygon", { points: pts([corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1)]), ...fill });
+      sign < 0 ? marks.unshift(poly) : marks.push(poly);  // faces on the far side go behind the wires
+    }
+  } else {
+    const r = e[0], hh = e[2], rx = r * k * 1.225, ry = r * k * 0.707;
+    const cap = (z, extra) => { const [x, y] = pr(0, 0, z); return s("ellipse", { cx: x, cy: y, rx, ry, class: "wire", ...extra }); };
+    const [, yt] = pr(0, 0, hh), [, yb] = pr(0, 0, -hh);
+    if (face === "side") marks.push(s("path", { d: `M${cx - rx} ${yt} L${cx - rx} ${yb} A${rx} ${ry} 0 0 0 ${cx + rx} ${yb} L${cx + rx} ${yt} Z`, ...fill }));
+    marks.push(cap(-hh, face === "-z" ? fill : {}), s("polyline", { class: "wire", points: `${cx - rx},${yt} ${cx - rx},${yb}` }),
+      s("polyline", { class: "wire", points: `${cx + rx},${yt} ${cx + rx},${yb}` }), cap(hh, face === "+z" ? fill : { fill: "var(--bg)" }));
   }
+  // local axes of the geom
+  [[1.0, 0, 0, "x"], [0, 1.0, 0, "y"], [0, 0, 1.0, "z"]].forEach(([x, y, z, n], i) => {
+    const len = e[i] + 0.5, a = pr(x * e[i], y * e[i], z * e[i]), b = pr(x * len, y * len, z * len), t = pr(x * (len + 0.3), y * (len + 0.3), z * (len + 0.3));
+    marks.push(s("line", { class: "axis", x1: a[0], y1: a[1], x2: b[0], y2: b[1] }), s("text", { x: t[0], y: t[1] + 3, "text-anchor": "middle" }, n));
+  });
+  svg.append(...marks);
   return svg;
 }
-function detailPanel(row, traces) {
+// Where on one surface: contact points in the face's own 2D frame, drawn in the
+// face's true proportions. `side` is {name, entity, type, face, extent, geom}.
+function surfacePlot(points, side, offset, color, onHover) {
+  const { face, type, extent } = side, axes = plotAxes(face), names = "xyz";
+  const pad = 16, size = 116;
+  let pts = points.map((p) => [p[offset + axes[0]], p[offset + axes[1]], p[1]]);
+  let w = size, hgt = size, map, note = "";
+  if (type === "plane") {  // planes are in metres and unbounded: zoom on the points
+    const us = pts.map((p) => p[0]), vs = pts.map((p) => p[1]);
+    const cu = (Math.min(...us) + Math.max(...us)) / 2, cv = (Math.min(...vs) + Math.max(...vs)) / 2;
+    const half = Math.max(0.05, (Math.max(...us) - Math.min(...us)) / 2, (Math.max(...vs) - Math.min(...vs)) / 2) * 1.2;
+    map = (u, v) => [pad + ((u - cu) / half + 1) / 2 * w, pad + (1 - (v - cv) / half) / 2 * hgt];
+    note = `zoomed: ${fmt(2 * half, 2)} m across`;
+  } else {
+    const ratio = Math.max(0.2, Math.min(5, extent[axes[0]] / extent[axes[1]]));
+    if (ratio < 1) w = size * ratio; else hgt = size / ratio;
+    pts = pts.filter((p) => Math.abs(p[0]) <= 1.5 && Math.abs(p[1]) <= 1.5);
+    map = (u, v) => [pad + (u + 1) / 2 * w, pad + (1 - v) / 2 * hgt];
+    note = `${fmt(2000 * extent[axes[0]], 0)} × ${fmt(2000 * extent[axes[1]], 0)} mm`;
+  }
+  const svg = s("svg", { width: w + 2 * pad, height: hgt + 2 * pad });
+  svg.append(s("rect", { class: "face", x: pad, y: pad, width: w, height: hgt }),
+    s("line", { class: "centre", x1: pad + w / 2, x2: pad + w / 2, y1: pad, y2: pad + hgt }),
+    s("line", { class: "centre", x1: pad, x2: pad + w, y1: pad + hgt / 2, y2: pad + hgt / 2 }),
+    s("text", { x: pad + w, y: pad + hgt + 12, "text-anchor": "end" }, names[axes[0]] + " →"),
+    s("text", { x: pad - 4, y: pad + 8, "text-anchor": "end" }, names[axes[1]]),
+    s("text", { x: pad - 4, y: pad + 19, "text-anchor": "end" }, "↑"));
+  const peak = Math.max(1e-9, ...pts.map((p) => p[2]));
+  for (const p of pts) {
+    const [x, y] = map(p[0], p[1]);
+    svg.append(s("circle", { cx: x, cy: y, r: 1.5 + 3 * Math.sqrt(p[2] / peak), fill: color, "fill-opacity": 0.5 }));
+  }
+  const el = h("div", { class: "splot", onmouseenter: () => onHover && onHover(side.entity), onmouseleave: () => onHover && onHover(null) },
+    h("div", { class: "shead" }, h("div", {}, h("div", { class: "sname mono" }, side.name), h("div", { class: "sface" }, faceTitle(type, face, side.geom)),
+      h("div", { class: "sface" }, note)), shapeGlyph(type, face, extent, color)), svg);
+  return el;
+}
+function detailPanel(row, traces, onHover) {
   const el = h("div", { class: "detail" }, h("b", {}, `${row.a}  ↔  ${row.b}`), h("span", { class: "muted" }, `  ${row.category}`));
   for (const item of row.items.slice(0, 12)) {
-    const p = item.pair;
-    el.append(h("div", { class: "muted" }, `${traces[item.lane].label} — ${p.name_a} ↔ ${p.name_b}: ${p.intervals.length} interval(s), ${fmt(p.active_s)} s in contact, peak ${fmt(p.peak_force, 1)} N`));
+    const p = item.pair, tr = traces[item.lane];
+    // same colour as this run's bars in the timeline
+    const color = traces.length > 1 ? tr.color : (row.category.startsWith("robot") ? cssVar("--robot") : cssVar("--other"));
+    el.append(h("div", { class: "runline" }, h("span", { class: "dot", style: `background:${color}` }), h("b", {}, tr.label),
+      h("span", { class: "muted" }, ` — ${p.intervals.length} interval(s), ${fmt(p.active_s)} s in contact, peak ${fmt(p.peak_force, 1)} N`)));
     const plots = h("div", { class: "plots" });
     for (const sf of item.surfaces.slice(0, 6)) {
-      plots.append(surfacePlot(sf.points, sf.face_a, sf.type_a, 2, "A"), surfacePlot(sf.points, sf.face_b, sf.type_b, 5, "B"));
+      const side = (x, name, entity) => ({ name, entity, type: sf["type_" + x], face: sf["face_" + x], extent: sf["extent_" + x] || [1, 1, 1], geom: sf["geom_" + x] });
+      plots.append(h("div", { class: "spair" }, surfacePlot(sf.points, side("a", p.name_a, p.a), 2, color, onHover),
+        h("div", { class: "touch", title: "these two surfaces touch" }, "↔"), surfacePlot(sf.points, side("b", p.name_b, p.b), 5, color, onHover)));
     }
+    if (item.surfaces.length > 6) plots.append(h("div", { class: "muted" }, `+ ${item.surfaces.length - 6} more surface pair(s) not shown`));
     el.append(plots);
   }
-  el.append(h("div", { class: "muted" }, "Each dot is one env step: the force-weighted contact point on that surface, in the geom's own frame scaled to [-1, 1]; dot size = peak force."));
+  if (row.items.length > 12) el.append(h("div", { class: "muted" }, `+ ${row.items.length - 12} more not shown`));
+  el.append(h("div", { class: "muted" }, "Each box is one pair of touching surfaces. Each plot is one face in its true proportions, in the part's own axes (see the small drawing; the filled face is the one plotted). A dot is the force-weighted contact point of one env step; dot size = peak force. Hover a plot to find the entity in the scene image."));
   return el;
 }
 const relevantEntities = (summaries) => {
@@ -371,7 +449,7 @@ async function pageIndex() {
     h("div", { class: "body" }, h("b", {}, sc.name),
       h("span", { class: "muted" }, `${sc.num_runs} runs · ${sc.num_traces} traces`), h("br"),
       ...["simulator", "robot", "dynamics"].filter((k) => sc[k]).map((k) => h("span", { class: "tag" }, sc[k]))))));
-    app.replaceChildren(bar, cards);
+    app.replaceChildren(h("p", {}, h("a", { href: "#/d" }, "Diversity and optimality of the final policies, all scenarios →")), bar, cards);
   };
   draw();
 }
@@ -400,7 +478,8 @@ async function pageScenario(name) {
     const used = [...new Set(chosen.map((t) => t.method))];
     const detail = h("div", {});
     const tl = new Timeline(traces, state.opts);
-    tl.onSelect = (row) => detail.replaceChildren(detailPanel(row, traces));
+    let hotHook = () => {};
+    tl.onSelect = (row) => detail.replaceChildren(detailPanel(row, traces, (id) => hotHook(id)));
     overlay.replaceChildren(
       h("div", { class: "swatches" }, used.map((m) => h("span", {}, seeds.map((sd, i) => h("span", { class: "dot", title: sd, style: `margin-right:1px;background:${runColor(m, i, seeds.length)}` })), " ", m)),
         h("span", { class: "muted" }, `one lane per run, ${traces.length} runs · shade = run seed (${seeds[0]} lightest … ${seeds[seeds.length - 1]} darkest) · line inside a bar = contact force`)),
@@ -413,6 +492,7 @@ async function pageScenario(name) {
       diagram.setLabels(ids);
       const lg = legend(entities, ids, diagram);
       diagram.onHover = (id) => lg.hot(id);
+      hotHook = (id) => { diagram.setHot(id); lg.hot(id); };
       diagramBox.replaceChildren(h("div", { class: "panel", style: "flex:1 1 560px;max-width:760px" }, diagram.el), h("div", { class: "panel" }, lg));
     }
     const video = h("div", {});
@@ -433,6 +513,7 @@ async function pageScenario(name) {
       h("span", { class: "muted" }, "first selected run is drawn solid; the others translucent, coloured by method")), video);
   };
 
+  const nCommits = (t) => sc.traces.filter((x) => x.run_id === t.run_id && x.instance === state.instance).length;
   const drawMatrix = () => {
     const have = latest();
     const table = h("table", { class: "matrix" }, h("tr", {}, h("th", {}, "method"), seeds.map((sd) => h("th", {}, sd))));
@@ -447,6 +528,7 @@ async function pageScenario(name) {
         return h("td", {}, h("span", { class: "cell" },
           h("input", { type: "checkbox", checked: state.selected.has(t.id), onchange: (e) => { e.target.checked ? state.selected.add(t.id) : state.selected.delete(t.id); drawOverlay(); } }),
           sr, h("a", { href: "#/t/" + t.id, title: t.subject }, "open"),
+          h("a", { href: "#/e/" + t.run_id, title: "contact strategy over the commits of this run" }, `history${nCommits(t) > 1 ? " (" + nCommits(t) + ")" : ""}`),
           h("span", { class: "badge " + (t.solved ? "ok" : "no") }, t.crashed ? "crashed" : t.solved ? "solved" : "failed")));
       })));
     }
@@ -469,7 +551,9 @@ async function pageScenario(name) {
   };
   const matrixBox = h("div", { class: "panel" });
   app.replaceChildren(
-    h("div", {}, Object.values(sc.tags).map((t) => h("span", { class: "tag" }, t))),
+    h("div", {}, Object.values(sc.tags).map((t) => h("span", { class: "tag" }, t)),
+      h("a", { href: "#/h/" + name, style: "margin-left:12px" }, "strategy histories of all runs →"),
+      h("a", { href: "#/d/" + name, style: "margin-left:12px" }, "diversity and optimality →")),
     h("h2", {}, "Runs ", h("small", {}, "— tick recorded runs to compare them; numbers are the reported solve rates")), matrixBox,
     h("h2", {}, "Contact timelines"), h("div", { class: "panel" }, overlay),
     h("h2", {}, "Who is who ", h("small", {}, "— entities in contact in the selected runs; hover the image or the list")), diagramBox,
@@ -483,11 +567,15 @@ async function pageTrace(id) {
   const meta = sm.meta, sc = await j("/api/scenario?name=" + meta.environment);
   METHODS = sc.methods;
   const instance = id.split("/").pop(), inst = sc.instances[instance];
-  $("#crumbs").replaceChildren(h("a", { href: "#/s/" + meta.environment }, meta.environment), ` / ${meta.run_id} / commit ${meta.commit} / ${instance}`);
+  $("#crumbs").replaceChildren(h("a", { href: "#/s/" + meta.environment }, meta.environment), " / ", h("a", { href: "#/e/" + meta.run_id, title: "history of this run over its commits" }, meta.run_id), ` / commit ${meta.commit} of ${meta.num_commits - 1} / ${instance}`);
   const opts = { level: "entity", resting: false, cats: new Set(DEFAULT_CATS) };
   const traces = [{ summary: sm, color: methodColor(meta.method), label: meta.run_id }];
   const files = "/files/" + id;
-  const video = h("video", { src: files + "/video.mp4", controls: true, muted: true, style: "width:100%" });
+  const video = h("video", { controls: true, muted: true, style: "width:100%" });
+  const row0 = sc.traces.find((x) => x.id === id);
+  if (row0 && !row0.has_video) {  // history commits are recorded without a video
+    runJob({ kind: "video", trace: id }, (job) => { if (job.state === "done") video.src = `${files}/video.mp4?t=${Date.now()}`; });
+  } else video.src = files + "/video.mp4";
   const mode = h("div", { class: "tabs" });
   const setMode = (name) => {
     const t = video.currentTime;
@@ -502,7 +590,7 @@ async function pageTrace(id) {
   const info = h("div", { class: "muted" }, `${m.crashed ? "crashed: " + m.crashed : m.solved ? "solved" : "not solved"} in ${m.num_steps} steps (${fmt(sm.duration, 1)} s)` +
     (m.object_count != null ? ` · ${m.object_count} objects` : "") + ` · this commit's reported solve rate ${fmt(meta.commit_solve_rate)} · “${meta.subject}”`);
   const detail = h("div", {}), tl = new Timeline(traces, opts);
-  tl.onSelect = (row) => detail.replaceChildren(detailPanel(row, traces));
+  tl.onSelect = (row) => detail.replaceChildren(detailPanel(row, traces, (hid) => { if (diagram) { diagram.setHot(hid); lg.hot(hid); } }));
   tl.onSeek = (t) => { video.currentTime = t; };
   let diagram = null, lg = null;
   const right = h("div", { class: "panel", style: "flex:1 1 420px;max-width:640px" });
@@ -534,12 +622,903 @@ async function pageTrace(id) {
   requestAnimationFrame(tick);
 }
 
+// -------------------------------------------------------------- evolution
+// How the contact strategy of one run changes over its commits.
+const MODE_PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#e0a100", "#8f5bd6", "#d6457a", "#12a5b8", "#7a8f1e",
+  "#b0562c", "#4f5fbf", "#c23b3b", "#3d8f5f"];
+const shortName = (n) => n.replace(/^robot\.gripper\./, "").replace(/^(robot|env|world)\./, "");
+const modeName = (pairs) => pairs.length ? pairs.map((p) => p.split(" <> ").map(shortName).join("↔")).join("  +  ") : "no contact";
+function modeColours(commits) {
+  const colour = new Map();
+  for (const c of commits) for (const m of c.modes || []) {
+    const key = m.pairs.join("|");
+    if (colour.has(key)) continue;
+    if (!m.pairs.length) { colour.set(key, "var(--free)"); continue; }
+    const n = [...colour.keys()].filter((k) => k).length;
+    let hash = 0; for (const ch of key) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    colour.set(key, n < MODE_PALETTE.length ? MODE_PALETTE[n] : `hsl(${hash % 360} 55% ${42 + (hash >> 9) % 22}%)`);
+  }
+  return colour;
+}
+const outcome = (c) => c.trace == null ? (c.key ? "broken" : "none") : c.crashed ? "crashed" : c.solved ? "solved" : "failed";
+
+async function pageEvolution(runId) {
+  const app = $("#app"), env = runId.split("/")[1];
+  $("#crumbs").replaceChildren(h("a", { href: "#/s/" + env }, env), ` / ${runId} / history`);
+  const state = { level: "class", xmode: "fraction", sel: null };
+  const body = h("div", {});
+  const controls = h("div", { class: "bar" },
+    h("label", {}, "contacts by ", h("select", { onchange: (e) => { state.level = e.target.value; load(); } },
+      ["class", "entity", "surface"].map((v) => h("option", { value: v }, v)))),
+    h("label", {}, "strip x axis ", h("select", { onchange: (e) => { state.xmode = e.target.value; draw(); } },
+      [["fraction", "fraction of the episode"], ["seconds", "seconds"], ["steps", "one cell per mode"]].map(([v, t]) => h("option", { value: v }, t)))));
+  app.replaceChildren(controls, body);
+  let ev = null;
+  const load = async () => {
+    body.replaceChildren(h("p", { class: "muted" }, "loading…"));
+    ev = await j(`/api/evolution?run=${encodeURIComponent(runId)}&level=${state.level}`);
+    draw();
+  };
+  const draw = () => {
+    const commits = ev.commits, n = commits.length;
+    const colour = modeColours(commits);
+    const versions = commits.filter((c) => c.trace && (c.same_as === c.commit || c.recorded && c.identical === false));
+    const checks = commits.filter((c) => c.identical !== undefined);
+    const tipText = (c) => `commit ${c.commit}: ${c.subject}\n` +
+      (c.trace == null ? (c.key ? "no trace: the policy does not load at this commit, or the commit is not recorded" : "no policy at this commit") :
+        `${c.same_as !== c.commit ? `same policy as commit ${c.same_as}\n` : ""}this instance: ${outcome(c)} in ${c.num_steps} steps · ${c.modes.length} modes, ${c.num_pairs} pairs\n` +
+        `reported solve rate: ${fmt(c.solve_rate)}\nchange from the version before: ${fmt(c.d_prev)} (sequence), ${fmt(c.p_prev)} (pairs)\n` +
+        `distance to the final version: ${fmt(c.d_final)} (sequence), ${fmt(c.p_final)} (pairs)` +
+        (c.new_pairs && c.new_pairs.length ? `\nnew pairs: ${c.new_pairs.map((p) => p.split(" <> ").map(shortName).join(" ↔ ")).join(", ")}` : ""));
+
+    // ---- chart over the commits
+    const padL = 46, padR = 14, plotH = 150, top = 14, cw = Math.max(5, Math.min(34, Math.floor(((body.clientWidth || 1200) - padL - padR - 40) / n)));
+    const W = padL + n * cw + padR, H = top + plotH + 46;
+    const x = (i) => padL + (i + 0.5) * cw, y = (v) => top + (1 - v) * plotH;
+    const svg = s("svg", { width: W, height: H, class: "evo" });
+    for (const v of [0, 0.5, 1]) svg.append(s("line", { class: "grid", x1: padL, x2: W - padR, y1: y(v), y2: y(v) }), s("text", { x: padL - 6, y: y(v) + 4, "text-anchor": "end" }, String(v)));
+    commits.forEach((c, i) => {
+      if (c.d_prev != null && c.d_prev > 0) svg.append(s("rect", { class: "dprev", x: x(i) - Math.max(1.5, cw * 0.3), width: Math.max(3, cw * 0.6), y: y(c.d_prev), height: y(0) - y(c.d_prev) }));
+    });
+    const line = (key, cls) => {
+      let d = "", pen = false;
+      commits.forEach((c, i) => { if (c[key] == null) { return; } d += `${pen ? "L" : "M"}${x(i).toFixed(1)} ${y(c[key]).toFixed(1)} `; pen = true; });
+      if (d) svg.append(s("path", { class: cls, d }));
+    };
+    line("d_final", "dfinal"); line("solve_rate", "rate");
+    commits.forEach((c, i) => {
+      if (c.solve_rate != null) svg.append(s("circle", { class: "ratedot", cx: x(i), cy: y(c.solve_rate), r: Math.min(3, cw / 3) }));
+      const o = outcome(c), my = top + plotH + 14, r = Math.min(4.5, cw / 2 - 0.5);
+      const mark = s("circle", { class: "mark " + o + (c.trace && c.same_as !== c.commit ? " same" : ""), cx: x(i), cy: my, r });
+      svg.append(mark);
+      if (n <= 60 || i % 5 === 0) svg.append(s("text", { x: x(i), y: my + 20, "text-anchor": "middle" }, String(c.commit)));
+      const hit = s("rect", { class: "hit" + (state.sel === c.commit ? " sel" : ""), x: x(i) - cw / 2, width: cw, y: top - 6, height: plotH + 30 });
+      hit.addEventListener("mousemove", (e) => tip(e, tipText(c)));
+      hit.addEventListener("mouseleave", (e) => tip(e, ""));
+      hit.addEventListener("click", () => { state.sel = c.trace ? (c.same_as !== c.commit && !versions.includes(c) ? c.same_as : c.commit) : null; draw(); const row = $(`[data-commit="${state.sel}"]`); if (row) row.scrollIntoView({ block: "center", behavior: "smooth" }); });
+      svg.append(hit);
+    });
+    svg.append(s("text", { x: padL, y: H - 2 }, "commit"));
+    const key = h("div", { class: "swatches" },
+      h("span", {}, h("span", { class: "key rate" }), "reported solve rate (withheld eval instances)"),
+      h("span", {}, h("span", { class: "key dprev" }), "strategy change from the version before"),
+      h("span", {}, h("span", { class: "key dfinal" }), "distance to the final strategy"),
+      h("span", {}, h("span", { class: "dotc solved" }), "solved", h("span", { class: "dotc failed", style: "margin-left:8px" }), "failed", h("span", { class: "dotc crashed", style: "margin-left:8px" }), "crashed",
+        h("span", { class: "dotc none", style: "margin-left:8px" }), "no policy", h("span", { class: "dotc broken", style: "margin-left:8px" }), "no trace (policy does not load, or not recorded) — on this instance; faded = policy not changed"));
+
+    // ---- strategy strip: one row per policy version
+    const labelW = 430, rightW = 110, rowH = 20, sw = Math.max(500, (body.clientWidth || 1200) - labelW - rightW - 40);
+    const strip = s("svg", { width: labelW + sw + rightW, height: 24 + versions.length * rowH + 4, class: "evo" });
+    const dur = Math.max(1e-6, ev.duration);
+    if (state.xmode === "seconds") {
+      const tick = dur > 60 ? 10 : dur > 20 ? 5 : dur > 8 ? 2 : 1;
+      for (let t = 0; t <= dur + 1e-6; t += tick) strip.append(s("line", { class: "grid", x1: labelW + (t / dur) * sw, x2: labelW + (t / dur) * sw, y1: 16, y2: 24 + versions.length * rowH }),
+        s("text", { x: labelW + (t / dur) * sw, y: 11, "text-anchor": "middle" }, t + (t === 0 ? " s" : "")));
+    }
+    strip.append(s("text", { x: labelW + sw + rightW, y: 11, "text-anchor": "end" }, "change"), s("text", { x: labelW + sw + 48, y: 11, "text-anchor": "end" }, "length"));
+    versions.forEach((c, r) => {
+      const yy = 22 + r * rowH, o = outcome(c), end = c.modes.length ? c.modes[c.modes.length - 1].end : 0;
+      const band = s("rect", { class: "band" + (state.sel === c.commit ? " sel" : ""), x: 0, y: yy, width: labelW + sw + rightW, height: rowH, "data-commit": c.commit });
+      band.addEventListener("click", () => { location.hash = "#/t/" + c.trace; });
+      band.addEventListener("mousemove", (e) => tip(e, tipText(c) + "\nclick to open this trace"));
+      band.addEventListener("mouseleave", (e) => tip(e, ""));
+      strip.append(band,
+        s("circle", { class: "mark " + o, cx: 8, cy: yy + rowH / 2, r: 4, "pointer-events": "none" }),
+        s("text", { class: "rowlabel", x: 18, y: yy + 14, "pointer-events": "none" }, `c${c.commit}`),
+        s("text", { x: 52, y: yy + 14, "pointer-events": "none" }, c.solve_rate == null ? "–" : fmt(c.solve_rate)),
+        s("text", { x: 84, y: yy + 14, "pointer-events": "none" }, c.subject.length > 56 ? c.subject.slice(0, 55) + "…" : c.subject));
+      c.modes.forEach((m, k) => {
+        const [a, b] = state.xmode === "seconds" ? [m.start / dur, m.end / dur] : state.xmode === "fraction" ? [m.start / end, m.end / end] : [k / c.modes.length, (k + 1) / c.modes.length];
+        const seg = s("rect", { x: labelW + a * sw, y: yy + 3, width: Math.max(1, (b - a) * sw - (state.xmode === "steps" ? 1 : 0)), height: rowH - 6, fill: colour.get(m.pairs.join("|")), "fill-opacity": m.tail ? 0.3 : 1 });
+        seg.addEventListener("mousemove", (e) => tip(e, `commit ${c.commit} · ${fmt(m.start)} – ${fmt(m.end)} s\n${modeName(m.pairs)}${m.tail ? "\nafter the robot's last contact: not part of the strategy" : ""}`));
+        seg.addEventListener("mouseleave", (e) => tip(e, ""));
+        seg.addEventListener("click", () => { location.hash = "#/t/" + c.trace; });
+        strip.append(seg);
+      });
+      strip.append(s("text", { x: labelW + sw + 48, y: yy + 14, "text-anchor": "end", "pointer-events": "none" }, fmt(end, 1) + " s"));
+      if (c.d_prev != null) strip.append(s("text", { class: c.d_prev > 0 ? "rowlabel" : "", x: labelW + sw + rightW, y: yy + 14, "text-anchor": "end" }, fmt(c.d_prev)));
+    });
+    const used = new Map();
+    for (const c of versions) for (const m of c.modes) { const k = m.pairs.join("|"); used.set(k, (used.get(k) || 0) + 1); }
+    const keyed = [...colour.entries()].filter(([k]) => used.has(k)).sort((p, q) => used.get(q[0]) - used.get(p[0]));
+    const shownKeys = state.allModes ? keyed : keyed.slice(0, 14);
+    const modesKey = h("div", { class: "modekey" }, shownKeys.map(([k, col]) =>
+      h("span", {}, h("span", { class: "dot", style: `background:${col}` }), modeName(k ? k.split("|") : []), h("i", {}, ` ${used.get(k)}`))),
+      keyed.length > 14 ? h("button", { onclick: () => { state.allModes = !state.allModes; draw(); } }, state.allModes ? "show fewer" : `show all ${keyed.length} modes`) : null,
+      h("i", {}, "number = how many times the mode occurs in the rows above; hover a segment for its name"));
+    const same = checks.filter((c) => c.identical).length, ok = checks.filter((c) => c.d_same === 0).length;
+    const m0 = commits.find((c) => c.trace);
+    body.replaceChildren(
+      h("div", { class: "muted" }, `${n} commits · ${versions.length} policy versions recorded on ${ev.instance}` + (m0 ? "" : " · nothing recorded yet for this run")),
+      h("h2", {}, "Over the commits ", h("small", {}, "— hover a commit; click it to find its row below")),
+      h("div", { class: "panel scroll" }, key, svg),
+      h("h2", {}, "Contact strategy of each policy version ", h("small", {}, "— one row per commit that changed the policy; colour = contact mode (the set of pairs in contact); click a row to open the trace")),
+      h("div", { class: "panel scroll" }, strip, modesKey),
+      h("p", { class: "muted" }, checks.length
+        ? `Check: ${checks.length} commit(s) with an unchanged policy were recorded again. ${same} gave exactly the same trace; ${ok} gave the same contact-mode sequence.`
+        : "Check: no commit with an unchanged policy was recorded twice (record with --commits sample)."),
+      h("p", { class: "muted" }, `Contact modes: gaps under ${ev.options.gap * 1000} ms merged; contacts under ${ev.options.min_duration * 1000} ms dropped unless above ${ev.options.keep_force} N; modes under ${ev.options.min_mode * 1000} ms absorbed; left/right gripper parts merged; resting contacts hidden. ` +
+        "Faded modes come after the robot's last contact and are not part of the strategy. Change = edit distance between mode sequences (0 = same order of modes, 1 = nothing in common); it ignores how long a mode lasts."));
+  };
+  await load();
+}
+
+// -------------------------------------------------------------- histories
+// The histories of all runs of a scenario on one axis, through a shared
+// vocabulary of contact strategies.
+const fmtDur = (sec) => sec == null ? "–" : sec >= 3600 ? `${Math.floor(sec / 3600)} h ${String(Math.round((sec % 3600) / 60)).padStart(2, "0")}` : `${Math.round(sec / 60)} min`;
+const seqName = (modes) => modes.length ? modes.map((m) => modeName(m).replace(/  \+  /g, " + ")).join("  ›  ") : "no robot contact";
+function strategyColour(strategies) {
+  const colour = new Map();
+  strategies.forEach((st, i) => {
+    let hash = 0; for (const ch of st.id + seqName(st.modes)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    colour.set(st.id, i < MODE_PALETTE.length ? MODE_PALETTE[i] : `hsl(${hash % 360} 45% ${50 + (hash >> 9) % 20}%)`);
+  });
+  return colour;
+}
+
+async function pageHistories(name) {
+  const app = $("#app");
+  $("#crumbs").replaceChildren(h("a", { href: "#/s/" + name }, name), " / strategy histories");
+  const state = { level: "class", axis: "fraction", pick: [], allStrategies: false };
+  const body = h("div", {}), pairBox = h("div", {});
+  let hs = null;
+  const load = async () => {
+    body.replaceChildren(h("p", { class: "muted" }, "loading…"));
+    hs = await j(`/api/histories?name=${name}&level=${state.level}&${defQuery()}`);
+    METHODS = hs.methods;
+    draw(); drawPair();
+  };
+  const controls = h("div", { class: "bar" },
+    h("label", {}, "x axis ", h("select", { onchange: (e) => { state.axis = e.target.value; draw(); } },
+      [["fraction", "fraction of the commits"], ["time", "time elapsed since the first commit"]].map(([v, t]) => h("option", { value: v }, t)))),
+    h("label", {}, "contacts by ", h("select", { onchange: (e) => { state.level = e.target.value; load(); } },
+      ["class", "entity", "surface"].map((v) => h("option", { value: v }, v)))),
+    h("a", { href: "#/d/" + name }, "diversity and optimality of the final policies →"));
+  app.replaceChildren(await defControls(load), controls, body, pairBox);
+  const draw = () => {
+    const runs = hs.runs, colour = strategyColour(hs.strategies), byId = new Map(hs.strategies.map((st) => [st.id, st]));
+    if (!runs.length) { body.replaceChildren(h("p", { class: "muted" }, `No commit history is recorded for ${name}. Record it with: python -m experiments.contacts.record '*/${name}/*' --commits sample --instances 0 --no-video --jobs 16`)); return; }
+    const time = state.axis === "time", tmax = Math.max(1, ...runs.map((r) => r.elapsed)) * 1.03;
+    // position of a commit boundary on [0, 1]; i may be commits.length (the end)
+    const pos = (r, i) => time ? (i < r.commits.length ? r.commits[i].elapsed : r.elapsed + tmax * 0.012) / tmax : i / r.commits.length;
+    const at = (r, c) => c == null ? null : time ? fmtDur(r.commits[c].elapsed) : fmt(c / r.commits.length);
+    const labelW = 236, colW = 66, cols = ["first solve", "settled", "strategies"], rowH = 22, gapM = 8, top = 30;
+    const sw = Math.max(520, (body.clientWidth || 1200) - labelW - cols.length * colW - 40);
+    let yy = top; const rowY = [];
+    runs.forEach((r, i) => { if (i && runs[i - 1].method !== r.method) yy += gapM; rowY.push(yy); yy += rowH; });
+    const svg = s("svg", { width: labelW + sw + cols.length * colW, height: yy + 6, class: "evo" });
+    const ticks = time ? (() => { const step = tmax > 4 * 3600 ? 3600 : tmax > 2 * 3600 ? 1800 : tmax > 3600 ? 900 : 600; const out = []; for (let t = 0; t <= tmax; t += step) out.push([t / tmax, fmtDur(t)]); return out; })()
+      : [0, 0.25, 0.5, 0.75, 1].map((v) => [v, String(v)]);
+    for (const [v, text] of ticks) svg.append(s("line", { class: "grid", x1: labelW + v * sw, x2: labelW + v * sw, y1: top - 6, y2: yy }), s("text", { x: labelW + v * sw, y: top - 12, "text-anchor": "middle" }, text));
+    cols.forEach((c, k) => svg.append(s("text", { x: labelW + sw + (k + 1) * colW, y: top - 12, "text-anchor": "end" }, c)));
+    runs.forEach((r, i) => {
+      const y0 = rowY[i], picked = state.pick.indexOf(r.run_id);
+      const label = s("text", { class: "rowlabel pick" + (picked >= 0 ? " on" : ""), x: 22, y: y0 + 15 }, `${picked >= 0 ? "AB"[picked] + " · " : ""}${r.method} · ${r.seed}`);
+      label.addEventListener("click", () => { const k = state.pick.indexOf(r.run_id); if (k >= 0) state.pick.splice(k, 1); else { state.pick.push(r.run_id); if (state.pick.length > 2) state.pick.shift(); } draw(); drawPair(); });
+      const open = s("a", { href: "#/e/" + r.run_id }, s("text", { class: "link", x: labelW - 10, y: y0 + 15, "text-anchor": "end" }, "history"));
+      svg.append(s("rect", { x: 6, y: y0 + 6, width: 10, height: 10, rx: 3, fill: methodColor(r.method) }), label, open,
+        s("line", { class: "grid", x1: labelW, x2: labelW + pos(r, r.commits.length) * sw, y1: y0 + rowH / 2, y2: y0 + rowH / 2 }));
+      r.commits.forEach((c, k) => {
+        if (c.state === "none") return;
+        const x0 = labelW + pos(r, k) * sw, x1 = labelW + pos(r, k + 1) * sw;
+        const fill = c.state === "solved" ? colour.get(c.sid) : null;
+        const seg = s("rect", { class: "seg " + c.state, x: x0, y: y0 + 3, width: Math.max(1, x1 - x0 - (x1 - x0 > 3 ? 0.6 : 0)), height: rowH - 6, fill });
+        seg.addEventListener("mousemove", (e) => tip(e, `${r.run_id} · commit ${c.commit} of ${r.commits.length - 1} · ${fmtDur(c.elapsed)} after the start\n${c.subject}\n` +
+          `this instance: ${c.state}${c.num_steps ? ` in ${c.num_steps} steps` : ""} · reported solve rate ${fmt(c.solve_rate)}` + (c.sid ? `\n${c.sid}: ${seqName(byId.get(c.sid).modes)}` : "") + (c.trace ? "\nclick to open the trace" : "")));
+        seg.addEventListener("mouseleave", (e) => tip(e, ""));
+        if (c.trace) seg.addEventListener("click", () => { location.hash = "#/t/" + c.trace; });
+        svg.append(seg);
+      });
+      const mark = (c, cls, title) => { if (c == null) return; const mx = labelW + pos(r, c) * sw; const m = s("path", { class: "ms " + cls, d: cls === "solve" ? `M${mx - 4} ${y0 - 1} L${mx + 4} ${y0 - 1} L${mx} ${y0 + 5} Z` : `M${mx} ${y0 + rowH - 6} L${mx + 4} ${y0 + rowH - 1} L${mx - 4} ${y0 + rowH - 1} Z` }); m.append(s("title", {}, title)); svg.append(m); };
+      mark(r.first_solve, "solve", "first version that solves this instance");
+      mark(r.half, "half", "first commit with a reported solve rate of 0.5 or more");
+      [at(r, r.first_solve), at(r, r.settled), r.distinct ? String(r.distinct) + (r.returns ? ` (${r.returns} ret.)` : "") : "–"].forEach((text, k) =>
+        svg.append(s("text", { x: labelW + sw + (k + 1) * colW, y: y0 + 15, "text-anchor": "end" }, text ?? "–")));
+    });
+    const key = h("div", { class: "swatches" },
+      h("span", {}, h("span", { class: "dot", style: "background:var(--failc)" }), "failed"), h("span", {}, h("span", { class: "dot", style: "background:var(--crashc)" }), "crashed"),
+      h("span", {}, h("span", { class: "dot broken" }), "no trace (policy does not load, or not recorded)"),
+      h("span", {}, "▼ first version that solves this instance"), h("span", {}, "▲ first reported solve rate ≥ 0.5"),
+      h("span", { class: "muted" }, "colour = strategy of a solved episode · click a run name to pick two runs to compare"));
+    // strategies
+    const shown = state.allStrategies ? hs.strategies : hs.strategies.slice(0, 10);
+    const finals = new Map(); for (const r of runs) finals.set(r.final, (finals.get(r.final) || 0) + 1);
+    const vocab = h("table", { class: "vocab" }, h("tr", {}, ["", "runs", "methods", "final in", "variants", "most common member of the strategy"].map((t) => h("th", {}, t))),
+      shown.map((st) => h("tr", {}, h("td", {}, h("span", { class: "dot", style: `background:${colour.get(st.id)}` }), h("b", {}, st.id)), h("td", {}, String(st.runs)), h("td", {}, String(st.methods)),
+        h("td", {}, String(finals.get(st.id) || 0)), h("td", {}, String(st.variants)),
+        h("td", {}, seqName(st.modes)))));
+    // per method
+    const med = (xs) => { const v = xs.filter((x) => x != null).sort((p, q) => p - q); return v.length ? v[Math.floor((v.length - 1) / 2)] : null; };
+    const val = (r, c) => c == null ? null : time ? r.commits[c].elapsed : c / r.commits.length;
+    const show = (v) => v == null ? "–" : time ? fmtDur(v) : fmt(v);
+    const methodTable = h("table", { class: "vocab" }, h("tr", {}, ["method", "runs that solve", "first solve (median)", "settled (median)", "strategies visited (mean)", "final strategies"].map((t) => h("th", {}, t))),
+      hs.methods.map((m) => { const rs = runs.filter((r) => r.method === m); const fin = new Map(); for (const r of rs) fin.set(r.final, (fin.get(r.final) || 0) + 1);
+        return h("tr", {}, h("td", {}, h("span", { class: "dot", style: `background:${methodColor(m)}` }), m), h("td", {}, `${rs.filter((r) => r.first_solve != null).length} / ${rs.length}`),
+          h("td", {}, show(med(rs.map((r) => val(r, r.first_solve))))), h("td", {}, show(med(rs.map((r) => val(r, r.settled))))), h("td", {}, fmt(rs.reduce((a, r) => a + r.distinct, 0) / rs.length, 1)),
+          h("td", {}, [...fin.entries()].sort((p, q) => q[1] - p[1]).map(([id, k]) => h("span", { class: "fin" }, colour.has(id) ? h("span", { class: "dot", style: `background:${colour.get(id)}` }) : null, `${id}${k > 1 ? " ×" + k : ""}`)))); }));
+    body.replaceChildren(
+      h("p", { class: "defn" }, hs.definition_text),
+      h("div", { class: "muted" }, `${runs.length} runs on ${hs.instance} · ${hs.strategies.length} strategies among the solved episodes (${hs.exact} before similar ones are grouped)` + (hs.missing.length ? ` · no history recorded for ${hs.missing.length} run(s)` : "")),
+      h("h2", {}, "Histories ", h("small", {}, time ? "— each commit is drawn from its time to the time of the next commit" : "— each commit has the same width")),
+      h("div", { class: "panel scroll" }, key, svg),
+      h("h2", {}, "By method ", h("small", {}, `— ${time ? "time elapsed since the first commit" : "fraction of the run's commits"}; “settled” = from here on the strategy on this instance is the final one`)),
+      h("div", { class: "panel scroll" }, methodTable),
+      h("h2", {}, "Strategies ", h("small", {}, hs.group === "exact" ? "— one row per distinct strategy" : `— every two members of a strategy are within a distance of ${hs.tau}`)),
+      h("div", { class: "panel scroll" }, vocab, hs.strategies.length > 10 ? h("button", { onclick: () => { state.allStrategies = !state.allStrategies; draw(); } }, state.allStrategies ? "show fewer" : `show all ${hs.strategies.length}`) : null),
+      h("p", { class: "muted" }, "One instance only: a commit is “solved” when its policy solves this instance, which is not the reported solve rate. Elapsed time is wall time between commits and includes the agent's own tests."));
+  };
+  const drawPair = async () => {
+    if (state.pick.length < 2) { pairBox.replaceChildren(h("h2", {}, "Compare two runs"), h("p", { class: "muted" }, `Click two run names above (${state.pick.length} picked).`)); return; }
+    const [a, b] = state.pick;
+    const pm = await j(`/api/history_pair?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}&level=${state.level}&${defQuery()}`);
+    const cell = Math.max(9, Math.min(22, Math.floor(700 / Math.max(pm.rows.length, pm.cols.length, 1)))), left = 70, topM = 54;
+    const svg = s("svg", { width: left + pm.cols.length * cell + 20, height: topM + pm.rows.length * cell + 20, class: "evo" });
+    svg.append(s("text", { class: "rowlabel", x: left, y: 12 }, `B: ${b} →`), s("text", { class: "rowlabel", x: 4, y: topM - 8 }, "A ↓"));
+    const dot = (c, x, y) => s("circle", { class: "mark " + c.state, cx: x, cy: y, r: Math.min(4, cell / 2 - 1) });
+    pm.cols.forEach((c, k) => svg.append(dot(c, left + (k + 0.5) * cell, topM - 8), (pm.cols.length <= 30 || k % 5 === 0) ? s("text", { x: left + (k + 0.5) * cell, y: topM - 18, "text-anchor": "middle" }, String(c.commit)) : null));
+    pm.rows.forEach((r, i) => {
+      svg.append(dot(r, left - 8, topM + (i + 0.5) * cell), s("text", { x: left - 16, y: topM + (i + 0.5) * cell + 4, "text-anchor": "end" }, `c${r.commit}`));
+      pm.cols.forEach((c, k) => {
+        const d = pm.d[i][k];
+        const rect = s("rect", { class: "cellm", x: left + k * cell, y: topM + i * cell, width: cell - 1, height: cell - 1, "fill-opacity": 1 - d });
+        rect.addEventListener("mousemove", (e) => tip(e, `distance ${fmt(d)}\nA commit ${r.commit} (${r.state}, ${r.modes} modes): ${r.subject}\nB commit ${c.commit} (${c.state}, ${c.modes} modes): ${c.subject}`));
+        rect.addEventListener("mouseleave", (e) => tip(e, ""));
+        svg.append(rect);
+      });
+    });
+    pairBox.replaceChildren(h("h2", {}, "Compare two runs ", h("small", {}, "— one row or column per policy version; dark = the two versions have a similar contact-mode sequence")),
+      h("div", { class: "panel scroll" }, h("div", { class: "muted" }, `A: ${a} (${pm.rows.length} versions) · B: ${b} (${pm.cols.length} versions)`), svg,
+        h("div", { class: "muted" }, "A dark block in the lower right corner: the runs end with the same strategy. A dark diagonal band: they follow the same path. Unsolved versions are compared too, and their long sequences are rarely similar.")));
+  };
+  await load();
+}
+
+// ---------------------------------------------------- strategy definition
+// What counts as "one strategy" is a choice (strategy.Definition on the server).
+// The choice is shared by the histories and diversity pages and kept in the browser.
+let DEFS = null;
+// the "tuned" preset of strategy.py: the default for a browser with no stored choice
+const DEF = { scope: "all", identity: "keep", order: "sequence", fingers: "pad_first", metric: "warp", gap: "", min_duration: "", min_mode: "", group: "similar", tau: 0.25 };
+try { Object.assign(DEF, JSON.parse(localStorage.getItem("contactDefinition") || "{}")); } catch (err) { /* defaults */ }
+const defQuery = () => `scope=${DEF.scope}&identity=${DEF.identity}&order=${DEF.order}&fingers=${DEF.fingers}&metric=${DEF.metric}&group=${DEF.group}&tau=${DEF.tau}` +
+  ["gap", "min_duration", "min_mode"].map((k) => (DEF[k] === "" || DEF[k] == null ? "" : `&${k}=${DEF[k]}`)).join("");
+async function defControls(onChange) {
+  DEFS = DEFS || await j("/api/definitions");
+  const box = h("div", { class: "bar defbar" }), fine = h("div", { class: "bar defbar deftimes" }), wrap = h("div", {}, box, fine);
+  const TIMES = [0, 0.03, 0.05, 0.1, 0.2, 0.3, 0.5, 1];
+  const time = (label, key, title) => sel(label, DEF[key] === "" || DEF[key] == null ? "" : DEF[key],
+    [["", `default (${DEFS.times[key]} s)`], ...TIMES.filter((v) => v !== DEFS.times[key]).map((v) => [v, `${v} s`])], (v) => set({ [key]: v === "" ? "" : Number(v) }), title);
+  const set = (patch) => {
+    Object.assign(DEF, patch);
+    try { localStorage.setItem("contactDefinition", JSON.stringify(DEF)); } catch (err) { /* not kept */ }
+    draw(); drawFine(); onChange();
+  };
+  const preset = () => (Object.entries(DEFS.presets).find(([, v]) => Object.entries(v).every(([k, value]) => String(DEF[k]) === String(value))) || [""])[0];
+  const sel = (label, value, options, on, title) => h("label", { title }, label, h("select", { onchange: (e) => on(e.target.value) },
+    options.map(([v, text]) => h("option", { value: v, selected: String(v) === String(value) }, text))));
+  const tips = (group) => Object.entries(DEFS[group]).map(([k, v]) => `${k}: ${v}`).join("\n");
+  const draw = () => box.replaceChildren(
+    h("b", {}, "One strategy ="),
+    sel("preset", preset(), [["", "custom"], ...Object.keys(DEFS.presets).map((k) => [k, k])], (v) => { if (v) set({ ...DEFS.presets[v] }); }, Object.entries(DEFS.presets).map(([k, v]) => `${k}: ${Object.entries(v).map(([a, b]) => `${a} = ${b}`).join(", ")}`).join("\n")),
+    sel("contacts", DEF.scope, [["all", "all pairs"], ["robot", "robot pairs only"]], (v) => set({ scope: v }), tips("scope")),
+    sel("names", DEF.identity, [["keep", "as named"], ["merge", "copies merged"], ["kind", "kind only"]], (v) => set({ identity: v }), tips("identity")),
+    sel("order", DEF.order, [["sequence", "mode sequence"], ["first", "modes, first occurrence"], ["onset", "pairs, first occurrence"], ["set", "set of pairs"]], (v) => set({ order: v }), tips("order")),
+    sel("finger links", DEF.fingers, [["all", "always count"], ["pad_first", "not while a pad holds"]], (v) => set({ fingers: v }), tips("fingers")),
+    sel("same when", DEF.group, [["similar", "similar"], ["exact", "equal"]], (v) => set({ group: v })),
+    DEF.group === "similar" ? sel("within", DEF.tau, [...new Set([0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.6, 0.7, Number(DEF.tau)])].sort((p, q) => p - q).map((v) => [v, String(v)]), (v) => set({ tau: Number(v) }), "largest distance between two members of one strategy") : null,
+    DEF.group === "similar" ? sel("distance", DEF.metric, [["edit", "mode edit distance"], ["warp", "elastic mode distance"], ["overlap", "timeline overlap"]], (v) => set({ metric: v }), tips("metric") + "\nThe history page uses the mode edit distance when the timeline overlap is selected.") : null);
+  const drawFine = () => fine.replaceChildren(
+    h("b", {}, "A contact counts when ="),
+    time("merge gaps up to", "gap", "Two contacts of one pair with a gap of at most this time are one contact."),
+    time("shortest contact", "min_duration", "A contact shorter than this time does not count, unless it is a strong impact."),
+    time("shortest mode", "min_mode", "A contact mode shorter than this time joins the mode before it."),
+    h("button", { disabled: ["gap", "min_duration", "min_mode"].every((k) => DEF[k] === "" || DEF[k] == null), onclick: () => set({ gap: "", min_duration: "", min_mode: "" }) }, "defaults"));
+  draw(); drawFine();
+  return wrap;
+}
+
+// -------------------------------------------------------------- diversity
+// Final policies of a scenario: how different they are, and how good.
+const median = (xs) => { const v = xs.filter((x) => x != null).sort((p, q) => p - q); return v.length ? (v[Math.floor((v.length - 1) / 2)] + v[Math.ceil((v.length - 1) / 2)]) / 2 : null; };
+const tint = (share) => `color-mix(in srgb, var(--accent) ${Math.round(Math.max(0, Math.min(1, share)) * 62)}%, transparent)`;
+const tile = (value, label, title) => h("div", { class: "tile", title }, h("b", {}, value), h("span", {}, label));
+const methodKey = (methods) => h("div", { class: "swatches" }, methods.map((m) => h("span", {}, h("span", { class: "dot", style: `background:${methodColor(m)}` }), m)));
+const DIVERSITY_NOTE = "Effective number = 2 to the power of the entropy of the strategy frequencies: the number of equally common strategies that gives the same entropy. " +
+  "A group of n runs cannot exceed n. Distance = mean distance between the strategies of two runs; it needs no grouping.";
+
+// Ghost video of a set of final policies: every run is a translucent robot in one
+// scene, coloured by method or by strategy. No run is the reference.
+const GHOST_OTHER = "#8a8f98";
+const hslHex = (hue, sat, light) => {
+  const a = sat * Math.min(light, 1 - light);
+  const f = (n) => { const k = (n + hue / 30) % 12; return Math.round(255 * (light - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))).toString(16).padStart(2, "0"); };
+  return `#${f(0)}${f(8)}${f(4)}`;
+};
+function ghostPanel(name, d) {
+  const solved = d.solved.map((id) => d.runs.find((r) => r.run_id === id)).filter((r) => r.trace).sort((p, q) => p.steps - q.steps);
+  const rank = new Map(d.strategies.map((st, i) => [st.id, i]));
+  // the runs of each strategy, shortest episode first
+  const members = new Map();
+  for (const r of solved) { if (!members.has(r.sid)) members.set(r.sid, []); members.get(r.sid).push(r); }
+  const present = d.strategies.filter((st) => members.has(st.id));
+  const largest = [...present].sort((p, q) => members.get(q.id).length - members.get(p.id).length)[0];
+  const state = { runs: "strategy", colour: "strategy", inside: "run", sid: largest ? largest.id : null, singles: false, objects: true };
+  const shortest = (key) => { const best = new Map(); for (const r of solved) if (!best.has(r[key])) best.set(r[key], r); return [...best.values()]; };
+  const sets = { all: solved, strategy: shortest("sid"), method: shortest("method") };
+  const strategyHex = (sid) => (rank.get(sid) < MODE_PALETTE.length ? MODE_PALETTE[rank.get(sid)] : GHOST_OTHER);
+  const methodHex = (r) => { const c = cssVar(methodVar(r.method)); return /^#[0-9a-f]{6}$/i.test(c) ? c : GHOST_OTHER; };
+  // colours of a list of runs, and the groups for its legend
+  const paint = (runs, by) => {
+    const colours = runs.map((r, i) => (by === "run" ? (runs.length <= MODE_PALETTE.length ? MODE_PALETTE[i] : hslHex(360 * i / runs.length, 0.6, 0.5)) : by === "method" ? methodHex(r) : strategyHex(r.sid)));
+    const groups = new Map();
+    runs.forEach((r, i) => {
+      const label = by === "run" ? `${r.method} ${r.seed}` : by === "method" ? r.method : (rank.get(r.sid) < MODE_PALETTE.length ? r.sid : "other strategies");
+      if (!groups.has(label)) groups.set(label, { colour: colours[i], runs: [] });
+      groups.get(label).runs.push(r);
+    });
+    const labels = by === "run" ? [...groups.keys()] : by === "method" ? d.method_order.filter((m) => groups.has(m))
+      : [...groups.keys()].sort((p, q) => (p === "other strategies") - (q === "other strategies") || rank.get(p) - rank.get(q));
+    return { colours, groups, labels };
+  };
+  const legend = (p) => h("div", { class: "swatches", style: "margin:6px 0" }, p.labels.map((label) => {
+    const g = p.groups.get(label), st = d.strategies.find((x) => x.id === label);
+    return h("span", { title: (st ? seqName(st.modes).slice(0, 300) + "\n" : "") + g.runs.map((r) => `${r.method} · ${r.seed} · ${r.sid} · ${r.steps} steps`).join("\n") },
+      h("span", { class: "dot", style: `background:${g.colour}` }), `${label}${g.runs.length > 1 ? " ×" + g.runs.length : ""}`);
+  }));
+  const request = (runs, p) => ({ kind: "ghost", traces: runs.map((r) => r.trace), colours: p.colours, all_bodies: state.objects, equal: true });
+  const player = (job, file, width) => [
+    h("video", { src: job.output + "?t=" + Date.now(), controls: true, loop: true, autoplay: true, muted: true, playsinline: true, style: `width:100%;max-width:${width}` }),
+    h("div", { class: "bar" }, h("a", { href: job.output, download: file }, h("button", {}, "Save video")), h("span", { class: "muted mono" }, file))];
+  const steps = (runs) => { const a = runs[0].steps, b = runs[runs.length - 1].steps; return a === b ? `${a} steps` : `${a}–${b} steps`; };
+  const box = h("div", {}), out = h("div", {});
+
+  const draw = () => {
+    const select = (key, options) => h("select", { onchange: (e) => { state[key] = e.target.value; out.replaceChildren(); draw(); } }, options.map(([v, text]) => h("option", { value: v, selected: v === state[key] }, text)));
+    const inside = state.runs === "one" || state.runs === "grid";
+    const by = inside ? state.inside : state.colour;
+    const objects = h("input", { type: "checkbox", checked: state.objects, onchange: (e) => { state.objects = e.target.checked; } });
+    const bar = [
+      h("label", {}, "runs ", select("runs", [["strategy", `shortest episode of each strategy (${sets.strategy.length})`], ["method", `shortest episode of each method (${sets.method.length})`],
+        ["all", `all final policies that solve (${sets.all.length})`], ["one", "all runs of one strategy"], ["grid", "all runs of each strategy, one video for each (grid)"]])),
+      state.runs === "one" ? h("label", {}, "strategy ", select("sid", present.map((st) => [st.id, `${st.id} (${members.get(st.id).length} run${members.get(st.id).length > 1 ? "s" : ""})`]))) : null,
+      inside ? h("label", {}, "colour ", select("inside", [["run", "run"], ["method", "method"]])) : h("label", {}, "colour ", select("colour", [["strategy", "strategy"], ["method", "method"]])),
+      h("label", {}, objects, "ghost the objects too")];
+
+    if (state.runs === "grid") {
+      const shown = present.filter((st) => state.singles || members.get(st.id).length > 1);
+      const hidden = present.length - present.filter((st) => members.get(st.id).length > 1).length;
+      const singles = h("input", { type: "checkbox", checked: state.singles, onchange: (e) => { state.singles = e.target.checked; out.replaceChildren(); draw(); } });
+      const tiles = shown.map((st) => {
+        const runs = members.get(st.id), p = paint(runs, by), slot = h("div", { class: "gslot muted" }, "not rendered");
+        const methods = new Set(runs.map((r) => r.method)).size;
+        const el = h("div", { class: "ghosttile" },
+          h("div", { class: "ghead", title: seqName(st.modes).slice(0, 600) }, h("span", { class: "dot", style: `background:${strategyHex(st.id)}` }), h("b", {}, st.id),
+            h("span", { class: "muted" }, ` ${runs.length} run${runs.length > 1 ? "s" : ""} · ${methods} method${methods > 1 ? "s" : ""} · ${steps(runs)}`)),
+          slot, legend(p));
+        return { st, runs, p, slot, el };
+      });
+      const restart = h("button", { disabled: true, onclick: () => out.querySelectorAll("video").forEach((v) => { v.currentTime = 0; v.play(); }) }, "Play all from the start");
+      const render = h("button", { class: "primary", disabled: !tiles.length, onclick: () => {
+        render.disabled = true;
+        let left = tiles.length;
+        for (const t of tiles) {
+          t.slot.replaceChildren("in the queue…");
+          runJob(request(t.runs, t.p), (job) => {
+            const file = `ghost_${name}_${d.instance}_${t.st.id}_by_${by}${state.objects ? "_objects" : ""}.mp4`;
+            t.slot.classList.toggle("muted", job.state !== "done");
+            t.slot.replaceChildren(...(job.state === "done" ? player(job, file, "100%") : [h("pre", { class: "log" }, job.log)]));
+            left -= 1;
+            if (!left) { render.disabled = false; restart.disabled = false; }
+          });
+        }
+      } }, `Render ${tiles.length} video${tiles.length === 1 ? "" : "s"}`);
+      box.replaceChildren(
+        h("div", { class: "bar" }, ...bar, h("label", {}, singles, `also the ${hidden} strateg${hidden === 1 ? "y" : "ies"} with one run`), render, restart),
+        h("div", { class: "muted" }, `One video for each strategy, with all final policies of that strategy that solve ${d.instance}. In one video, all runs start at the same time from the same scene, ` +
+          "and a run that is complete holds its last pose. Every robot is translucent. The dot at each title is the colour of the strategy on this page. Strategies follow the definition above."));
+      out.className = "ghostgrid";
+      out.replaceChildren(...tiles.map((t) => t.el));
+      box.append(out);
+      return;
+    }
+
+    out.className = "";
+    const chosen = state.runs === "one" ? (members.get(state.sid) || []) : sets[state.runs];
+    const p = paint(chosen, by);
+    const longest = Math.max(0, ...chosen.map((r) => r.steps));
+    const st = state.runs === "one" ? d.strategies.find((x) => x.id === state.sid) : null;
+    box.replaceChildren(
+      h("div", { class: "bar" }, ...bar,
+        h("button", { class: "primary", disabled: chosen.length < 1 || (state.runs !== "one" && chosen.length < 2), onclick: (ev) => {
+          ev.target.disabled = true;
+          const shown = { runs: state.runs === "one" ? state.sid : "final_" + state.runs, by, objects: state.objects };
+          runJob(request(chosen, p), (job) => {
+            ev.target.disabled = false;
+            if (job.state !== "done") { out.replaceChildren(h("pre", { class: "log" }, job.log)); return; }
+            out.replaceChildren(...player(job, `ghost_${name}_${d.instance}_${shown.runs}_by_${shown.by}${shown.objects ? "_objects" : ""}.mp4`, "min(960px,100%)"));
+          });
+        } }, `Render ghost video of ${chosen.length} run${chosen.length === 1 ? "" : "s"}`)),
+      legend(p),
+      st ? h("div", { class: "muted mono", style: "margin:2px 0 6px" }, `${st.id}: ${seqName(st.modes)}`.slice(0, 400)) : null,
+      h("div", { class: "muted" }, `All runs start at the same time from the same scene (${d.instance}). A run that is complete holds its last pose; the longest episode has ${longest} steps. ` +
+        "No run is the reference: every robot is translucent. Without ghosted objects, the objects follow the shortest episode. Strategies follow the definition above."),
+      out);
+  };
+  draw();
+  return box;
+}
+
+async function pageDiversity(name) {
+  const app = $("#app");
+  $("#crumbs").replaceChildren(h("a", { href: "#/d" }, "diversity"), " / ", h("a", { href: "#/s/" + name }, name));
+  const state = { rows: "method", allStrategies: false };
+  const body = h("div", {});
+  let d = null, ghost = null;
+  const load = async () => {
+    body.replaceChildren(h("p", { class: "muted" }, "loading…"));
+    d = await j(`/api/diversity?name=${name}&${defQuery()}`);
+    METHODS = d.method_order;
+    ghost = ghostPanel(name, d);
+    draw();
+  };
+  const draw = () => {
+    const solved = d.solved.map((id) => d.runs.find((r) => r.run_id === id)), n = solved.length, o = d.overall;
+    if (!d.runs.length) { body.replaceChildren(h("p", { class: "muted" }, `No commit history is recorded for ${name}.`)); return; }
+    const byId = new Map(d.strategies.map((st) => [st.id, st]));
+    const dt = d.step_seconds || 0.1, sec = (steps) => steps == null ? "–" : `${fmt(steps * dt, 1)} s`;
+    const runTip = (r) => `${r.run_id}\n${r.sid}: ${seqName(byId.get(r.sid).modes).slice(0, 260)}\n${r.steps} steps = ${sec(r.steps)} · total reward ${r.reward} · policy compute ${fmt(r.policy_time_s, 1)} s\nclick to open the trace`;
+    const open = (el, r) => { el.addEventListener("mousemove", (e) => tip(e, runTip(r))); el.addEventListener("mouseleave", (e) => tip(e, "")); el.addEventListener("click", () => { location.hash = "#/t/" + r.trace; }); el.style.cursor = "pointer"; return el; };
+
+    // map: classical MDS of the distance matrix
+    const mw = 470, mh = 380, pad = 26;
+    const map = s("svg", { width: mw, height: mh, class: "evo" });
+    if (n >= 3) {
+      const xs = solved.map((r) => r.xy[0]), ys = solved.map((r) => r.xy[1]);
+      const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1e-9);
+      const k = Math.min(mw, mh) - 2 * pad, cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+      const spots = new Map();  // runs with one strategy share a spot: spread them on a ring
+      solved.forEach((r) => { const key = r.xy.map((v) => Math.round((v / span) * 60)).join(","); if (!spots.has(key)) spots.set(key, []); spots.get(key).push(r); });
+      map.append(s("rect", { x: 0.5, y: 0.5, width: mw - 1, height: mh - 1, fill: "none", stroke: "var(--grid)" }));
+      for (const group of spots.values()) group.forEach((r, i) => {
+        const ring = group.length > 1 ? 7 + group.length * 0.9 : 0, a = (i / group.length) * 2 * Math.PI;
+        const x = mw / 2 + ((r.xy[0] - cx) / span) * k + ring * Math.cos(a), y = mh / 2 + ((r.xy[1] - cy) / span) * k + ring * Math.sin(a);
+        map.append(open(s("circle", { cx: x, cy: y, r: 5.5, fill: methodColor(r.method), stroke: "var(--surface)", "stroke-width": 1.5 }), r));
+      });
+    } else map.append(s("text", { x: 14, y: 24 }, "Fewer than 3 final policies solve this instance."));
+
+    // distance matrix of the solved final policies, in method order
+    const cell = Math.max(7, Math.min(16, Math.floor(400 / Math.max(n, 1)))), gap = 4, left = 14, topM = 14;
+    const offs = []; let acc = 0;
+    solved.forEach((r, i) => { if (i && solved[i - 1].method !== r.method) acc += gap; offs.push(acc + i * cell); });
+    const size = (offs[n - 1] || 0) + cell;
+    const mat = s("svg", { width: left + size + 6, height: topM + size + 6, class: "evo" });
+    solved.forEach((r, i) => {
+      mat.append(s("rect", { x: 2, y: topM + offs[i], width: 8, height: cell - 1, fill: methodColor(r.method) }), s("rect", { x: left + offs[i], y: 2, width: cell - 1, height: 8, fill: methodColor(r.method) }));
+      solved.forEach((q, k) => {
+        const v = d.distance[i][k];
+        const rect = s("rect", { class: "cellm", x: left + offs[k], y: topM + offs[i], width: cell - 1, height: cell - 1, "fill-opacity": Math.pow(1 - v, 1.4) });
+        rect.addEventListener("mousemove", (e) => tip(e, `distance ${fmt(v)}\n${r.method} · ${r.seed} (${r.sid}, ${r.steps} steps)\n${q.method} · ${q.seed} (${q.sid}, ${q.steps} steps)`));
+        rect.addEventListener("mouseleave", (e) => tip(e, ""));
+        mat.append(rect);
+      });
+    });
+
+    // mean distance between methods
+    const ms = d.methods, order = d.method_order.map((m) => ms.findIndex((x) => x.method === m));
+    const between = h("table", { class: "heat" }, h("tr", {}, h("th", {}), order.map((b) => h("th", {}, h("span", { class: "dot", style: `background:${methodColor(ms[b].method)}`, title: ms[b].method })))),
+      order.map((a) => h("tr", {}, h("th", {}, h("span", { class: "dot", style: `background:${methodColor(ms[a].method)}` }), ms[a].method),
+        order.map((b) => { const v = d.method_distance[a][b]; return h("td", { style: v == null ? "" : `background:${tint(1 - v)}`, class: a === b ? "diag" : "", title: `${ms[a].method} and ${ms[b].method}` + (a === b ? " (two runs of the method)" : "") }, v == null ? "–" : fmt(v)); }))));
+
+    // per method
+    const chips = (finals) => Object.entries(finals).sort((p, q) => q[1] - p[1]).map(([id, k]) => h("span", { class: "fin" }, `${id}${k > 1 ? " ×" + k : ""}`));
+    const methodTable = h("table", { class: "vocab" }, h("tr", {}, ["method", "solved", "strategies", "effective number", "mean distance", "episode length (median)", "best", "at the first solve", "policy compute", "reported solve rate", "final strategies"].map((t) => h("th", {}, t))),
+      order.map((a) => { const m = ms[a]; return h("tr", {}, h("td", {}, h("span", { class: "dot", style: `background:${methodColor(m.method)}` }), m.method), h("td", {}, `${m.n} / ${m.runs}`),
+        h("td", {}, m.n ? String(m.richness) : "–"), h("td", {}, fmt(m.effective, 1)), h("td", {}, fmt(m.distance)),
+        h("td", {}, m.median_steps == null ? "–" : `${Math.round(m.median_steps)} steps · ${sec(m.median_steps)}`), h("td", {}, m.best_steps == null ? "–" : String(m.best_steps)),
+        h("td", {}, m.first_steps == null ? "–" : `${Math.round(m.first_steps)} steps`), h("td", {}, m.policy_time_s == null ? "–" : `${fmt(m.policy_time_s, 1)} s`), h("td", {}, fmt(m.solve_rate)), h("td", {}, chips(m.finals))); }));
+
+    // episode length: one dot per solved final policy
+    const top12 = d.strategies.slice(0, 12);
+    const rows = state.rows === "method" ? order.map((a) => ({ label: ms[a].method, colour: methodColor(ms[a].method), runs: solved.filter((r) => r.method === ms[a].method) }))
+      : top12.map((st) => ({ label: `${st.id} · ${st.runs} run${st.runs > 1 ? "s" : ""}`, runs: solved.filter((r) => r.sid === st.id), title: seqName(st.modes) }));
+    const labelW = 150, rowH = 26, pw = Math.max(480, Math.min(900, (body.clientWidth || 1100) - labelW - 80)), xmax = Math.max(10, ...solved.map((r) => r.steps)) * 1.05;
+    const step = [10, 20, 50, 100, 200, 500].find((v) => xmax / v <= 9) || 500;
+    const dots = s("svg", { width: labelW + pw + 30, height: 30 + rows.length * rowH + 26, class: "evo" });
+    for (let v = 0; v <= xmax; v += step) dots.append(s("line", { class: "grid", x1: labelW + (v / xmax) * pw, x2: labelW + (v / xmax) * pw, y1: 22, y2: 26 + rows.length * rowH }), s("text", { x: labelW + (v / xmax) * pw, y: 14, "text-anchor": "middle" }, String(v)));
+    dots.append(s("text", { x: labelW + pw, y: 30 + rows.length * rowH + 16, "text-anchor": "end" }, `steps of the episode on ${d.instance} · 1 step = ${dt} s · total reward = −steps`));
+    rows.forEach((row, i) => {
+      const y = 26 + i * rowH + rowH / 2;
+      const label = s("text", { class: "rowlabel", x: row.colour ? 20 : 6, y: y + 4 }, row.label); if (row.title) label.append(s("title", {}, row.title));
+      dots.append(row.colour ? s("rect", { x: 4, y: y - 5, width: 10, height: 10, rx: 3, fill: row.colour }) : null, label);
+      const mid = median(row.runs.map((r) => r.steps));
+      if (mid != null) dots.append(s("line", { x1: labelW + (mid / xmax) * pw, x2: labelW + (mid / xmax) * pw, y1: y - 10, y2: y + 10, stroke: "var(--fg)", "stroke-width": 2 }));
+      let last = -99, side = 0;
+      [...row.runs].sort((p, q) => p.steps - q.steps).forEach((r) => {
+        const x = labelW + (r.steps / xmax) * pw; side = x - last < 9 ? (side <= 0 ? 1 : -1) : 0; last = x;
+        dots.append(open(s("circle", { cx: x, cy: y + side * 5, r: 4.5, fill: methodColor(r.method), stroke: "var(--surface)", "stroke-width": 1.5 }), r));
+      });
+      if (!row.runs.length) dots.append(s("text", { x: labelW + 4, y: y + 4 }, "no final policy solves this instance"));
+    });
+
+    const shown = state.allStrategies ? d.strategies : d.strategies.slice(0, 10);
+    const vocab = h("table", { class: "vocab" }, h("tr", {}, ["", "runs", "methods", "variants", "episode length (median)", "best", "most common member of the strategy"].map((t) => h("th", {}, t))),
+      shown.map((st) => h("tr", {}, h("td", {}, h("b", {}, st.id)), h("td", {}, String(st.runs)), h("td", {}, String(st.methods)), h("td", {}, String(st.variants)),
+        h("td", {}, `${Math.round(st.median_steps)} steps`), h("td", {}, String(st.best_steps)), h("td", {}, seqName(st.modes)))));
+    const failed = d.runs.length - n;
+    body.replaceChildren(
+      h("p", { class: "defn" }, d.definition_text),
+      h("div", { class: "tiles" },
+        tile(`${n} / ${d.runs.length}`, "final policies solve this instance", "Only these enter the numbers on this page."),
+        tile(String(o.richness), "strategies"), tile(fmt(o.effective, 1), "effective number of strategies", DIVERSITY_NOTE),
+        tile(fmt(o.distance), "mean distance between two runs", DIVERSITY_NOTE),
+        tile(o.within == null ? "–" : `${fmt(o.within)} / ${fmt(o.between)}`, "distance within a method / between methods", "Mean distance between two runs of the same method, and of two different methods."),
+        tile(o.p_value == null ? "–" : (o.p_value < 0.001 ? "< 0.001" : fmt(o.p_value, 3)), "p-value: the method does not matter", "Permutation test of (between − within) with the method labels shuffled. A small value says that runs of one method have more similar strategies than runs of different methods."),
+        tile(o.best_steps == null ? "–" : `${o.best_steps} steps`, `shortest episode (${sec(o.best_steps)})`)),
+      h("p", { class: "muted" }, DIVERSITY_NOTE),
+      h("div", { class: "cols" },
+        h("div", {}, h("h2", {}, "Map of the final strategies ", h("small", {}, "— one dot per run; near dots have similar strategies")), h("div", { class: "panel" }, methodKey(d.method_order), map,
+          h("div", { class: "muted" }, "Multidimensional scaling of the distances. The axes have no meaning. Runs with the same strategy sit on a small ring."))),
+        h("div", {}, h("h2", {}, "Distance between every two runs ", h("small", {}, "— dark = similar; the side colour is the method")), h("div", { class: "panel scroll" }, mat),
+          h("h2", {}, "Mean distance between methods ", h("small", {}, "— the diagonal is two runs of one method")), h("div", { class: "panel scroll" }, between))),
+      h("h2", {}, "Ghost video of the final policies ", h("small", {}, "— the runs in one scene, one translucent robot per run")),
+      h("div", { class: "panel" }, n >= 2 ? ghost : h("span", { class: "muted" }, "Fewer than 2 final policies solve this instance.")),
+      h("h2", {}, "By method ", h("small", {}, `— the final policy of each run, on ${d.instance}` + (failed ? `; ${failed} final policies do not solve it and are left out` : ""))),
+      h("div", { class: "panel scroll" }, methodTable),
+      h("h2", {}, "Episode length of the final policies ", h("small", {}, "— one dot per run, colour = method, bar = median; shorter is better"),
+        h("select", { style: "margin-left:12px", onchange: (e) => { state.rows = e.target.value; draw(); } }, [["method", "rows: methods"], ["strategy", "rows: strategies"]].map(([v, t]) => h("option", { value: v, selected: v === state.rows }, t)))),
+      h("div", { class: "panel scroll" }, state.rows === "strategy" ? methodKey(d.method_order) : null, dots, state.rows === "strategy" && d.strategies.length > 12 ? h("div", { class: "muted" }, `The 12 most common of ${d.strategies.length} strategies.`) : null),
+      h("h2", {}, "Strategies of the final policies"),
+      h("div", { class: "panel scroll" }, vocab, d.strategies.length > 10 ? h("button", { onclick: () => { state.allStrategies = !state.allStrategies; draw(); } }, state.allStrategies ? "show fewer" : `show all ${d.strategies.length}`) : null),
+      h("p", { class: "muted" }, `One episode per run, on ${d.instance}: this is not the reported score. The reward is −1 per step on these scenarios, so the total reward is minus the episode length. ` +
+        "“At the first solve” is the episode length of the first policy version of the run that solves this instance. “Policy compute” is the time that the policy code used during the episode."));
+  };
+  app.replaceChildren(await defControls(load), h("div", { class: "bar" }, h("a", { href: "#/h/" + name }, "strategy histories of this scenario →"), h("a", { href: "#/m/" + name }, "what the distance means: explore the metrics →"), h("a", { href: "#/d" }, "all scenarios →")), body);
+  await load();
+}
+
+const OVERVIEW_METRICS = [
+  ["effective", "effective number of strategies", 1], ["richness", "number of strategies", 0], ["distance", "mean distance between two runs", 2],
+  ["n", "final policies that solve the instance", 0], ["relative_steps", "median episode length ÷ shortest episode of the scenario", 2], ["median_steps", "median episode length (steps)", 0],
+  ["policy_time_s", "median policy compute time (s)", 1]];
+async function pageDiversityAll() {
+  const app = $("#app");
+  $("#crumbs").replaceChildren("diversity and optimality of the final policies");
+  const state = { metric: "effective" };
+  const body = h("div", {});
+  let ov = null;
+  const load = async () => {
+    body.replaceChildren(h("p", { class: "muted" }, "loading…"));
+    ov = await j(`/api/diversity_overview?${defQuery()}`);
+    METHODS = ov.methods;
+    draw();
+  };
+  const draw = () => {
+    const [key, title, digits] = OVERVIEW_METRICS.find((m) => m[0] === state.metric);
+    const value = (group) => group && group.n ? group[key] : null;
+    const all = ov.scenarios.flatMap((sc) => ov.methods.map((m) => value(sc.methods[m]))).filter((v) => v != null);
+    const lo = Math.min(...all), hi = Math.max(...all);
+    const cell = (group, perMethod) => { const v = value(group);
+      return h("td", { style: v == null || !perMethod ? "" : `background:${tint(hi > lo ? (v - lo) / (hi - lo) : 0)}`, title: group ? `${group.n} of ${group.runs} final policies solve the instance` : "" }, v == null ? "–" : fmt(v, digits)); };
+    const table = h("table", { class: "heat" },
+      h("tr", {}, h("th", {}, "scenario"), ov.methods.map((m) => h("th", {}, h("span", { class: "dot", style: `background:${methodColor(m)}` }), m)), h("th", {}, "all runs"), h("th", {}, "distance within / between methods"), h("th", {}, "p-value")),
+      ov.scenarios.map((sc) => h("tr", {}, h("th", {}, h("a", { href: "#/d/" + sc.name }, sc.name)), ov.methods.map((m) => cell(sc.methods[m], true)),
+        key === "relative_steps" || key === "policy_time_s" ? h("td", {}, "–") : cell(sc.overall, false),
+        h("td", {}, sc.overall.within == null ? "–" : `${fmt(sc.overall.within)} / ${fmt(sc.overall.between)}`), h("td", {}, sc.overall.p_value == null ? "–" : sc.overall.p_value < 0.001 ? "< 0.001" : fmt(sc.overall.p_value, 3)))));
+    // source access: the same model with and without the source code
+    const pairs = ov.methods.filter((m) => ov.methods.includes(m + "-source")).map((m) => {
+      let more = 0, same = 0, less = 0, skipped = 0;
+      for (const sc of ov.scenarios) { const a = value(sc.methods[m]), b = value(sc.methods[m + "-source"]);
+        if (a == null || b == null) skipped += 1; else if (Math.abs(a - b) < 1e-9) same += 1; else if (b > a) more += 1; else less += 1; }
+      return h("tr", {}, h("td", {}, h("span", { class: "dot", style: `background:${methodColor(m + "-source")}` }), `${m}-source`, " against ", h("span", { class: "dot", style: `background:${methodColor(m)}` }), m),
+        h("td", {}, String(more)), h("td", {}, String(same)), h("td", {}, String(less)), h("td", {}, String(skipped))); });
+    body.replaceChildren(
+      h("p", { class: "defn" }, ov.definition_text),
+      h("h2", {}, title, " ", h("small", {}, `— final policy of each run, one episode on ${ov.instance}; dark = high; hover a cell for the number of runs`)),
+      h("div", { class: "panel scroll" }, table),
+      h("h2", {}, "Source access ", h("small", {}, `— number of scenarios in which the method with source access has a higher, equal or lower value of “${title}”`)),
+      h("div", { class: "panel scroll" }, h("table", { class: "vocab" }, h("tr", {}, ["", "higher", "equal", "lower", "one of the two has no solved run"].map((t) => h("th", {}, t))), pairs)),
+      h("p", { class: "muted" }, DIVERSITY_NOTE + " A method has 5 runs, so its counts are coarse: compare the mean distance too. The p-value is a permutation test of (between − within) with the method labels shuffled. " +
+        "Episode length: the reward is −1 per step, so the total reward is minus the episode length; one episode per run, which is not the reported score."));
+  };
+  const metric = h("div", { class: "bar" }, h("label", {}, "show", h("select", { onchange: (e) => { state.metric = e.target.value; draw(); } }, OVERVIEW_METRICS.map(([v, t]) => h("option", { value: v }, t)))));
+  app.replaceChildren(await defControls(load), metric, body);
+  await load();
+}
+
+// ---------------------------------------------------------------- metrics
+// Explore the distances between two strategies: what a value looks like, how the
+// metrics differ, and what a threshold does to the number of strategies.
+const SIDE = ["#2a78d6", "#eb6834"];  // run A, run B of a pair
+const METRIC_VARS = { edit: "--s1", warp: "--s5", set: "--s2", duty: "--s3", overlap: "--s4", dtw: "--s7" };
+const metricColour = (key) => `var(${METRIC_VARS[key] || "--s8"})`;
+const pairLabel = (pair) => pair.split(" <> ").map(shortName).join("↔");
+const pct = (x) => `${Math.round(x * 100)}%`;
+
+// One pair of runs: what is behind every distance between them.
+function pairView(d, a, b, detail, metric) {
+  const runs = [a, b], sides = [detail.a, detail.b];
+  const head = h("div", { class: "bar" }, runs.map((r, i) => h("span", { class: "fin" },
+    h("span", { class: "dot", style: `background:${SIDE[i]}` }), h("b", {}, i ? "B " : "A "),
+    h("a", { href: "#/t/" + r.trace, title: "open the trace" }, `${r.method} · ${r.seed}`),
+    h("span", { class: "muted" }, ` ${r.steps} steps, ${sides[i].key.length} modes`))),
+    d.metrics.map((m) => h("span", { class: "mchip" + (m.key === metric ? " on" : ""), title: m.name + "\n" + m.text }, `${m.key} `, h("b", {}, fmt(detail.values[m.key])))));
+
+  // timelines of the contact pairs: run A above run B in every row
+  const shownRows = [...detail.pairs].sort((p, q) => Math.max(q.duty_a, q.duty_b) - Math.max(p.duty_a, p.duty_b)).slice(0, 16)
+    .sort((p, q) => Math.min(...[...p.a, ...p.b].map((iv) => iv[0])) - Math.min(...[...q.a, ...q.b].map((iv) => iv[0])));
+  const labelW = 170, pw = 300, rowH = 22, top = 18, tw = labelW + pw + 96;
+  const svg = s("svg", { width: tw, height: top + shownRows.length * rowH + 22, class: "evo" });
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) svg.append(s("line", { class: "grid", x1: labelW + v * pw, x2: labelW + v * pw, y1: top - 4, y2: top + shownRows.length * rowH }),
+    s("text", { x: labelW + v * pw, y: top + shownRows.length * rowH + 14, "text-anchor": "middle" }, v === 0 ? "start" : v === 1 ? "last robot contact" : pct(v)));
+  svg.append(s("text", { x: labelW + pw + 8, y: 10 }, "duty A / B"));
+  shownRows.forEach((row, i) => {
+    const y = top + i * rowH;
+    const label = s("text", { x: labelW - 8, y: y + 13, "text-anchor": "end", style: "fill:var(--fg)" }, pairLabel(row.pair).slice(0, 28));
+    const band = s("rect", { class: "band", x: 0, y, width: tw, height: rowH });
+    band.addEventListener("mousemove", (e) => tip(e, `${pairLabel(row.pair)}\nA in contact ${pct(row.duty_a)} of the time, B ${pct(row.duty_b)}\nboth at the same time ${pct(row.both)}, one or both ${pct(row.either)}`));
+    band.addEventListener("mouseleave", (e) => tip(e, ""));
+    svg.append(label);
+    [row.a, row.b].forEach((ivs, k) => ivs.forEach(([t0, t1]) => svg.append(s("rect", { x: labelW + t0 * pw, y: y + 3 + k * 8, width: Math.max(1.5, (t1 - t0) * pw), height: 6, rx: 1.5, fill: SIDE[k] }))));
+    svg.append(s("text", { x: labelW + pw + 8, y: y + 13 }, `${pct(row.duty_a)} / ${pct(row.duty_b)}`), band);
+  });
+
+  // the edits between the two mode sequences
+  const cell = (modes, cls) => h("div", { class: "acell " + cls }, modes == null ? "—" : modeName(modes).replace(/  \+  /g, " + "));
+  const column = (e) => h("div", { class: "acol " + e.op, title: { same: "the same mode in both", replace: `replaced: ${pct(e.cost)} of the pairs of the two modes are not in common`, remove: "only in A: cost 1", add: "only in B: cost 1" }[e.op] },
+    cell(e.i == null ? null : detail.a.key[e.i], "a"), cell(e.j == null ? null : detail.b.key[e.j], "b"), h("div", { class: "acost" }, e.cost ? fmt(e.cost) : "0"));
+  const edits = h("div", { class: "align" }), FIRST = 10;
+  const fill = (all) => edits.replaceChildren(...detail.edits.slice(0, all ? undefined : FIRST).map(column),
+    detail.edits.length > FIRST ? h("button", { style: "align-self:center", onclick: () => fill(!all) }, all ? "show fewer" : `show all ${detail.edits.length} columns`) : "");
+  fill(false);
+
+  const sum = (key) => detail.pairs.reduce((acc, r) => acc + key(r), 0);
+  const inA = detail.pairs.filter((r) => r.a.length).length, inB = detail.pairs.filter((r) => r.b.length).length, inBoth = detail.pairs.filter((r) => r.a.length && r.b.length).length;
+  const why = h("table", { class: "vocab" },
+    h("tr", {}, h("td", {}, "edit"), h("td", {}, `edit cost ${fmt(detail.edit_cost)} ÷ ${detail.edit_length} modes in the longer sequence = ${fmt(detail.values.edit)}`)),
+    h("tr", {}, h("td", {}, "warp"), h("td", {}, detail.warp_steps ? `the best elastic alignment matches ${detail.warp_steps} pairs of modes with a total cost of ${fmt(detail.warp_cost)}: ${fmt(detail.warp_cost)} ÷ ${detail.warp_steps} = ${fmt(detail.values.warp)}` : `one or both sequences are empty: ${fmt(detail.values.warp)}`)),
+    h("tr", {}, h("td", {}, "set"), h("td", {}, `${inBoth} of ${detail.pairs.length} contact pairs are in both (A has ${inA}, B has ${inB}): 1 − ${inBoth}/${detail.pairs.length} = ${fmt(detail.values.set)}`)),
+    h("tr", {}, h("td", {}, "duty"), h("td", {}, `sum of the smaller duty factors ${fmt(sum((r) => Math.min(r.duty_a, r.duty_b)))} ÷ sum of the larger ${fmt(sum((r) => Math.max(r.duty_a, r.duty_b)))}: 1 − ratio = ${fmt(detail.values.duty)}`)),
+    h("tr", {}, h("td", {}, "overlap"), h("td", {}, `contact at the same time ${fmt(sum((r) => r.both))} ÷ contact in one or both ${fmt(sum((r) => r.either))}: 1 − ratio = ${fmt(detail.values.overlap)}`)),
+    h("tr", {}, h("td", {}, "dtw"), h("td", {}, `after the best local stretch of time, the matched instants differ in ${pct(detail.values.dtw)} of their contact pairs on average`)));
+
+  const video = h("div", {});
+  const render = h("button", { onclick: (ev) => {
+    ev.target.disabled = true;
+    runJob({ kind: "ghost", traces: [a.trace, b.trace], colours: SIDE, all_bodies: true, equal: true }, (job) => {
+      ev.target.disabled = false;
+      video.replaceChildren(job.state !== "done" ? h("pre", { class: "log" }, job.log)
+        : h("video", { src: job.output + "?t=" + Date.now(), controls: true, loop: true, autoplay: true, muted: true, style: "max-width:min(720px,100%)" }));
+    });
+  } }, "Render ghost video of A and B");
+  return h("div", { class: "panel pairview" }, head,
+    h("div", { class: "cols" },
+      h("div", { style: "max-width:none" }, h("div", { class: "muted" }, "Contact pairs over time (A above B in each row)" + (detail.pairs.length > shownRows.length ? `; the ${shownRows.length} longest of ${detail.pairs.length} pairs` : "")), svg),
+      h("div", { style: "flex:1 1 380px;min-width:300px" }, h("div", { class: "muted" }, "Mode sequences, aligned (A above B; the number is the cost of the column)"), edits, why)),
+    h("div", { class: "bar" }, render), video);
+}
+
+async function pageMetrics(name) {
+  const app = $("#app");
+  $("#crumbs").replaceChildren(h("a", { href: "#/d/" + name }, "diversity"), " / ", h("a", { href: "#/s/" + name }, name), " / distance metrics");
+  const state = { metric: DEF.metric, other: DEF.metric === "overlap" ? "warp" : "overlap", d: DEF.tau, picked: null };
+  const table = h("div", {}), readout = h("p", { class: "defn" }), charts = h("div", {}), examples = h("div", {}), compare = h("div", {}), picked = h("div", {}), repeatBox = h("div", {});
+  let rep = null, repToken = 0;
+  const loadRepeat = async () => {
+    const mine = ++repToken;
+    rep = null; drawRepeat();
+    try { const got = await j(`/api/repeatability?name=${name}&${defQuery()}`); if (mine === repToken) { rep = got; drawRepeat(); } }
+    catch (err) { if (mine === repToken) repeatBox.replaceChildren(h("h2", {}, "Repeatability"), h("p", { class: "muted" }, "The repeatability data did not load.")); }
+  };
+  // one policy on several start scenes: the within distances give the threshold
+  const drawRepeat = () => {
+    const title = h("h2", {}, "Repeatability ", h("small", {}, "— is a policy the same strategy as itself on another start scene?"));
+    if (!rep) { repeatBox.replaceChildren(title, h("p", { class: "muted" }, "loading…")); return; }
+    const m = rep.metrics[state.metric];
+    if (!m) { repeatBox.replaceChildren(title, h("p", { class: "muted" }, `Not computed for “${state.metric}”. Select the mode edit distance, the elastic mode distance or the timeline overlap.`)); return; }
+    if (!m.within.length) { repeatBox.replaceChildren(title, h("p", { class: "muted" }, `No final policy of ${name} solves two start scenes with the same number of objects. Record more instances (see the README).`)); return; }
+    const hw = 560, hh = 230, left = 40, bottom = 28, bins = 25, pw = hw - left - 10, ph = hh - bottom - 12;
+    const count = (values) => { const c = new Array(bins).fill(0); for (const v of values) c[Math.min(bins - 1, Math.floor(v * bins))]++; return c.map((x) => x / values.length); };
+    const cw = count(m.within), cb = count(m.between), peak = Math.max(0.05, ...cw, ...cb);
+    const svg = s("svg", { width: hw, height: hh, class: "evo" });
+    for (const v of [0, 0.2, 0.4, 0.6, 0.8, 1]) svg.append(s("text", { x: left + v * pw, y: hh - 10, "text-anchor": "middle" }, v.toFixed(1)));
+    svg.append(s("line", { class: "grid", x1: left, x2: left + pw, y1: 12 + ph, y2: 12 + ph }), s("text", { x: left - 6, y: 16, "text-anchor": "end" }, pct(peak)), s("text", { x: left - 6, y: 12 + ph, "text-anchor": "end" }, "0"));
+    for (let b = 0; b < bins; b++) {
+      const x = left + (b / bins) * pw + 1, w = (pw / bins - 3) / 2;
+      svg.append(s("rect", { x, y: 12 + ph - (cw[b] / peak) * ph, width: w, height: (cw[b] / peak) * ph, fill: "var(--accent)" }),
+        s("rect", { x: x + w + 1, y: 12 + ph - (cb[b] / peak) * ph, width: w, height: (cb[b] / peak) * ph, fill: "var(--fg3)", opacity: 0.55 }));
+      const hit = s("rect", { class: "band", x: x - 1, y: 12, width: pw / bins, height: ph });
+      hit.addEventListener("mousemove", (e) => tip(e, `distance ${fmt(b / bins)} to ${fmt((b + 1) / bins)}
+${pct(cw[b])} of the pairs of one policy
+${pct(cb[b])} of the pairs of two runs`));
+      hit.addEventListener("mouseleave", (e) => tip(e, ""));
+      hit.addEventListener("click", () => setD((b + 0.5) / bins));
+      svg.append(hit);
+    }
+    const mark = (value, label, dash) => { if (value == null) return; const x = left + value * pw; svg.append(s("line", { x1: x, x2: x, y1: 18, y2: 12 + ph, stroke: "var(--accent)", "stroke-width": 1.2, "stroke-dasharray": dash }), s("text", { x: x + 3, y: 26, style: "fill:var(--accent)" }, label)); };
+    mark(m.quantiles.q90, "90 %", "4 3");
+    svg.append(s("line", { x1: left + state.d * pw, x2: left + state.d * pw, y1: 6, y2: 12 + ph, stroke: "var(--fg)", "stroke-width": 1.5 }));
+    const share = (values) => values.filter((v) => v <= state.d + 1e-9).length / values.length;
+    const key = h("div", { class: "swatches" }, h("span", {}, h("span", { class: "dot", style: "background:var(--accent)" }), `one policy, two start scenes (${m.within.length} pairs)`),
+      h("span", {}, h("span", { class: "dot", style: "background:color-mix(in srgb, var(--fg3) 55%, transparent)" }), `two runs, two start scenes (${m.between.length} pairs)`));
+    repeatBox.replaceChildren(title, h("div", { class: "cols" },
+      h("div", { class: "panel", style: "max-width:none" }, key, svg, h("div", { class: "muted" }, "Share of the pairs for each distance (each group adds up to 100 %). The black line is the slider; the dashed line holds 90 % of the pairs of one policy.")),
+      h("div", { class: "panel" },
+        h("p", {}, `At the slider value ${fmt(state.d)}, `, h("b", {}, pct(share(m.within))), " of the pairs of one policy are the same strategy, and ", h("b", {}, pct(share(m.between))), " of the pairs of two runs are."),
+        h("table", { class: "vocab" },
+          h("tr", {}, h("td", {}, "half of the pairs of one policy are within"), h("td", {}, h("button", { onclick: () => setD(m.quantiles.q50) }, fmt(m.quantiles.q50)))),
+          h("tr", {}, h("td", {}, "80 % are within"), h("td", {}, h("button", { onclick: () => setD(m.quantiles.q80) }, fmt(m.quantiles.q80)))),
+          h("tr", {}, h("td", {}, "90 % are within"), h("td", {}, h("button", { onclick: () => setD(m.quantiles.q90) }, fmt(m.quantiles.q90)))),
+          h("tr", {}, h("td", {}, "best separation of one policy from two runs"), h("td", {}, m.separation == null ? "–" : h("button", { onclick: () => setD(m.separation) }, fmt(m.separation)))),
+          h("tr", {}, h("td", {}, "probability that two runs are farther apart than one policy"), h("td", {}, m.auc == null ? "–" : fmt(m.auc)))),
+        h("p", { class: "muted" }, `Data: the final policy of ${rep.runs} runs on the start scenes ${rep.instances.map((k) => "inst" + k).join(", ")} (${rep.episodes} solved episodes). Only two scenes with the same number of objects are compared. ` +
+          "A threshold below the 90 % value splits one policy into more than one strategy. A probability near 0.5 means that the runs of this scenario are not more different from each other than one policy is from itself."))));
+  };
+  const slider = h("input", { type: "range", min: 0, max: 1, step: 0.01, value: state.d, style: "width:420px" });
+  const sliderValue = h("b", { style: "min-width:38px" }, fmt(state.d));
+  let d = null, pairs = [], timer = null, token = 0;
+  const details = new Map();
+  const detail = async (i, k) => {
+    const key = `${d.runs[i].trace}|${d.runs[k].trace}|${defQuery()}`;
+    if (!details.has(key)) details.set(key, await j(`/api/metric_pair?a=${d.runs[i].trace}&b=${d.runs[k].trace}&${defQuery()}`));
+    return details.get(key);
+  };
+  const load = async () => {
+    charts.replaceChildren(h("p", { class: "muted" }, "loading…"));
+    d = await j(`/api/metrics?name=${name}&${defQuery()}`);
+    METHODS = d.method_order;
+    pairs = [];
+    d.runs.forEach((r, i) => d.runs.forEach((q, k) => { if (k > i) pairs.push([i, k]); }));
+    state.picked = null; picked.replaceChildren();
+    draw(); loadExamples(); loadRepeat();
+  };
+  const dist = (key, p) => d.distance[key][p[0]][p[1]];
+  const at = (key) => d.classes[key][Math.round(state.d * 100)];
+
+  const draw = () => {
+    drawRepeat();
+    if (d.runs.length < 3) { table.replaceChildren(); charts.replaceChildren(h("p", { class: "muted" }, `Fewer than 3 final policies solve ${d.instance} in ${name}.`)); compare.replaceChildren(); return; }
+    const cur = d.metrics.find((m) => m.key === state.metric);
+    // metric table: definition, what it sees, and the numbers at the slider
+    table.replaceChildren(h("table", { class: "vocab metrics" },
+      h("tr", {}, ["distance", "what it is", "sees", "ignores", "mean", `rank correlation with “${cur.key}”`, `strategies at ${fmt(state.d)}`, "largest strategy"].map((t) => h("th", {}, t))),
+      d.metrics.map((m) => h("tr", { class: m.key === state.metric ? "on" : "", onclick: () => { state.metric = m.key; if (state.other === m.key) state.other = m.key === "edit" ? "overlap" : "edit"; draw(); loadExamples(); } },
+        h("td", {}, h("input", { type: "radio", name: "metric", checked: m.key === state.metric }), h("span", { class: "dot", style: `background:${metricColour(m.key)};margin:0 6px` }), h("b", {}, m.name), h("div", { class: "muted mono" }, m.key + (m.key === DEF.metric ? " · selected in the definition bar" : ""))),
+        h("td", { style: "max-width:380px" }, m.text), h("td", { style: "max-width:190px" }, m.sees), h("td", { style: "max-width:170px" }, m.ignores),
+        h("td", {}, fmt(d.mean[m.key])), h("td", {}, m.key === state.metric ? "–" : fmt(d.spearman[state.metric][m.key])), h("td", {}, String(at(m.key)[0])), h("td", {}, `${at(m.key)[1]} runs`)))));
+    const near = pairs.filter((p) => dist(state.metric, p) <= state.d + 1e-9).length;
+    readout.replaceChildren(`With “${cur.name}”, ${near} of ${pairs.length} pairs of runs (${pct(near / pairs.length)}) have a distance of ${fmt(state.d)} or less. `,
+      `As the threshold, ${fmt(state.d)} gives ${at(state.metric)[0]} strategies for ${d.runs.length} runs; the largest strategy has ${at(state.metric)[1]} runs.`);
+
+    // histogram of the pair distances, same method and different methods
+    const hw = 470, hh = 210, left = 34, bottom = 28, bins = 40, pw = hw - left - 10, ph = hh - bottom - 12;
+    const counts = Array.from({ length: bins }, () => [0, 0]);
+    for (const p of pairs) counts[Math.min(bins - 1, Math.floor(dist(state.metric, p) * bins))][d.runs[p[0]].method === d.runs[p[1]].method ? 0 : 1]++;
+    const peak = Math.max(1, ...counts.map((c) => c[0] + c[1]));
+    const hist = s("svg", { width: hw, height: hh, class: "evo" });
+    const axis = (svg, w, hgt, lft, plotH) => { for (const v of [0, 0.2, 0.4, 0.6, 0.8, 1]) svg.append(s("text", { x: lft + v * w, y: hgt - 10, "text-anchor": "middle" }, v.toFixed(1))); svg.append(s("line", { class: "grid", x1: lft, x2: lft + w, y1: 12 + plotH, y2: 12 + plotH })); };
+    axis(hist, pw, hh, left, ph);
+    hist.append(s("text", { x: left - 6, y: 16, "text-anchor": "end" }, String(peak)), s("text", { x: left - 6, y: 12 + ph, "text-anchor": "end" }, "0"));
+    counts.forEach(([same, diff], b) => {
+      const x = left + (b / bins) * pw + 1, w = pw / bins - 2, h0 = (same / peak) * ph, h1 = (diff / peak) * ph;
+      if (diff) hist.append(s("rect", { x, y: 12 + ph - h1, width: w, height: h1, fill: "var(--fg3)", opacity: 0.55 }));
+      if (same) hist.append(s("rect", { x, y: 12 + ph - h1 - h0 - (diff ? 1 : 0), width: w, height: h0, fill: "var(--accent)" }));
+      const hit = s("rect", { class: "band", x: x - 1, y: 12, width: w + 2, height: ph });
+      hit.addEventListener("mousemove", (e) => tip(e, `distance ${fmt(b / bins)} to ${fmt((b + 1) / bins)}\n${same} pairs of one method\n${diff} pairs of two methods`));
+      hit.addEventListener("mouseleave", (e) => tip(e, ""));
+      hit.addEventListener("click", () => setD((b + 0.5) / bins));
+      hist.append(hit);
+    });
+    hist.append(s("line", { x1: left + state.d * pw, x2: left + state.d * pw, y1: 6, y2: 12 + ph, stroke: "var(--fg)", "stroke-width": 1.5 }));
+
+    // number of strategies against the threshold, one line per metric
+    const cw = 470, ch = 210, cpw = cw - left - 10, cph = ch - bottom - 12, n = d.runs.length;
+    const curve = s("svg", { width: cw, height: ch, class: "evo" });
+    axis(curve, cpw, ch, left, cph);
+    curve.append(s("text", { x: left - 6, y: 16, "text-anchor": "end" }, String(n)), s("text", { x: left - 6, y: 12 + cph, "text-anchor": "end" }, "1"));
+    const cy = (count) => 12 + cph - ((count - 1) / Math.max(1, n - 1)) * cph;
+    for (const m of [...d.metrics].sort((p, q) => (p.key === state.metric) - (q.key === state.metric))) {
+      let path = "";
+      d.classes[m.key].forEach(([count], i) => { const x = left + d.taus[i] * cpw; path += i ? `H${x.toFixed(1)}V${cy(count).toFixed(1)}` : `M${x.toFixed(1)},${cy(count).toFixed(1)}`; });
+      curve.append(s("path", { d: path, fill: "none", stroke: metricColour(m.key), "stroke-width": m.key === state.metric ? 2.6 : 1.5, opacity: m.key === state.metric ? 1 : 0.75 }));
+    }
+    curve.append(s("line", { x1: left + state.d * cpw, x2: left + state.d * cpw, y1: 6, y2: 12 + cph, stroke: "var(--fg)", "stroke-width": 1.5 }));
+    const over = s("rect", { class: "band", x: left, y: 6, width: cpw, height: cph + 6 });
+    over.addEventListener("mousemove", (e) => { const t = Math.max(0, Math.min(1, (e.offsetX - left) / cpw)), i = Math.round(t * 100); tip(e, `threshold ${fmt(d.taus[i])}\n` + d.metrics.map((m) => `${m.key}: ${d.classes[m.key][i][0]} strategies`).join("\n")); });
+    over.addEventListener("mouseleave", (e) => tip(e, ""));
+    over.addEventListener("click", (e) => setD(Math.round(Math.max(0, Math.min(1, (e.offsetX - left) / cpw)) * 100) / 100));
+    curve.append(over);
+    const key = (items) => h("div", { class: "swatches" }, items.map(([colour, text]) => h("span", {}, h("span", { class: "dot", style: `background:${colour}` }), text)));
+    charts.replaceChildren(h("div", { class: "cols" },
+      h("div", {}, h("h2", {}, "Distances between all pairs of runs ", h("small", {}, `— “${cur.key}”; the line is the slider`)), h("div", { class: "panel" }, key([["var(--accent)", "two runs of one method"], ["color-mix(in srgb, var(--fg3) 55%, transparent)", "two runs of two methods"]]), hist, h("div", { class: "muted" }, "Number of pairs for each distance. Click a bar to move the slider there."))),
+      h("div", {}, h("h2", {}, "Number of strategies against the threshold ", h("small", {}, "— complete linkage, as on the other pages")), h("div", { class: "panel" }, key(d.metrics.map((m) => [metricColour(m.key), m.key])), curve, h("div", { class: "muted" }, "A flat part of a line is a range of thresholds with the same strategies. The scales of the metrics are different: one threshold does not fit all.")))));
+
+    // two metrics against each other
+    const sw = 400, sh = 400, sl = 44, sp = sw - sl - 12;
+    const scatter = s("svg", { width: sw, height: sh, class: "evo" });
+    const sx = (v) => sl + v * sp, sy = (v) => 12 + (1 - v) * sp;
+    for (const v of [0, 0.2, 0.4, 0.6, 0.8, 1]) scatter.append(s("line", { class: "grid", x1: sx(v), x2: sx(v), y1: sy(0), y2: sy(1) }), s("line", { class: "grid", x1: sx(0), x2: sx(1), y1: sy(v), y2: sy(v) }),
+      s("text", { x: sx(v), y: sy(0) + 14, "text-anchor": "middle" }, v.toFixed(1)), s("text", { x: sl - 6, y: sy(v) + 4, "text-anchor": "end" }, v.toFixed(1)));
+    scatter.append(s("line", { x1: sx(0), y1: sy(0), x2: sx(1), y2: sy(1), stroke: "var(--fg3)", "stroke-dasharray": "3 3" }),
+      s("text", { x: sx(0.5), y: sh - 4, "text-anchor": "middle", style: "fill:var(--fg)" }, cur.name), s("text", { x: 12, y: sy(0.5), "text-anchor": "middle", transform: `rotate(-90 12 ${sy(0.5)})`, style: "fill:var(--fg)" }, d.metrics.find((m) => m.key === state.other).name));
+    for (const p of [...pairs].sort((u, v) => (d.runs[u[0]].method === d.runs[u[1]].method) - (d.runs[v[0]].method === d.runs[v[1]].method))) {
+      const same = d.runs[p[0]].method === d.runs[p[1]].method, sel = state.picked && state.picked[0] === p[0] && state.picked[1] === p[1];
+      const dot = s("circle", { cx: sx(dist(state.metric, p)), cy: sy(dist(state.other, p)), r: sel ? 6 : 3.5, fill: same ? "var(--accent)" : "var(--fg3)", "fill-opacity": sel ? 1 : same ? 0.8 : 0.4, stroke: sel ? "var(--fg)" : "none", "stroke-width": 2, style: "cursor:pointer" });
+      dot.addEventListener("mousemove", (e) => tip(e, `${d.runs[p[0]].method} · ${d.runs[p[0]].seed}  and  ${d.runs[p[1]].method} · ${d.runs[p[1]].seed}\n${state.metric} ${fmt(dist(state.metric, p))} · ${state.other} ${fmt(dist(state.other, p))}\nclick to see this pair`));
+      dot.addEventListener("mouseleave", (e) => tip(e, ""));
+      dot.addEventListener("click", () => pick(p));
+      scatter.append(dot);
+    }
+    const heat = h("table", { class: "heat" }, h("tr", {}, h("th", {}), d.metrics.map((m) => h("th", {}, m.key))),
+      d.metrics.map((a) => h("tr", {}, h("th", {}, a.key), d.metrics.map((b) => { const v = d.spearman[a.key][b.key]; return h("td", { style: v == null || a.key === b.key ? "" : `background:${tint(v)}`, class: a.key === b.key ? "diag" : "" }, a.key === b.key ? "1" : fmt(v)); }))));
+    compare.replaceChildren(h("h2", {}, "Two metrics against each other ", h("small", {}, "— one dot per pair of runs; a dot far from the diagonal is a pair on which the metrics disagree"),
+        h("select", { style: "margin-left:12px", onchange: (e) => { state.other = e.target.value; draw(); } }, d.metrics.filter((m) => m.key !== state.metric).map((m) => h("option", { value: m.key, selected: m.key === state.other }, "vertical: " + m.name)))),
+      h("div", { class: "cols" }, h("div", { class: "panel", style: "max-width:none" }, key([["var(--accent)", "two runs of one method"], ["color-mix(in srgb, var(--fg3) 55%, transparent)", "two runs of two methods"]]), scatter),
+        h("div", {}, h("div", { class: "panel" }, h("div", { class: "muted", style: "margin-bottom:6px" }, "Rank correlation (Spearman) between the metrics, over all pairs of runs. 1 = the two metrics order the pairs in the same way."), heat))));
+  };
+
+  const pick = async (p) => {
+    state.picked = p; draw();
+    picked.replaceChildren(h("p", { class: "muted" }, "loading…"));
+    const got = await detail(p[0], p[1]);
+    picked.replaceChildren(h("h2", {}, "Selected pair"), pairView(d, d.runs[p[0]], d.runs[p[1]], got, state.metric));
+  };
+  const loadExamples = async () => {
+    if (!d || d.runs.length < 3) { examples.replaceChildren(); return; }
+    const mine = ++token, metric = state.metric;
+    const ranked = [...pairs].sort((p, q) => Math.abs(dist(metric, p) - state.d) - Math.abs(dist(metric, q) - state.d));
+    const chosen = [], used = new Set();  // prefer pairs that share no run, for variety
+    for (const p of ranked.slice(0, 40)) if (chosen.length < 3 && !used.has(p[0]) && !used.has(p[1])) { chosen.push(p); used.add(p[0]); used.add(p[1]); }
+    for (const p of ranked) if (chosen.length < 3 && !chosen.includes(p)) chosen.push(p);
+    const got = await Promise.all(chosen.map((p) => detail(p[0], p[1])));
+    if (mine !== token) return;
+    examples.replaceChildren(h("h2", {}, `What a distance of ${fmt(state.d)} looks like `, h("small", {}, `— the ${chosen.length} pairs of runs with the “${metric}” distance nearest to the slider`)),
+      ...chosen.map((p, i) => pairView(d, d.runs[p[0]], d.runs[p[1]], got[i], metric)));
+  };
+  const setD = (value) => {
+    state.d = Math.round(value * 100) / 100; slider.value = state.d; sliderValue.textContent = fmt(state.d);
+    draw(); clearTimeout(timer); timer = setTimeout(loadExamples, 180);
+  };
+  slider.addEventListener("input", () => setD(Number(slider.value)));
+  app.replaceChildren(await defControls(load),
+    h("div", { class: "bar" }, h("a", { href: "#/d/" + name }, "diversity of this scenario →"), h("a", { href: "#/h/" + name }, "strategy histories →"),
+      h("span", { class: "muted" }, "“contacts” and “names” apply to every distance here; “order” applies to the edit distance and to the elastic distance only; “same when” is replaced by the slider.")),
+    table,
+    h("div", { class: "bar defbar" }, h("b", {}, "Distance"), slider, sliderValue, [0.1, 0.2, 0.35, 0.5].map((v) => h("button", { onclick: () => setD(v) }, String(v)))),
+    readout, charts, repeatBox, examples, compare, picked);
+  await load();
+}
+
 async function route() {
   tip({}, "");
   const [, page, ...rest] = decodeURIComponent(location.hash || "#/").split("/");
   try {
     if (page === "s") await pageScenario(rest[0]);
     else if (page === "t") await pageTrace(rest.join("/"));
+    else if (page === "e") await pageEvolution(rest.join("/"));
+    else if (page === "h") await pageHistories(rest[0]);
+    else if (page === "d") await (rest[0] ? pageDiversity(rest[0]) : pageDiversityAll());
+    else if (page === "m") await pageMetrics(rest[0]);
     else await pageIndex();
   } catch (err) {
     $("#app").replaceChildren(h("p", {}, "Error: " + err.message));

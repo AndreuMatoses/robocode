@@ -16,14 +16,21 @@ carries its own outcome. The policy is model-written code and runs in this proce
     python -m experiments.contacts.record opus55/tossing3d/seed24
     python -m experiments.contacts.record 'opus55/tossing3d/*' --instances 0 1 2
     python -m experiments.contacts.record '*/tossing3d/*' --commit 0 --count 2
+    python -m experiments.contacts.record '*/tossing3d/*' --commits versions \
+        --instances 0 --no-video --jobs 16
 
-Several matching runs are recorded one subprocess each, so one policy's modules and
-crashes cannot affect the next.
+``--commits`` records the history of a run: ``versions`` = every commit that changes
+the policy (see ``commits.py``) plus the last one, ``sample`` = those plus one
+unchanged commit per streak (their traces must be identical), ``all`` = every commit.
+
+Several (run, commit) tasks are recorded one subprocess each, so one policy's modules
+and crashes cannot affect the next; ``--jobs`` runs that many at a time.
 """
 
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import fnmatch
 import json
 import subprocess
@@ -36,6 +43,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from experiments.contacts.commits import load_versions, select_commits
 from experiments.contacts.entities import robot_env
 from experiments.contacts.recorder import STEP_COLUMNS, ContactRecorder, recording
 from experiments.contacts.replay import (
@@ -125,11 +133,14 @@ def record_run(args: argparse.Namespace, run_id: str) -> None:
             out.mkdir(parents=True, exist_ok=True)
             np.savez_compressed(out / "trace.npz", **arrays)
             camera = render_camera_name(ro.env)
-            write_video(
-                replay_frames(ro.env, arrays["qpos"], args.width, args.height, camera),
-                out / "video.mp4",
-                FPS,
-            )
+            if not args.no_video:
+                write_video(
+                    replay_frames(
+                        ro.env, arrays["qpos"], args.width, args.height, camera
+                    ),
+                    out / "video.mp4",
+                    FPS,
+                )
             diagram = diagram_dir(args.out, run_id.split("/")[1], seed, args.count)
             if not (diagram / "diagram.json").exists():
                 set_qpos(robot_env(ro.env), arrays["qpos"][0])
@@ -163,16 +174,48 @@ def record_run(args: argparse.Namespace, run_id: str) -> None:
             )
 
 
+def _tasks(args: argparse.Namespace, runs: list[str]) -> list[tuple[str, int]]:
+    """The (run, commit) pairs to record; commit -1 is resolved by the worker."""
+    if args.commits is None:
+        return [(run_id, args.commit) for run_id in runs]
+    tasks = []
+    for run_id in runs:
+        versions = load_versions(args.data, args.out, run_id)
+        for commit in select_commits(versions, args.commits):
+            done = all(
+                (
+                    instance_dir(args.out, run_id, commit, seed, args.count)
+                    / "meta.json"
+                ).exists()
+                for seed in args.instances
+            )
+            if args.force or not done:
+                tasks.append((run_id, commit))
+    return tasks
+
+
 def main() -> None:
     """Record one run in this process, or several in one subprocess each."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument("runs", nargs="+", help="run ids or globs, '*/tossing3d/*'")
     parser.add_argument("--commit", type=int, default=-1, help="-1 = last (default)")
+    parser.add_argument(
+        "--commits",
+        choices=["versions", "sample", "all"],
+        help="record the history of each run instead of one commit",
+    )
     parser.add_argument("--instances", type=int, nargs="+", default=[0, 1, 2])
     parser.add_argument("--count", type=int, help="pin the object count")
     parser.add_argument("--width", type=int, default=960)
     parser.add_argument("--height", type=int, default=720)
     parser.add_argument("--force", action="store_true", help="re-record existing")
+    parser.add_argument(
+        "--no-video", action="store_true", help="trace only; render on demand later"
+    )
+    parser.add_argument("--jobs", type=int, default=1, help="subprocesses at a time")
+    parser.add_argument(
+        "--timeout", type=float, default=1800, help="seconds per subprocess"
+    )
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
     args = parser.parse_args()
@@ -180,18 +223,44 @@ def main() -> None:
     runs = matching_runs(args.data, args.runs)
     if not runs:
         raise SystemExit(f"No run with commits matches {args.runs}")
-    if len(runs) == 1:
+    if len(runs) == 1 and args.commits is None:
         record_run(args, runs[0])
         return
-    passthrough = [a for a in sys.argv[1:] if a not in args.runs]
-    failed = []
-    for i, run_id in enumerate(runs, 1):
-        print(f"[{i}/{len(runs)}] {run_id}", flush=True)
+    tasks = _tasks(args, runs)
+    passthrough = ["--instances", *map(str, args.instances)]
+    passthrough += ["--width", str(args.width), "--height", str(args.height)]
+    passthrough += ["--data", str(args.data), "--out", str(args.out)]
+    passthrough += ["--count", str(args.count)] if args.count is not None else []
+    passthrough += ["--force"] if args.force else []
+    passthrough += ["--no-video"] if args.no_video else []
+
+    def work(task: tuple[str, int]) -> tuple[tuple[str, int], int, str]:
+        run_id, commit = task
         cmd = [sys.executable, "-m", "experiments.contacts.record", run_id]
-        if subprocess.run(cmd + passthrough, check=False).returncode:
-            failed.append(run_id)
+        cmd += ["--commit", str(commit), *passthrough]
+        try:
+            done = subprocess.run(
+                cmd, check=False, capture_output=True, text=True, timeout=args.timeout
+            )
+        except subprocess.TimeoutExpired:
+            return task, 1, f"  timed out after {args.timeout:.0f} s"
+        lines = [
+            line
+            for line in (done.stdout + done.stderr).splitlines()
+            if line.startswith(("  instance", run_id))
+        ]
+        return task, done.returncode, "\n".join(lines) or done.stderr[-2000:]
+
+    failed = []
+    print(f"{len(tasks)} recording(s) to make, {args.jobs} at a time", flush=True)
+    with concurrent.futures.ThreadPoolExecutor(max(1, args.jobs)) as pool:
+        for i, (task, code, text) in enumerate(pool.map(work, tasks), 1):
+            print(f"[{i}/{len(tasks)}] {task[0]} commit {task[1]}", flush=True)
+            print(text, flush=True)
+            if code:
+                failed.append(f"{task[0]}@{task[1]}")
     if failed:
-        print(f"{len(failed)} runs failed: {', '.join(failed)}")
+        print(f"{len(failed)} recordings failed: {', '.join(failed)}")
 
 
 if __name__ == "__main__":

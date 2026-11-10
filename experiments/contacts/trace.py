@@ -31,7 +31,7 @@ def trace_id(root: Path, directory: Path) -> str:
     return directory.relative_to(root).as_posix()
 
 
-@functools.lru_cache(maxsize=256)
+@functools.lru_cache(maxsize=16384)
 def load_meta(directory: Path) -> dict[str, Any]:
     """The ``meta.json`` of a trace (cached)."""
     return json.loads((directory / "meta.json").read_text())
@@ -77,9 +77,11 @@ def summarise(directory: Path) -> dict[str, Any]:
                 "geom_a": geoms[g_a]["index"],
                 "face_a": FACES[f_a],
                 "type_a": geoms[g_a]["type"],
+                "extent_a": geoms[g_a]["extent"],
                 "geom_b": geoms[g_b]["index"],
                 "face_b": FACES[f_b],
                 "type_b": geoms[g_b]["type"],
+                "extent_b": geoms[g_b]["extent"],
                 "intervals": [
                     [round(s * dt, 4), round(e * dt, 4)]
                     for s, e in merge_intervals(own)

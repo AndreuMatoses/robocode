@@ -301,8 +301,9 @@ def ghost_frames(
     width: int,
     height: int,
     camera: str,
-    alpha: float = 0.35,
+    alpha: float | None = None,
     robot_only: bool = True,
+    equal: bool = False,
 ) -> Iterator[np.ndarray]:
     """Frames with several recorded trajectories of the same instance overlaid.
 
@@ -310,17 +311,38 @@ def ghost_frames(
     scene as translucent copies tinted with their colour. With ``robot_only`` the
     ghosts are robots only (objects are shown for the first trajectory), otherwise
     every moving body is ghosted. A trajectory that ended holds its last pose.
+
+    With ``equal`` no trajectory is the reference: the first one is a ghost too,
+    which is the fair picture of a population (the final policies of a scenario).
+    An object is then ghosted only while its pose differs between the trajectories;
+    an object that is at the same place in all of them is drawn once, as it is.
+    ``alpha`` defaults to 0.35 and goes down when there are many trajectories.
     """
     renv = robot_env(env)
     model = renv.sim.model.mj_model
     ctx = renv.sim._render_context_offscreen  # pylint: disable=protected-access
     scratch = [mujoco.MjData(model) for _ in trajectories[1:]]
-    is_robot = np.array([e.kind == "robot" for e in emap.entities])[emap.geom_entity]
+    kinds = np.array([e.kind for e in emap.entities])[emap.geom_entity]
+    is_robot = kinds == "robot"
+    ghosted = is_robot if robot_only else kinds != "world"  # a drawer moves too
+    if alpha is None:
+        alpha = min(0.35, max(0.15, 1.4 / len(trajectories) ** 0.5))
+    # mjv_addGeoms stops without an error when the scene is full.
+    wanted = model.ngeom * (len(trajectories) + 1) + 200
+    if ctx.scn.maxgeom < wanted:
+        ctx.scn = mujoco.MjvScene(model, maxgeom=wanted)
 
     def edit(scn: Any) -> None:
-        for i in range(scn.ngeom):  # tint the solid robot too, to tell it apart
+        for i in range(scn.ngeom):
             geom = scn.geoms[i]
-            if geom.objtype == mujoco.mjtObj.mjOBJ_GEOM and is_robot[geom.objid]:
+            if geom.objtype != mujoco.mjtObj.mjOBJ_GEOM:
+                continue
+            if equal and split[geom.objid]:  # the first trajectory is a ghost too
+                geom.rgba[:3] = colours[0]
+                geom.rgba[3] = alpha
+                geom.matid = -1
+                geom.transparent = 1
+            elif is_robot[geom.objid]:  # tint the solid robot, to tell it apart
                 geom.rgba[:3] = 0.5 * np.array(geom.rgba[:3]) + 0.5 * np.array(
                     colours[0]
                 )
@@ -330,22 +352,32 @@ def ghost_frames(
             mujoco.mjv_addGeoms(
                 model, data, ctx.vopt, ctx.pert, mujoco.mjtCatBit.mjCAT_DYNAMIC, scn
             )
+            if scn.ngeom >= scn.maxgeom:
+                raise RuntimeError("the MuJoCo scene is full: too many ghosts")
             for i in range(start, scn.ngeom):
                 geom = scn.geoms[i]
-                keep = geom.objtype == mujoco.mjtObj.mjOBJ_GEOM and (
-                    not robot_only or is_robot[geom.objid]
-                )
+                keep = geom.objtype == mujoco.mjtObj.mjOBJ_GEOM and split[geom.objid]
                 geom.rgba[:3] = colour
                 geom.rgba[3] = alpha if keep else 0.0
                 geom.matid = -1
                 geom.transparent = 1
                 geom.segid = -1
 
+    main = renv.sim.data.mj_data
+    split = ghosted  # per geom: drawn once per trajectory, as ghosts
     for step in range(max(len(t) for t in trajectories)):
         set_qpos(renv, trajectories[0][min(step, len(trajectories[0]) - 1)])
+        apart = np.zeros(len(emap.entities), dtype=bool)
         for data, trajectory in zip(scratch, trajectories[1:]):
             data.qpos[:] = trajectory[min(step, len(trajectory) - 1)]
             mujoco.mj_kinematics(model, data)
+            if equal:
+                moved = (np.abs(data.geom_xpos - main.geom_xpos).max(axis=1) > 2e-3) | (
+                    np.abs(data.geom_xmat - main.geom_xmat).max(axis=1) > 2e-2
+                )
+                np.logical_or.at(apart, emap.geom_entity, moved)
+        if equal:
+            split = ghosted & (is_robot | apart[emap.geom_entity])
         yield render(renv, camera, width, height, edit=edit)
 
 
@@ -356,6 +388,8 @@ def ghost_video(
     width: int,
     height: int,
     robot_only: bool = True,
+    equal: bool = False,
+    alpha: float | None = None,
 ) -> None:
     """Overlay the traces in ``directories`` (same scenario and instance)."""
     env, emap, meta = open_trace_env(directories[0])
@@ -372,7 +406,9 @@ def ghost_video(
             width,
             height,
             meta["camera"],
+            alpha=alpha,
             robot_only=robot_only,
+            equal=equal,
         )
         write_video(frames, out, meta["fps"])
     finally:
@@ -385,18 +421,35 @@ def _colour(text: str) -> tuple[float, float, float]:
 
 
 def main() -> None:
-    """Render a contact-highlight video or a ghost overlay from recorded traces."""
+    """Render an episode, contact-highlight or ghost video from recorded traces."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument("mode", choices=["contact", "ghost", "diagram"])
+    parser.add_argument("mode", choices=["video", "contact", "ghost", "diagram"])
     parser.add_argument("traces", type=Path, nargs="+", help="trace directories")
     parser.add_argument("-o", "--out", type=Path, required=True)
     parser.add_argument("--colours", nargs="*", default=[], help="hex, one per trace")
     parser.add_argument("--all-bodies", action="store_true", help="ghost objects too")
+    parser.add_argument(
+        "--equal", action="store_true", help="ghost: the first trace is a ghost too"
+    )
+    parser.add_argument("--alpha", type=float, help="ghost opacity (default: by count)")
     parser.add_argument("--width", type=int, default=960)
     parser.add_argument("--height", type=int, default=720)
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    if args.mode == "contact":
+    if args.mode == "video":
+        env, _, meta = open_trace_env(args.traces[0])
+        try:
+            frames = replay_frames(
+                env,
+                load_qpos(args.traces[0]),
+                args.width,
+                args.height,
+                meta.get("camera") or render_camera_name(env),
+            )
+            write_video(frames, args.out, int(meta.get("fps", 10)))
+        finally:
+            env.close()
+    elif args.mode == "contact":
         contact_video(args.traces[0], args.out, args.width, args.height)
     elif args.mode == "diagram":
         env, emap, _ = open_trace_env(args.traces[0])
@@ -411,7 +464,14 @@ def main() -> None:
             for i in range(len(args.traces))
         ]
         ghost_video(
-            args.traces, colours, args.out, args.width, args.height, not args.all_bodies
+            args.traces,
+            colours,
+            args.out,
+            args.width,
+            args.height,
+            robot_only=not args.all_bodies,
+            equal=args.equal,
+            alpha=args.alpha,
         )
     print(args.out)
 
