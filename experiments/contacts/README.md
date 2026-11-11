@@ -10,11 +10,18 @@ Analyse the **contact strategies** of the policies in the dataset
 1. how diverse the strategies are across runs of one scenario (methods × seeds);
 2. how a strategy evolves over an agent's run (across its git commits).
 
-Scope so far: the 10 MuJoCo scenarios, all with the TidyBot (holonomic base, Kinova
-Gen3, Robotiq 2F-85): balancebeam3d, constrainedcupboard3d, dynamicshelf3d, dynamo3d,
-rearrange3d, scooppour3d, sortclutteredblocks3d, sweepintodrawer3d, sweepsimple3d,
-tossing3d. The 2D and PyBullet scenarios are listed in the viewer but have no contact
-recording.
+Scope so far:
+
+- the 10 MuJoCo scenarios, all with the TidyBot (holonomic base, Kinova Gen3,
+  Robotiq 2F-85): balancebeam3d, constrainedcupboard3d, dynamicshelf3d, dynamo3d,
+  rearrange3d, scooppour3d, sortclutteredblocks3d, sweepintodrawer3d, sweepsimple3d,
+  tossing3d;
+- the 4 dynamic 2D scenarios (pymunk): dynobstruction2d, dynpushpullhook2d,
+  dynpusht2d, dynscooppour2d (see "Simulator backends").
+
+The kinematic scenarios (2D geometry, PyBullet, PR2, rovers) are listed in the
+viewer but have no contact recording: they have no contacts, only collision checks
+and attachments, and need a definition of "contact" first.
 
 ## What the branch adds over `main`
 
@@ -25,6 +32,9 @@ recording.
 | `experiments/results_viewer.py` | Only change: fit-to-window toggle (`f`) in the video player |
 | `experiments/contacts/entities.py` | Names for what touches what: `robot.gripper.left_pad`, `env.cube_0`, `env.table_1.top`, `world.floor`; class names without index (`env.cube`); surfaces (box faces `±x/±y/±z`, cylinder side/caps) and contact points in normalised local coordinates |
 | `experiments/contacts/recorder.py` | Logs MuJoCo contacts at every 0.5 ms substep by wrapping `MjSim.step` / `MujocoEnv.step` |
+| `experiments/contacts/backend.py` | The simulator families: which recorder and which replay a scenario or a trace uses (`mujoco`, `pymunk`), and how to add one |
+| `experiments/contacts/recorder2d.py` | Logs pymunk contacts (arbiters) at every 10 ms substep of the dynamic 2D scenarios, with the grasp as a contact; subclass of the shared `recorder.BaseRecorder` |
+| `experiments/contacts/render2d.py` | Draws a pymunk trace from the trace alone (no environment): episode video, contact video, ghost video, labelled diagram |
 | `experiments/contacts/record.py` | CLI: roll out a run/commit on fixed instances, write trace + video + diagram |
 | `experiments/contacts/replay.py` | Renders from recorded `qpos`, no policy: episode video, labelled diagram, contact-highlight video, ghost overlay |
 | `experiments/contacts/trace.py` | Loads a trace and summarises it per entity pair (used by the viewer) |
@@ -51,6 +61,115 @@ Design points worth knowing:
 - A pair is "resting" (hidden by default) if it involves no robot part and is active
   for ≥ 98 % of the episode. Fixture-internal contacts (drawers against their cabinet)
   show very large forces and are also hidden by default.
+
+## Simulator backends
+
+The trace files have one layout for every simulator, so the analysis (`strategy`,
+`histories`, `diversity`, `metrics`, `repeat`) and the viewer pages do not depend on
+the simulator. A *backend* is the part that does: how to read the contacts and how
+to draw a recorded episode again. `backend.py` names them and says how to add one;
+`meta.json` has the key `"backend"` (a trace without it is a MuJoCo trace).
+
+| backend | scenarios | recorder | replay |
+|---|---|---|---|
+| `mujoco` | the 10 dynamic3d scenarios | `recorder.ContactRecorder` | `replay.py`: sets `qpos` on a new environment and renders |
+| `pymunk` | the 4 dynamic2d scenarios | `recorder2d.PymunkRecorder` | `render2d.py`: draws from the trace alone, no environment |
+
+Both recorders are subclasses of `recorder.BaseRecorder`, which has the part that
+does not depend on the simulator (intervals, per-step rows, the arrays). A trace of
+the MuJoCo recorder is bit-identical before and after this split.
+
+### pymunk (dynamic 2D)
+
+- One `env.step` is 100 `Space.step` substeps of 10 ms: 1 s of simulated time. The
+  recorder reads the arbiters (colliding shape pairs with points, normal, impulse)
+  after every substep. Two records of one policy are identical (6 of 6 checked).
+- The robot parts, the walls and the tables are kinematic bodies. When a robot part
+  runs into a wall or a table, pymunk calls a handler of the environment, which
+  moves the robot back to its last pose. No impulse is applied and the pair is in
+  no arbiter list, so the recorder wraps those handlers and records the pair with a
+  force of zero ("the robot is stopped by the wall"). In a sample of 7
+  final policies of each scenario this is rare in dynobstruction2d (3 of 713 env
+  steps), absent in dynpushpullhook2d, and 5 % of the env steps in dynscooppour2d
+  (the arm on the middle wall).
+- A grasp replaces the body of the object by a kinematic body that moves with the
+  gripper. The recorder then adds the pairs finger - held object itself, with a
+  force of zero (the grasp force is not simulated), so a grasp is one contact from
+  the first touch to the release.
+- Entities: `robot.base`, `robot.arm`, `robot.gripper.palm`,
+  `robot.gripper.left_finger` / `right_finger` (`robot.dot` in dynpusht2d);
+  `env.<name>` for objects (dynamic bodies) and fixtures (table, target surface);
+  `world.<name>` for the walls. A "geom" is one pymunk shape; `qpos` holds the pose
+  `x, y, theta` of every entity at every env step.
+- To read the arbiters in Python is much slower than the simulation. A scene with
+  12 or more movable bodies (dynscooppour2d: 30 objects, 35 times slower) is read
+  at every 5th substep (50 ms; `substep_stride` in `meta.json`).
+- The pictures show the collision shapes in the colours of the state objects, not
+  the picture of `env.render()`. Episode video, contact video, ghost video and the
+  labelled diagram all work from the viewer as for MuJoCo.
+
+### Tuning for pymunk: not the MuJoCo values
+
+The same two steps as for MuJoCo (gap histogram, repeatability test) were run on
+the 2D data: the final policy of the 140 runs on instances 0 to 3 (560 episodes,
+516 solved) and every policy version on instance 0 (3 130 records: 2 288 solve,
+87 crash in the episode, 6 versions do not load; logs in
+`outputs/contact_record_logs/dyn2d_*.log`).
+
+- *Merge gap.* The robot moves at the start of an env step and then holds, so one
+  push is a train of contacts of 0.1-0.3 s with gaps of 0.6-1.5 s (9 400 of the
+  16 300 gaps of the three small scenarios, instances 1 to 3), only 330 gaps are
+  between 1.5 s and 10 s, and a longer gap is a new contact. The gap is 3 s (3 env steps): it is the most
+  repeatable value (mean AUC 0.693; 0.66-0.69 for 0, 0.3, 0.5, 1, 2, 5 and 10 s).
+  `strategy.TIME_SCALE` holds the factor of each time for each backend (pymunk: gap
+  × 10, the two other times × 1; they have no effect on the result there). The
+  definition bar still shows the MuJoCo values; the page text gives the real ones.
+- *Definition.* A policy changes more between two start scenes than in the MuJoCo
+  scenarios, and the runs differ less from each other: the mean AUC is 0.69 at
+  best (0.85 for MuJoCo). The pairs without a robot part (object on object, object
+  on a wall) and the object names depend on the start scene. Within 0.25 are, of
+  the pairs of one policy: 43 % with all pairs and names as given (the MuJoCo
+  preset), 65 % with robot pairs only, 82 % with robot pairs and kinds only.
+- *Preset "tuned 2D".* Robot pairs only, kind only, full mode sequence, elastic
+  distance, threshold 0.35 (89 % of the pairs of one policy; the 90 % value is
+  0.38 / 0.48 / 0.30 / 0.21 in dynobstruction2d / dynpushpullhook2d / dynpusht2d /
+  dynscooppour2d, 0.37 pooled). On instance 0 it gives 5 / 2 / 3 / 2 strategies
+  for 35 / 33 / 34 / 30 runs. A threshold of 0.25 gives 6 / 2 / 5 / 6 strategies
+  and 82 %.
+- *In the viewer.* A page of one scenario offers the tuned preset of its simulator
+  with one button when it shows another definition (`strategy.TUNED_PRESET`), in
+  both directions: "tuned 2D" on a 2D scenario, "tuned" on a MuJoCo scenario.
+- *What it means.* In dynpushpullhook2d the AUC is 0.54: the runs are not more
+  different from each other than one policy is from itself (all take the hook and
+  pull). The strategies of the 2D scenarios are thus less reliable than those of
+  the MuJoCo scenarios, and a diversity number there needs this caveat.
+
+### Speed
+
+The distances between many mode sequences are computed for all pairs at one time
+(`strategy.key_distance_matrix`, the same values as the pair functions, 10 to 20
+times faster), and the interval code has no Python loop over long contacts. The
+first load of the history page of dynscooppour2d (534 traces with about 500 contact
+keys each) takes about 15 s; it took more than 2 minutes before.
+
+### Not done
+
+The kinematic scenarios (kinematic2d, kinematic3d, PR2, rovers) have no contacts: a
+motion into collision is rejected and a grasp is an attachment. A recorder for them
+must first define a contact. The definition nearest to the MuJoCo one ("two bodies
+touch at this instant") has three sources, each with a counterpart that is already
+in the traces:
+
+| source in a kinematic scenario | counterpart | what it gives |
+|---|---|---|
+| the two shapes are nearer than a small tolerance (PyBullet: closest points; 2D: distance of the geoms) | a MuJoCo contact | object on a table, object on object, the gripper at an object |
+| the robot holds the object (attachment, suction) | the pad contacts of a MuJoCo grasp; the "finger - held object" pair of the pymunk recorder | the grasp, also when the gripper does not touch the object in the geometry |
+| a motion is rejected because the robot or the held object would collide | a MuJoCo contact that stops the robot; the "stopped by the wall" pair of the pymunk recorder | the bump that never appears as an overlap |
+
+What stays different: there is no force (so no impact rule and no impulse), the time
+resolution is one env step, and the tolerance is a new parameter that must be tuned
+like the merge gap (too small: a resting object does not touch its table; too
+large: a near miss counts).
 
 ## State
 

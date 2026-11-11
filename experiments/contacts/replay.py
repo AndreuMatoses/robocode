@@ -420,6 +420,41 @@ def _colour(text: str) -> tuple[float, float, float]:
     return tuple(int(value[i : i + 2], 16) / 255 for i in (0, 2, 4))  # type: ignore
 
 
+PALETTE = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951", "#ff8ab7"]
+
+
+def _main_2d(args: argparse.Namespace, meta: dict[str, Any]) -> None:
+    """The four modes for a pymunk trace: drawn from the trace, with no env."""
+    # pylint: disable-next=import-outside-toplevel
+    from experiments.contacts import render2d
+
+    fps, size = int(meta.get("fps", 10)), (args.width, args.height)
+    if args.mode == "video":
+        _, poses = render2d.load(args.traces[0])
+        write_video(render2d.episode_frames(meta, poses, *size), args.out, fps)
+    elif args.mode == "contact":
+        write_video(render2d.contact_frames(args.traces[0], *size), args.out, fps)
+    elif args.mode == "diagram":
+        _, poses = render2d.load(args.traces[0])
+        render2d.write_diagram(meta, poses[0], args.out, *size)
+    else:
+        loaded = [render2d.load(d) for d in args.traces]
+        colours = [
+            _colour(args.colours[i] if i < len(args.colours) else PALETTE[i % 6])
+            for i in range(len(args.traces))
+        ]
+        frames = render2d.ghost_frames(
+            [m for m, _ in loaded],
+            [p for _, p in loaded],
+            colours,
+            *size,
+            alpha=args.alpha,
+            robot_only=not args.all_bodies,
+            equal=args.equal,
+        )
+        write_video(frames, args.out, fps)
+
+
 def main() -> None:
     """Render an episode, contact-highlight or ghost video from recorded traces."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
@@ -436,7 +471,10 @@ def main() -> None:
     parser.add_argument("--height", type=int, default=720)
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    if args.mode == "video":
+    first = json.loads((args.traces[0] / "meta.json").read_text())
+    if first.get("backend") == "pymunk":
+        _main_2d(args, first)
+    elif args.mode == "video":
         env, _, meta = open_trace_env(args.traces[0])
         try:
             frames = replay_frames(
@@ -458,9 +496,8 @@ def main() -> None:
         finally:
             env.close()
     else:
-        palette = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951", "#ff8ab7"]
         colours = [
-            _colour(args.colours[i] if i < len(args.colours) else palette[i % 6])
+            _colour(args.colours[i] if i < len(args.colours) else PALETTE[i % 6])
             for i in range(len(args.traces))
         ]
         ghost_video(

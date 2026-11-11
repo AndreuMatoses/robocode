@@ -43,9 +43,11 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from experiments.contacts import render2d
+from experiments.contacts.backend import backend_of_scenario, make_recorder, recording
 from experiments.contacts.commits import load_versions, select_commits
 from experiments.contacts.entities import robot_env
-from experiments.contacts.recorder import STEP_COLUMNS, ContactRecorder, recording
+from experiments.contacts.recorder import STEP_COLUMNS
 from experiments.contacts.replay import (
     render_camera_name,
     replay_frames,
@@ -86,11 +88,11 @@ def matching_runs(data: Path, patterns: list[str]) -> list[str]:
 
 
 def record_instance(
-    ro: Any, slot: list, seed: int, count: int | None, max_steps: int
+    ro: Any, slot: list, seed: int, count: int | None, max_steps: int, backend: str
 ) -> tuple[dict[str, np.ndarray], dict[str, Any], Any]:
     """Roll the policy out on one instance; return (arrays, metrics, recorder)."""
     state, info = reset_for_episode(ro.env, seed, count)
-    recorder = ContactRecorder(robot_env(ro.env))
+    recorder = make_recorder(backend, ro.env)
     tape = _ActionRecorder(ro.approach)
     slot[0] = recorder
     started = time.monotonic()
@@ -118,7 +120,8 @@ def record_instance(
 def record_run(args: argparse.Namespace, run_id: str) -> None:
     """Record every requested instance of one run at one commit."""
     configure_gl_backend()
-    with open_rollout(args.data, run_id, args.commit) as ro, recording() as slot:
+    backend = backend_of_scenario(run_id.split("/")[1])
+    with open_rollout(args.data, run_id, args.commit) as ro, recording(backend) as slot:
         commit = ro.commits.iloc[ro.pos]
         print(f"{run_id} commit {ro.pos}/{len(ro.commits) - 1}: {commit.subject}")
         max_steps = max_steps_for(ro, args.count)
@@ -128,25 +131,14 @@ def record_run(args: argparse.Namespace, run_id: str) -> None:
                 print(f"  instance {seed}: already recorded")
                 continue
             arrays, metrics, recorder = record_instance(
-                ro, slot, seed, args.count, max_steps
+                ro, slot, seed, args.count, max_steps, backend
             )
             out.mkdir(parents=True, exist_ok=True)
             np.savez_compressed(out / "trace.npz", **arrays)
-            camera = render_camera_name(ro.env)
-            if not args.no_video:
-                write_video(
-                    replay_frames(
-                        ro.env, arrays["qpos"], args.width, args.height, camera
-                    ),
-                    out / "video.mp4",
-                    FPS,
-                )
-            diagram = diagram_dir(args.out, run_id.split("/")[1], seed, args.count)
-            if not (diagram / "diagram.json").exists():
-                set_qpos(robot_env(ro.env), arrays["qpos"][0])
-                write_diagram(ro.env, recorder.emap, diagram, args.width, args.height)
+            camera = render_camera_name(ro.env) if backend == "mujoco" else "2d"
             reeval = commit.reeval_solve_rate
             meta = {
+                "backend": backend,
                 "run_id": run_id,
                 "method": run_id.split("/")[0],
                 "environment": run_id.split("/")[1],
@@ -166,7 +158,25 @@ def record_run(args: argparse.Namespace, run_id: str) -> None:
                 "num_ticks": recorder.tick,
                 "step_columns": STEP_COLUMNS,
                 **recorder.emap.to_json(),
+                **recorder.extra_meta(),
             }
+            diagram = diagram_dir(args.out, run_id.split("/")[1], seed, args.count)
+            if backend == "pymunk":
+                poses = render2d.poses_of(arrays["qpos"])
+                frames = render2d.episode_frames(meta, poses, args.width, args.height)
+                if not (diagram / "diagram.json").exists():
+                    render2d.write_diagram(
+                        meta, poses[0], diagram, args.width, args.height
+                    )
+            else:
+                frames = replay_frames(
+                    ro.env, arrays["qpos"], args.width, args.height, camera
+                )
+            if not args.no_video:
+                write_video(frames, out / "video.mp4", FPS)
+            if backend == "mujoco" and not (diagram / "diagram.json").exists():
+                set_qpos(robot_env(ro.env), arrays["qpos"][0])
+                write_diagram(ro.env, recorder.emap, diagram, args.width, args.height)
             (out / "meta.json").write_text(json.dumps(meta))
             print(
                 f"  instance {seed}: {metrics}; {len(arrays['keys'])} contact keys, "

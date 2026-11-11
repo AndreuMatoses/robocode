@@ -115,12 +115,7 @@ def group_strategies(
         return {key: key for key in keys}
     if group != "similar":
         raise ValueError(f"unknown grouping {group!r}")
-    dist = np.zeros((len(keys), len(keys)))
-    for i, key_a in enumerate(keys):
-        for j in range(i + 1, len(keys)):
-            dist[i, j] = dist[j, i] = strategy.key_distance(
-                list(key_a), list(keys[j]), metric
-            )
+    dist = strategy.key_distance_matrix(keys, metric)
     labels = fcluster(linkage(squareform(dist), "complete"), tau + 1e-9, "distance")
     return {key: int(label) for key, label in zip(keys, labels)}
 

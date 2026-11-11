@@ -141,6 +141,18 @@ PRESETS: dict[str, dict[str, Any]] = {
         "group": "similar",
         "tau": 0.25,
     },
+    # The same test on the dynamic 2D (pymunk) scenarios gives another result: the
+    # pairs without a robot part (object on object, object on a wall) change with
+    # the start scene, and so do the object names. With robot pairs and kinds only,
+    # 9 of 10 pairs of one policy are within 0.35.
+    "tuned 2D": {
+        "scope": "robot",
+        "identity": "kind",
+        "order": "sequence",
+        "metric": "warp",
+        "group": "similar",
+        "tau": 0.35,
+    },
     "detailed": {"scope": "all", "identity": "keep", "order": "sequence"},
     "object-agnostic": {"scope": "all", "identity": "merge", "order": "first"},
     "robot skeleton": {"scope": "robot", "identity": "merge", "order": "onset"},
@@ -214,6 +226,49 @@ class Definition:
         return dataclasses.replace(opts, **change) if change else opts
 
 
+TUNED_PRESET = {"mujoco": "tuned", "pymunk": "tuned 2D"}  # backend -> preset name
+
+# The debounce times of ``Options`` are tuned for the MuJoCo scenarios (an env step
+# of 0.1 s with continuous control). Another simulator has its own clock and its own
+# contact pattern, so each time is multiplied by a factor of its backend. The factors
+# come from the same data-driven steps as the MuJoCo values (see the README):
+# the gap histogram and the repeatability test of that backend.
+#
+# pymunk (dynamic2d): one env step is 100 substeps = 1 s. The robot moves at the
+# start of a step and then holds, so one push is a train of contacts of 0.1-0.3 s
+# with gaps of 0.6-1.5 s; the gap must cover that (3 s = 3 steps).
+TIME_SCALE: dict[str, dict[str, float]] = {
+    "pymunk": {"gap": 10.0, "min_duration": 1.0, "min_mode": 1.0},
+}
+
+
+def time_note(backend: str) -> str:
+    """One sentence on the debounce times of a simulator (empty for MuJoCo)."""
+    scale = TIME_SCALE.get(backend)
+    if not scale:
+        return ""
+    opts = scaled(Options(), {"backend": backend})
+    return (
+        f" In this simulator ({backend}) the times are other: the gap is "
+        f"{opts.gap:g} s, the shortest contact {opts.min_duration:g} s and the "
+        f"shortest mode {opts.min_mode:g} s (one env step is 1 s), each multiplied "
+        "by the same factor when a time is changed in the bar."
+    )
+
+
+def scaled(opts: Options, meta: dict[str, Any]) -> Options:
+    """``opts`` with its debounce times in the time of the trace's simulator."""
+    scale = TIME_SCALE.get(str(meta.get("backend", "mujoco")))
+    if not scale:
+        return opts
+    return dataclasses.replace(
+        opts,
+        gap=opts.gap * scale.get("gap", 1.0),
+        min_duration=opts.min_duration * scale.get("min_duration", 1.0),
+        min_mode=opts.min_mode * scale.get("min_mode", 1.0),
+    )
+
+
 def _category(kind_a: str, kind_b: str) -> str:
     return f"{kind_a}-{kind_b}" if kind_a != kind_b else f"{kind_a}-self"
 
@@ -264,6 +319,7 @@ def pair_intervals(
     dt, total = meta["dt"], max(int(meta["num_ticks"]), 1)
     geoms = {g["id"]: g for g in meta["geoms"]}
     entities = meta["entities"]
+    opts = scaled(opts, meta)
 
     def label(geom: int, face: int) -> tuple[str, str]:
         entity = entities[geoms[geom]["entity"]]
@@ -333,13 +389,19 @@ def pair_intervals(
         high = np.maximum(high, low).clip(max=len(ticks) - 1)
         peaks = fn_max[low]
         impulses = fn_mean[low] * (span[:, 1] - span[:, 0])
-        for i in np.flatnonzero(high > low):  # an interval over more than one step
-            start, end = span[i]
-            steps_in = np.arange(low[i], high[i] + 1)
-            upper = ticks[(steps_in + 1).clip(max=len(ticks) - 1)]
-            inside = np.minimum(upper, end) - np.maximum(ticks[steps_in], start)
-            peaks[i] = fn_max[steps_in].max()
-            impulses[i] = (fn_mean[steps_in] * inside.clip(0)).sum()
+        many = np.flatnonzero(high > low)  # intervals over more than one step
+        if many.size:
+            first, last = low[many], high[many]
+            # peak: the largest step value from the first to the last step
+            edges = np.column_stack((first, last + 1)).ravel()
+            padded = np.append(fn_max, 0.0)
+            peaks[many] = np.maximum.reduceat(padded, edges)[::2]
+            # impulse: whole steps between the two ends, plus the two partial ends
+            upper = ticks[(np.arange(len(ticks)) + 1).clip(max=len(ticks) - 1)]
+            whole = np.concatenate(([0.0], np.cumsum(fn_mean * (upper - ticks))))
+            head = fn_mean[first] * (upper[first] - span[many, 0]).clip(0)
+            tail = fn_mean[last] * (span[many, 1] - ticks[last]).clip(0)
+            impulses[many] = head + (whole[last] - whole[first + 1]) + tail
         raw.setdefault(name, []).extend(
             zip(
                 (span[:, 0] * dt).tolist(),
@@ -378,7 +440,9 @@ def mode_sequence(
     meta = load_meta(directory)
     duration = max(int(meta["num_ticks"]), 1) * meta["dt"]
     events: list[tuple[float, int, str]] = []
-    for name, rows in pair_intervals(directory, opts).items():
+    pairs = pair_intervals(directory, opts)
+    opts = scaled(opts, meta)
+    for name, rows in pairs.items():
         for start, end, _ in rows:
             events += [(start, 1, name), (min(end, duration), -1, name)]
     events.sort(key=lambda e: (e[0], e[1]))
@@ -565,6 +629,105 @@ def warp_distance(a: list[Mode], b: list[Mode]) -> float:
 def key_distance(a: list[Mode], b: list[Mode], metric: str = "edit") -> float:
     """A distance between two mode sequences that does not use time."""
     return warp_distance(a, b) if metric == "warp" else edit_distance(a, b)
+
+
+def jaccard_table(modes: list[Mode]) -> np.ndarray:
+    """The Jaccard distance between every two of ``modes`` (as ``jaccard``)."""
+    labels = {pair: i for i, pair in enumerate(sorted({p for m in modes for p in m}))}
+    member = np.zeros((len(modes), max(len(labels), 1)), dtype=np.float32)
+    for i, mode in enumerate(modes):
+        member[i, [labels[p] for p in mode]] = 1.0
+    shared = (member @ member.T).astype(np.float64)
+    size = member.sum(axis=1).astype(np.float64)
+    union = size[:, None] + size[None, :] - shared
+    with np.errstate(divide="ignore", invalid="ignore"):
+        table = 1.0 - shared / union
+    table[union == 0] = 0.0
+    return table
+
+
+def key_distance_matrix(
+    keys: list[tuple[Mode, ...]], metric: str = "edit", cells: int = 3_000_000
+) -> np.ndarray:
+    """``key_distance`` between every two of ``keys``, many pairs at a time.
+
+    The same recurrences as ``edit_distance`` and ``warp_path``, with the same
+    order of operations, so the values are equal to theirs. The table of a group
+    of pairs is filled one anti-diagonal at a time for the whole group, which is
+    much faster than one Python loop per pair when there are thousands of pairs.
+    """
+    count = len(keys)
+    out = np.zeros((count, count))
+    if count < 2:
+        return out
+    ids: dict[Mode, int] = {}
+    seqs = [
+        np.array([ids.setdefault(m, len(ids)) for m in key], dtype=np.int64)
+        for key in keys
+    ]
+    table = jaccard_table(list(ids)) if ids else np.zeros((1, 1))
+    length = np.array([len(q) for q in seqs])
+    first, second = np.triu_indices(count, 1)
+    # one or two empty sequences: no table to fill
+    empty = (length[first] == 0) | (length[second] == 0)
+    both = (length[first] == 0) & (length[second] == 0)
+    out[first[empty], second[empty]] = np.where(both[empty], 0.0, 1.0)
+    first, second = first[~empty], second[~empty]
+    # pairs of similar size together, so that little of a group is padding
+    order = np.argsort(np.maximum(length[first], length[second]), kind="stable")
+    first, second = first[order], second[order]
+    start = 0
+    while start < len(first):
+        stop = start + 1
+        size_a, size_b = int(length[first[start]]), int(length[second[start]])
+        while stop < len(first):
+            a = max(size_a, int(length[first[stop]]))
+            b = max(size_b, int(length[second[stop]]))
+            if (stop - start + 1) * (a + 1) * (b + 1) > cells:
+                break
+            size_a, size_b, stop = a, b, stop + 1
+        group_a, group_b = first[start:stop], second[start:stop]
+        seq_a = np.zeros((stop - start, size_a), dtype=np.int64)
+        seq_b = np.zeros((stop - start, size_b), dtype=np.int64)
+        for row, (i, k) in enumerate(zip(group_a.tolist(), group_b.tolist())):
+            seq_a[row, : length[i]] = seqs[i]
+            seq_b[row, : length[k]] = seqs[k]
+        cost = table[seq_a[:, :, None], seq_b[:, None, :]]
+        total = np.full((stop - start, size_a + 1, size_b + 1), np.inf)
+        steps = np.zeros(total.shape, dtype=np.int32)
+        if metric == "warp":
+            total[:, 0, 0] = 0.0
+        else:
+            total[:, :, 0] = np.arange(size_a + 1)
+            total[:, 0, :] = np.arange(size_b + 1)
+        for diagonal in range(2, size_a + size_b + 1):
+            i = np.arange(max(1, diagonal - size_b), min(size_a, diagonal - 1) + 1)
+            j = diagonal - i
+            here = cost[:, i - 1, j - 1]
+            if metric == "warp":
+                best, walked = total[:, i - 1, j - 1], steps[:, i - 1, j - 1]
+                for di, dj in ((1, 0), (0, 1)):  # then from above, then from the left
+                    other = total[:, i - di, j - dj]
+                    better = other < best
+                    best = np.where(better, other, best)
+                    walked = np.where(better, steps[:, i - di, j - dj], walked)
+                total[:, i, j] = best + here
+                steps[:, i, j] = walked + 1
+            else:
+                total[:, i, j] = np.minimum(
+                    np.minimum(total[:, i - 1, j] + 1, total[:, i, j - 1] + 1),
+                    total[:, i - 1, j - 1] + here,
+                )
+        rows_ = np.arange(stop - start)
+        end_a, end_b = length[group_a], length[group_b]
+        value = total[rows_, end_a, end_b]
+        if metric == "warp":
+            value = value / steps[rows_, end_a, end_b]
+        else:
+            value = value / np.maximum(end_a, end_b)
+        out[group_a, group_b] = value
+        start = stop
+    return out + out.T
 
 
 def pair_distance(dir_a: Path, dir_b: Path, opts: Options = Options()) -> float:

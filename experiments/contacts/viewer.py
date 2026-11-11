@@ -31,6 +31,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from experiments.contacts import (
+    backend,
     catalog,
     diversity,
     histories,
@@ -449,6 +450,8 @@ def scenario_histories(
         CONFIG.traces, _scenario_runs(name), instance, opts, _versions, group, tau, defn
     )
     out["name"] = name
+    out["preset"] = _preset(name)
+    out["definition_text"] += _time_note(name)
     out["methods"] = [
         m for m in METHOD_ORDER if any(r["method"] == m for r in out["runs"])
     ]
@@ -488,10 +491,27 @@ def _diversity(
         reported,
     )
     out["name"] = name
+    out["preset"] = _preset(name)
+    out["definition_text"] += _time_note(name)
     out["method_order"] = [
         m for m in METHOD_ORDER if any(r["method"] == m for r in out["runs"])
     ]
     return out
+
+
+def _backend(name: str) -> str:
+    simulator = catalog.scenario_tags(name)["simulator"]
+    return backend.BACKEND_OF_SIMULATOR.get(simulator, "mujoco")
+
+
+def _time_note(name: str) -> str:
+    """What is different about the debounce times of this scenario's simulator."""
+    return strategy.time_note(_backend(name))
+
+
+def _preset(name: str) -> str:
+    """The tuned preset of this scenario's simulator."""
+    return strategy.TUNED_PRESET.get(_backend(name), "tuned")
 
 
 def scenario_diversity(
@@ -514,6 +534,7 @@ def _metrics(
         defn,
     )
     out["name"] = name
+    out["preset"] = _preset(name)
     out["method_order"] = [
         m for m in METHOD_ORDER if any(r["method"] == m for r in out["runs"])
     ]

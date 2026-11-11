@@ -46,21 +46,21 @@ STEP_COLUMNS = [
 ]
 
 
-class ContactRecorder:
-    """Accumulates the contacts of one episode of one ``MujocoEnv``."""
+class BaseRecorder:
+    """The part of a recorder that does not depend on the simulator.
 
-    def __init__(self, renv: Any, min_force: float = 1e-3) -> None:
-        self.sim = renv.sim
-        self.model = renv.sim.model.mj_model
-        self.data = renv.sim.data.mj_data
-        self.emap: EntityMap = build_entity_map(self.model)
-        self.min_force = min_force
-        self.dt = float(self.model.opt.timestep)
-        self._rank = self.emap.rank()
-        site = mujoco.mj_name2id(
-            self.model, mujoco.mjtObj.mjOBJ_SITE, "robot_pinch_site"
-        )
-        self._site = site if site >= 0 else None
+    A subclass reads the simulator: ``substep`` appends to ``_buffer`` one tuple of
+    arrays per substep (tick, geom A, face A, geom B, face B, normal force,
+    tangential force, point on A, point on B), and ``_snapshot`` appends the state
+    of one env step to ``_qpos`` (whatever a replay needs), ``_time`` and ``_ee``.
+    It sets ``emap`` and ``dt`` before it calls ``BaseRecorder.__init__``.
+    """
+
+    backend = "mujoco"  # name of the simulator family, written to ``meta.json``
+    emap: EntityMap
+    dt: float
+
+    def __init__(self) -> None:
         self.tick = 0
         self._step_start = 0
         self._buffer: list[tuple[np.ndarray, ...]] = []
@@ -73,53 +73,18 @@ class ContactRecorder:
         self._time: list[float] = []
         self._snapshot()
 
-    # ------------------------------------------------------------ per substep
-
     def substep(self) -> None:
-        """Read the contacts after one ``mj_step``."""
-        self.tick += 1
-        data, n = self.data, self.data.ncon
-        if not n:
-            return
-        force = np.zeros((n, 6))
-        for i in range(n):
-            mujoco.mj_contactForce(self.model, data, i, force[i])
-        keep = force[:, 0] > self.min_force
-        if not keep.any():
-            return
-        geoms = np.array(data.contact.geom[:n])[keep]
-        points = np.array(data.contact.pos[:n])[keep]
-        # Order each pair: robot before object before fixture before world.
-        swap = self._rank[geoms[:, 0]] > self._rank[geoms[:, 1]]
-        geoms[swap] = geoms[swap][:, ::-1]
-        normals = np.array(data.contact.frame[:n])[keep, :3]
-        sides = [
-            local_points(
-                self.emap, geoms[:, k], points, normals, data.geom_xpos, data.geom_xmat
-            )
-            for k in (0, 1)
-        ]
-        self._buffer.append(
-            (
-                np.full(len(geoms), self.tick, dtype=np.int64),
-                geoms[:, 0],
-                sides[0][1],
-                geoms[:, 1],
-                sides[1][1],
-                force[keep, 0],
-                np.hypot(force[keep, 1], force[keep, 2]),
-                sides[0][0],
-                sides[1][0],
-            )
-        )
-
-    # ----------------------------------------------------------- per env step
+        """Read the contacts after one simulation substep."""
+        raise NotImplementedError
 
     def _snapshot(self) -> None:
-        self._qpos.append(np.array(self.data.qpos))
-        self._time.append(float(self.data.time))
-        if self._site is not None:
-            self._ee.append(np.array(self.data.site_xpos[self._site]))
+        raise NotImplementedError
+
+    def extra_meta(self) -> dict[str, Any]:
+        """What a replay of this simulator needs besides the entity tables."""
+        return {}
+
+    # ----------------------------------------------------------- per env step
 
     def end_step(self) -> None:
         """Aggregate the substeps of the env step that just finished."""
@@ -160,8 +125,8 @@ class ContactRecorder:
                         total / len(active),
                         per_tick.max(),
                         float(f_t[mask].sum()) / len(active),
-                        *((p_a[mask] * weight).sum(axis=0) / total),
-                        *((p_b[mask] * weight).sum(axis=0) / total),
+                        *_mean_point(p_a[mask], weight, total),
+                        *_mean_point(p_b[mask], weight, total),
                     ],
                     dtype=np.float32,
                 )
@@ -217,6 +182,75 @@ class ContactRecorder:
                 dtype=np.int64,
             ),
         }
+
+
+def _mean_point(points: np.ndarray, weight: np.ndarray, total: float) -> np.ndarray:
+    """Force-weighted mean point (the plain mean when no force is known)."""
+    if total <= 0.0:
+        return points.mean(axis=0)
+    return (points * weight).sum(axis=0) / total
+
+
+class ContactRecorder(BaseRecorder):
+    """Accumulates the contacts of one episode of one ``MujocoEnv``."""
+
+    def __init__(self, renv: Any, min_force: float = 1e-3) -> None:
+        self.sim = renv.sim
+        self.model = renv.sim.model.mj_model
+        self.data = renv.sim.data.mj_data
+        self.emap = build_entity_map(self.model)
+        self.min_force = min_force
+        self.dt = float(self.model.opt.timestep)
+        self._rank = self.emap.rank()
+        site = mujoco.mj_name2id(
+            self.model, mujoco.mjtObj.mjOBJ_SITE, "robot_pinch_site"
+        )
+        self._site = site if site >= 0 else None
+        super().__init__()
+
+    def substep(self) -> None:
+        """Read the contacts after one ``mj_step``."""
+        self.tick += 1
+        data, n = self.data, self.data.ncon
+        if not n:
+            return
+        force = np.zeros((n, 6))
+        for i in range(n):
+            mujoco.mj_contactForce(self.model, data, i, force[i])
+        keep = force[:, 0] > self.min_force
+        if not keep.any():
+            return
+        geoms = np.array(data.contact.geom[:n])[keep]
+        points = np.array(data.contact.pos[:n])[keep]
+        # Order each pair: robot before object before fixture before world.
+        swap = self._rank[geoms[:, 0]] > self._rank[geoms[:, 1]]
+        geoms[swap] = geoms[swap][:, ::-1]
+        normals = np.array(data.contact.frame[:n])[keep, :3]
+        sides = [
+            local_points(
+                self.emap, geoms[:, k], points, normals, data.geom_xpos, data.geom_xmat
+            )
+            for k in (0, 1)
+        ]
+        self._buffer.append(
+            (
+                np.full(len(geoms), self.tick, dtype=np.int64),
+                geoms[:, 0],
+                sides[0][1],
+                geoms[:, 1],
+                sides[1][1],
+                force[keep, 0],
+                np.hypot(force[keep, 1], force[keep, 2]),
+                sides[0][0],
+                sides[1][0],
+            )
+        )
+
+    def _snapshot(self) -> None:
+        self._qpos.append(np.array(self.data.qpos))
+        self._time.append(float(self.data.time))
+        if self._site is not None:
+            self._ee.append(np.array(self.data.site_xpos[self._site]))
 
 
 @contextlib.contextmanager

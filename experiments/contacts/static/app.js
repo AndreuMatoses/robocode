@@ -786,6 +786,7 @@ async function pageHistories(name) {
   const load = async () => {
     body.replaceChildren(h("p", { class: "muted" }, "loading…"));
     hs = await j(`/api/histories?name=${name}&level=${state.level}&${defQuery()}`);
+    PRESET_HINT(hs.preset);
     METHODS = hs.methods;
     draw(); drawPair();
   };
@@ -903,9 +904,18 @@ const DEF = { scope: "all", identity: "keep", order: "sequence", fingers: "pad_f
 try { Object.assign(DEF, JSON.parse(localStorage.getItem("contactDefinition") || "{}")); } catch (err) { /* defaults */ }
 const defQuery = () => `scope=${DEF.scope}&identity=${DEF.identity}&order=${DEF.order}&fingers=${DEF.fingers}&metric=${DEF.metric}&group=${DEF.group}&tau=${DEF.tau}` +
   ["gap", "min_duration", "min_mode"].map((k) => (DEF[k] === "" || DEF[k] == null ? "" : `&${k}=${DEF[k]}`)).join("");
+let PRESET_HINT = () => {};
 async function defControls(onChange) {
   DEFS = DEFS || await j("/api/definitions");
-  const box = h("div", { class: "bar defbar" }), fine = h("div", { class: "bar defbar deftimes" }), wrap = h("div", {}, box, fine);
+  const box = h("div", { class: "bar defbar" }), fine = h("div", { class: "bar defbar deftimes" }), hint = h("div", {}), wrap = h("div", {}, box, fine, hint);
+  // the tuned preset differs by simulator: offer it when the page shows another one
+  PRESET_HINT = (name) => {
+    const want = DEFS.presets[name];
+    if (!want || Object.entries(want).every(([k, value]) => String(DEF[k]) === String(value))) { hint.replaceChildren(); return; }
+    hint.replaceChildren(h("div", { class: "bar defbar deftimes", style: "border-color:var(--accent)" },
+      h("span", {}, `The tuned definition for the simulator of this scenario is the preset “${name}”. The page now shows another definition.`),
+      h("button", { class: "primary", onclick: () => set({ ...want }) }, `Use “${name}”`)));
+  };
   const TIMES = [0, 0.03, 0.05, 0.1, 0.2, 0.3, 0.5, 1];
   const time = (label, key, title) => sel(label, DEF[key] === "" || DEF[key] == null ? "" : DEF[key],
     [["", `default (${DEFS.times[key]} s)`], ...TIMES.filter((v) => v !== DEFS.times[key]).map((v) => [v, `${v} s`])], (v) => set({ [key]: v === "" ? "" : Number(v) }), title);
@@ -1078,6 +1088,7 @@ async function pageDiversity(name) {
   const load = async () => {
     body.replaceChildren(h("p", { class: "muted" }, "loading…"));
     d = await j(`/api/diversity?name=${name}&${defQuery()}`);
+    PRESET_HINT(d.preset);
     METHODS = d.method_order;
     ghost = ghostPanel(name, d);
     draw();
@@ -1386,6 +1397,7 @@ ${pct(cb[b])} of the pairs of two runs`));
   const load = async () => {
     charts.replaceChildren(h("p", { class: "muted" }, "loading…"));
     d = await j(`/api/metrics?name=${name}&${defQuery()}`);
+    PRESET_HINT(d.preset);
     METHODS = d.method_order;
     pairs = [];
     d.runs.forEach((r, i) => d.runs.forEach((q, k) => { if (k > i) pairs.push([i, k]); }));

@@ -308,19 +308,20 @@ def distance_matrices(
     ids = [[index[m] for m in row] for row in sampled] or [[] for _ in dirs]
 
     dist = {key: np.zeros((n, n)) for key in which}
-    seen: dict[tuple[Any, Any, Any], float] = {}
-    for i in range(n):
+    # the two distances on the keys: every two distinct keys at one time
+    distinct = list(dict.fromkeys(keys))
+    place = np.array([distinct.index(key) for key in keys], dtype=np.int64)
+    for key in which:
+        if key in ("edit", "warp") and n:
+            dist[key] = strategy.key_distance_matrix(distinct, key)[
+                np.ix_(place, place)
+            ]
+    timed_keys = [key for key in which if key not in ("edit", "warp")]
+    for i in range(n if timed_keys else 0):
         for k in range(i + 1, n):
             table = pair_table(spans[i], spans[k]) if spans else []
-            for key in which:
-                if key in ("edit", "warp"):
-                    pair = (key, keys[i], keys[k])
-                    if pair not in seen:
-                        seen[pair] = seen[(key, keys[k], keys[i])] = (
-                            strategy.key_distance(list(keys[i]), list(keys[k]), key)
-                        )
-                    value = seen[pair]
-                elif key == "set":
+            for key in timed_keys:
+                if key == "set":
                     value = strategy.jaccard(used[i], used[k])
                 elif key == "duty":
                     value = duty_distance(table)
