@@ -54,6 +54,7 @@ simulator; their contacts are built from the geometry (see "Simulator backends")
 | `experiments/contacts/repeat.py` | Repeatability of a strategy definition: the final policy of each run on several start scenes; within-policy and between-run distances, the thresholds they give, and the probability that two runs are farther apart than one policy is from itself |
 | `experiments/contacts/catalog.py` | Scenario tags (simulator, robot, dimension, dynamics) and thumbnails |
 | `experiments/contacts/viewer.py`, `static/` | The contact viewer (stdlib HTTP server, vanilla JS) |
+| `experiments/contacts/briefing.py` | What the agent was told: `env_description.md` and the system prompt and prompt from the start of `run_experiment.log`, grouped into variants with equal text (`/api/briefing`, the panel "Information given to the agent" on a scenario page) |
 
 Design points worth knowing:
 
@@ -94,6 +95,12 @@ the MuJoCo recorder is bit-identical before and after this split.
 - One `env.step` is 100 `Space.step` substeps of 10 ms: 1 s of simulated time. The
   recorder reads the arbiters (colliding shape pairs with points, normal, impulse)
   after every substep. Two records of one policy are identical (6 of 6 checked).
+- A trace stores the poses once per env step, and a video has one frame per env
+  step at 10 frames per second. So a dynamic 2D video plays 10 times faster than
+  the simulated time (4.4 s of video for 43 s of timeline). The trace page maps
+  video time to simulated time (`rate` in `pageTrace`) for the playhead and the
+  seek, and offers a 0.1× "real time" speed. In all other scenarios an env step
+  is 0.1 s, so video time and simulated time are equal.
 - The robot parts, the walls and the tables are kinematic bodies. When a robot part
   runs into a wall or a table, pymunk calls a handler of the environment, which
   moves the robot back to its last pose. No impulse is applied and the pair is in

@@ -454,6 +454,107 @@ async function pageIndex() {
   draw();
 }
 
+// ---------------------------------------------- information given to the agent
+// A small Markdown view: headings, tables, code blocks, list items, `code`, **bold**.
+// It makes text nodes only, so the text of a prompt cannot add markup to the page.
+function mdInline(text) {
+  const out = [], re = /`([^`]+)`|\*\*([^*]+)\*\*/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    out.push(m[1] != null ? h("code", {}, m[1]) : h("b", {}, m[2]));
+    last = re.lastIndex;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+function markdown(text) {
+  const root = h("div", { class: "md" }), lines = text.replace(/\r/g, "").split("\n");
+  const cells = (l) => l.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+  const fence = /^\s*```/, head = /^(#{1,4})\s+(.*)$/, row = /^\s*\|/, item = /^(\s*)(-|\d+\.)\s+(.*)$/;
+  let i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (!l.trim()) { i++; continue; }
+    if (fence.test(l)) {
+      const buf = [];
+      for (i++; i < lines.length && !fence.test(lines[i]); i++) buf.push(lines[i]);
+      i++; root.append(h("pre", {}, buf.join("\n"))); continue;
+    }
+    const hd = head.exec(l);
+    if (hd) { root.append(h("div", { class: "mdh mdh" + hd[1].length }, mdInline(hd[2]))); i++; continue; }
+    if (row.test(l)) {
+      const rows = [];
+      for (; i < lines.length && row.test(lines[i]); i++) rows.push(cells(lines[i]));
+      const ruled = rows.length > 1 && rows[1].every((c) => /^:?-+:?$/.test(c));
+      const body = ruled ? rows.slice(2) : rows;
+      root.append(h("div", { class: "mdtable" }, h("table", {},
+        ruled ? h("thead", {}, h("tr", {}, rows[0].map((c) => h("th", {}, mdInline(c))))) : null,
+        h("tbody", {}, body.map((r) => h("tr", {}, r.map((c) => h("td", {}, mdInline(c)))))))));
+      continue;
+    }
+    const it = item.exec(l);
+    if (it) {  // a list item and the indented lines that continue it
+      const buf = [it[3]];
+      for (i++; i < lines.length && lines[i].trim() && /^\s/.test(lines[i]) && !item.test(lines[i]) && !fence.test(lines[i]); i++) buf.push(lines[i].trim());
+      root.append(h("div", { class: "mdli", style: `margin-left:${8 + it[1].length * 8}px` }, h("span", { class: "mdmark" }, it[2] === "-" ? "•" : it[2]), h("span", {}, mdInline(buf.join(" ")))));
+      continue;
+    }
+    const buf = [];
+    for (; i < lines.length && lines[i].trim() && !fence.test(lines[i]) && !head.test(lines[i]) && !row.test(lines[i]) && !item.test(lines[i]); i++) buf.push(lines[i].trim());
+    root.append(h("p", {}, mdInline(buf.join(" "))));
+  }
+  return root;
+}
+
+const BRIEF_PARTS = [
+  ["description", "task and environment", "The description of the task, the observation, the actions and the reward (env_description.md of the run). It is a part of the prompt."],
+  ["prompt", "full prompt", "The first message to the agent, from the log of the run: the description, the interface of the program to write, and the rules."],
+  ["system", "system prompt", "The standing instructions of the agent program, from the log of the run."],
+];
+function briefingPanel(name) {
+  const body = h("div", { class: "muted" }, "loading…");
+  const box = h("details", { class: "panel brief" },
+    h("summary", {}, "Information given to the agent ", h("small", {}, "— the task and environment description, the prompt and the system prompt")), body);
+  let loaded = false;
+  box.addEventListener("toggle", async () => {
+    if (!box.open || loaded) return;
+    loaded = true;
+    let data;
+    try { data = await j("/api/briefing?name=" + name); } catch (err) { body.textContent = "Not available: " + err.message; return; }
+    if (!data.variants.length) { body.textContent = "The run folders of this scenario have no description and no prompt."; return; }
+    const state = { variant: 0, part: "description", raw: false };
+    const tabs = h("div", { class: "tabs" }), note = h("div", { class: "muted", style: "margin:6px 0" }), text = h("div", { class: "brieftext" });
+    const list = (v) => (v || []).join(", ");
+    const draw = () => {
+      const v = data.variants[state.variant], f = v.facts || {};
+      tabs.replaceChildren(...BRIEF_PARTS.map(([key, label, title]) => h("button", { class: state.part === key ? "on" : "", title, disabled: !v[key], onclick: () => { state.part = key; draw(); } }, label)));
+      if (!v[state.part]) state.part = "description";
+      const facts = [
+        f.design_counts ? `object counts for the design (the scenes of the agent): ${list(f.design_counts)}` : null,
+        f.eval_counts ? `object counts in the evaluation: ${list(f.eval_counts)}` : null,
+        f.max_steps != null ? `step limit ${f.max_steps}` : null,
+        f.eval_timeout_s != null ? `${f.eval_timeout_s} s of policy time for each episode` : null,
+        v.prompt && f.budget_usd != null ? `budget ${f.budget_usd} USD` : null,
+        v.prompt && f.tools ? `extra tools: ${list(f.tools)}` : null,
+      ].filter(Boolean);
+      note.replaceChildren(...[
+        h("div", {}, `${v.runs} runs get this text. ` + (v.prompt ? "" : "The log of these runs has no prompt, so only the description is shown. ") + BRIEF_PARTS.find((p) => p[0] === state.part)[2]),
+        facts.length ? h("div", {}, "From the configuration of the runs: " + facts.join(" · ") + ".") : null,
+        data.without_prompt.length ? h("div", {}, `The log of ${data.without_prompt.length} more run(s) has no prompt: ${data.without_prompt.join(", ")}.`) : null].filter(Boolean));
+      text.replaceChildren(state.raw ? h("pre", { class: "raw" }, v[state.part]) : markdown(v[state.part]));
+      text.scrollTop = 0;
+    };
+    const pick = h("select", { onchange: (e) => { state.variant = Number(e.target.value); draw(); } }, data.variants.map((v, i) => h("option", { value: i }, v.label)));
+    const raw = h("input", { type: "checkbox", onchange: (e) => { state.raw = e.target.checked; draw(); } });
+    body.className = "";
+    body.replaceChildren(h("div", { class: "bar" }, h("label", { title: "Runs with the same texts are one entry. A black-box agent and an agent with the source code get different texts, and the two agent programs have different system prompts." }, "given to ", pick), tabs,
+      h("label", { title: "Show the exact characters, without the Markdown layout." }, raw, "raw text")), note, text);
+    draw();
+  });
+  return box;
+}
+
 async function pageScenario(name) {
   $("#crumbs").replaceChildren(name);
   const app = $("#app");
@@ -554,6 +655,7 @@ async function pageScenario(name) {
     h("div", {}, Object.values(sc.tags).map((t) => h("span", { class: "tag" }, t)),
       h("a", { href: "#/h/" + name, style: "margin-left:12px" }, "strategy histories of all runs →"),
       h("a", { href: "#/d/" + name, style: "margin-left:12px" }, "diversity and optimality →")),
+    briefingPanel(name),
     h("h2", {}, "Runs ", h("small", {}, "— tick recorded runs to compare them; numbers are the reported solve rates")), matrixBox,
     h("h2", {}, "Contact timelines"), h("div", { class: "panel" }, overlay),
     h("h2", {}, "Who is who ", h("small", {}, "— entities in contact in the selected runs; hover the image or the list")), diagramBox,
@@ -572,6 +674,9 @@ async function pageTrace(id) {
   const traces = [{ summary: sm, color: methodColor(meta.method), label: meta.run_id }];
   const files = "/files/" + id;
   const video = h("video", { controls: true, muted: true, style: "width:100%" });
+  // The video has one frame for each env step. An env step of the dynamic 2D scenes is
+  // 1 s of simulated time, so there the video runs 10 times faster than the timeline.
+  const rate = (meta.step_seconds || 1 / meta.fps) * meta.fps;  // simulated seconds per video second
   const row0 = sc.traces.find((x) => x.id === id);
   if (row0 && !row0.has_video) {  // history commits are recorded without a video
     runJob({ kind: "video", trace: id }, (job) => { if (job.state === "done") video.src = `${files}/video.mp4?t=${Date.now()}`; });
@@ -586,12 +691,14 @@ async function pageTrace(id) {
   };
   mode.append(h("button", { class: "on", onclick: () => setMode("plain") }, "plain"), h("button", { onclick: () => setMode("contact") }, "contact highlight"));
   const speed = h("select", { onchange: (e) => { video.playbackRate = Number(e.target.value); } }, ["0.25", "0.5", "1", "2", "4"].map((v) => h("option", { value: v, selected: v === "1" }, v + "×")));
+  if (Math.abs(rate - 1) > 1e-6) speed.prepend(h("option", { value: String(1 / rate) }, `${fmt(1 / rate, 2)}× (real time)`));
   const m = meta.metrics;
   const info = h("div", { class: "muted" }, `${m.crashed ? "crashed: " + m.crashed : m.solved ? "solved" : "not solved"} in ${m.num_steps} steps (${fmt(sm.duration, 1)} s)` +
-    (m.object_count != null ? ` · ${m.object_count} objects` : "") + ` · this commit's reported solve rate ${fmt(meta.commit_solve_rate)} · “${meta.subject}”`);
+    (m.object_count != null ? ` · ${m.object_count} objects` : "") + ` · this commit's reported solve rate ${fmt(meta.commit_solve_rate)} · “${meta.subject}”` +
+    (Math.abs(rate - 1) > 1e-6 ? ` · one env step is ${fmt(meta.step_seconds, 1)} s of simulated time and one video frame, so the video plays ${fmt(rate, 0)}× faster than the timeline` : ""));
   const detail = h("div", {}), tl = new Timeline(traces, opts);
   tl.onSelect = (row) => detail.replaceChildren(detailPanel(row, traces, (hid) => { if (diagram) { diagram.setHot(hid); lg.hot(hid); } }));
-  tl.onSeek = (t) => { video.currentTime = t; };
+  tl.onSeek = (t) => { video.currentTime = t / rate; };
   let diagram = null, lg = null;
   const right = h("div", { class: "panel", style: "flex:1 1 420px;max-width:640px" });
   if (inst && inst.diagram) {
@@ -610,7 +717,7 @@ async function pageTrace(id) {
   tl.render();
   const tick = () => {
     if (!document.body.contains(video)) return;
-    const t = video.currentTime;
+    const t = video.currentTime * rate;  // simulated time
     tl.setTime(t);
     if (diagram) {
       const lit = new Map();
@@ -973,7 +1080,7 @@ function ghostPanel(name, d) {
   for (const r of solved) { if (!members.has(r.sid)) members.set(r.sid, []); members.get(r.sid).push(r); }
   const present = d.strategies.filter((st) => members.has(st.id));
   const largest = [...present].sort((p, q) => members.get(q.id).length - members.get(p.id).length)[0];
-  const state = { runs: "strategy", colour: "strategy", inside: "run", sid: largest ? largest.id : null, singles: false, objects: true };
+  const state = { runs: "strategy", colour: "strategy", inside: "run", sid: largest ? largest.id : null, singles: true, objects: true };
   const shortest = (key) => { const best = new Map(); for (const r of solved) if (!best.has(r[key])) best.set(r[key], r); return [...best.values()]; };
   const sets = { all: solved, strategy: shortest("sid"), method: shortest("method") };
   const strategyHex = (sid) => (rank.get(sid) < MODE_PALETTE.length ? MODE_PALETTE[rank.get(sid)] : GHOST_OTHER);
@@ -1017,7 +1124,8 @@ function ghostPanel(name, d) {
 
     if (state.runs === "grid") {
       const shown = present.filter((st) => state.singles || members.get(st.id).length > 1);
-      const hidden = present.length - present.filter((st) => members.get(st.id).length > 1).length;
+      const lone = present.filter((st) => members.get(st.id).length === 1).map((st) => st.id), hidden = lone.length;
+      const loneNames = lone.length > 6 ? lone.slice(0, 6).join(", ") + ", …" : lone.join(", ");
       const singles = h("input", { type: "checkbox", checked: state.singles, onchange: (e) => { state.singles = e.target.checked; out.replaceChildren(); draw(); } });
       const tiles = shown.map((st) => {
         const runs = members.get(st.id), p = paint(runs, by), slot = h("div", { class: "gslot muted" }, "not rendered");
@@ -1043,10 +1151,11 @@ function ghostPanel(name, d) {
           });
         }
       } }, `Render ${tiles.length} video${tiles.length === 1 ? "" : "s"}`);
-      box.replaceChildren(
-        h("div", { class: "bar" }, ...bar, h("label", {}, singles, `also the ${hidden} strateg${hidden === 1 ? "y" : "ies"} with one run`), render, restart),
+      box.replaceChildren(...[
+        h("div", { class: "bar" }, ...bar, hidden ? h("label", { title: "A strategy with one run gives a video of one robot, so the grid leaves it out until you tick this box." }, singles, `also the ${hidden} strateg${hidden === 1 ? "y" : "ies"} with one run (${loneNames})`) : null, render, restart),
+        hidden && !state.singles ? h("div", { class: "muted" }, `Not in the grid: ${loneNames}. ${hidden === 1 ? "This strategy has" : "Each of these strategies has"} one run only. Tick the box above to add ${hidden === 1 ? "it" : "them"}.`) : null,
         h("div", { class: "muted" }, `One video for each strategy, with all final policies of that strategy that solve ${d.instance}. In one video, all runs start at the same time from the same scene, ` +
-          "and a run that is complete holds its last pose. Every robot is translucent. The dot at each title is the colour of the strategy on this page. Strategies follow the definition above."));
+          "and a run that is complete holds its last pose. Every robot is translucent. The dot at each title is the colour of the strategy on this page. Strategies follow the definition above.")].filter(Boolean));
       out.className = "ghostgrid";
       out.replaceChildren(...tiles.map((t) => t.el));
       box.append(out);
@@ -1231,11 +1340,39 @@ async function pageDiversityAll() {
     const lo = Math.min(...all), hi = Math.max(...all);
     const cell = (group, perMethod) => { const v = value(group);
       return h("td", { style: v == null || !perMethod ? "" : `background:${tint(hi > lo ? (v - lo) / (hi - lo) : 0)}`, title: group ? `${group.n} of ${group.runs} final policies solve the instance` : "" }, v == null ? "–" : fmt(v, digits)); };
+    // Summary rows: the mean of each method over the scenarios. A method with no solved
+    // run in a scenario has no value there, so the first mean is over other scenarios
+    // for each method. The second mean uses only the scenarios where every method has
+    // a value: this is the row to compare the methods with.
+    const footRows = () => {
+      const mean = (values) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : null);
+      const own = (m) => ov.scenarios.filter((sc) => value(sc.methods[m]) != null);
+      const common = ov.scenarios.filter((sc) => ov.methods.every((m) => value(sc.methods[m]) != null));
+      const scale = key !== "median_steps";  // a raw step count has another scale in each scenario
+      const row = (label, hint, scenarios, perMethod) => {
+        const values = ov.methods.map((m) => (scale ? mean(perMethod(m).map((sc) => value(sc.methods[m]))) : null));
+        const shown = values.filter((v) => v != null), low = Math.min(...shown), high = Math.max(...shown);
+        const overall = scale && key !== "relative_steps" && key !== "policy_time_s" ? mean(scenarios.map((sc) => value(sc.overall)).filter((v) => v != null)) : null;
+        const tested = scenarios.filter((sc) => sc.overall.p_value != null), within = mean(tested.map((sc) => sc.overall.within)), between = mean(tested.map((sc) => sc.overall.between));
+        return h("tr", { class: "foot" }, h("th", { title: hint }, label),
+          values.map((v, i) => h("td", { style: v == null ? "" : `background:${tint(high > low ? (v - low) / (high - low) : 0)}`, title: `mean of ${perMethod(ov.methods[i]).length} scenarios` + (scale ? "" : ". A step count has another scale in each scenario: see the relative episode length.") }, v == null ? "–" : fmt(v, Math.max(digits, 2)))),
+          h("td", { title: `mean of ${scenarios.length} scenarios` }, overall == null ? "–" : fmt(overall, Math.max(digits, 2))),
+          h("td", { title: `mean of ${tested.length} scenarios` }, within == null ? "–" : `${fmt(within)} / ${fmt(between)}`),
+          h("td", { title: "number of scenarios in which the method explains a part of the strategy (permutation test)" }, tested.length ? `< 0.05 in ${tested.filter((sc) => sc.overall.p_value < 0.05).length} of ${tested.length}` : "–"));
+      };
+      return [
+        row("mean, scenarios with a solved run", "For each method: the mean over the scenarios in which a final policy of the method solves the instance. The methods do not have the same scenarios here.", ov.scenarios, own),
+        row(`mean, the ${common.length} scenarios that all methods solve`, "The mean over the scenarios in which every method has a final policy that solves the instance. All methods have the same scenarios, so compare the methods on this row.", common, () => common),
+        h("tr", { class: "foot count" }, h("th", { title: "Number of scenarios in which a final policy of the method solves the instance." }, "scenarios with a solved run"),
+          ov.methods.map((m) => h("td", {}, `${own(m).length} of ${ov.scenarios.length}`)), h("td", {}, String(ov.scenarios.length)), h("td", {}, ""), h("td", {}, "")),
+      ];
+    };
     const table = h("table", { class: "heat" },
       h("tr", {}, h("th", {}, "scenario"), ov.methods.map((m) => h("th", {}, h("span", { class: "dot", style: `background:${methodColor(m)}` }), m)), h("th", {}, "all runs"), h("th", {}, "distance within / between methods"), h("th", {}, "p-value")),
       ov.scenarios.map((sc) => h("tr", {}, h("th", {}, h("a", { href: "#/d/" + sc.name }, sc.name)), ov.methods.map((m) => cell(sc.methods[m], true)),
         key === "relative_steps" || key === "policy_time_s" ? h("td", {}, "–") : cell(sc.overall, false),
-        h("td", {}, sc.overall.within == null ? "–" : `${fmt(sc.overall.within)} / ${fmt(sc.overall.between)}`), h("td", {}, sc.overall.p_value == null ? "–" : sc.overall.p_value < 0.001 ? "< 0.001" : fmt(sc.overall.p_value, 3)))));
+        h("td", {}, sc.overall.within == null ? "–" : `${fmt(sc.overall.within)} / ${fmt(sc.overall.between)}`), h("td", {}, sc.overall.p_value == null ? "–" : sc.overall.p_value < 0.001 ? "< 0.001" : fmt(sc.overall.p_value, 3)))),
+      footRows());
     // source access: the same model with and without the source code
     const pairs = ov.methods.filter((m) => ov.methods.includes(m + "-source")).map((m) => {
       let more = 0, same = 0, less = 0, skipped = 0;
@@ -1249,7 +1386,7 @@ async function pageDiversityAll() {
       h("div", { class: "panel scroll" }, table),
       h("h2", {}, "Source access ", h("small", {}, `— number of scenarios in which the method with source access has a higher, equal or lower value of “${title}”`)),
       h("div", { class: "panel scroll" }, h("table", { class: "vocab" }, h("tr", {}, ["", "higher", "equal", "lower", "one of the two has no solved run"].map((t) => h("th", {}, t))), pairs)),
-      h("p", { class: "muted" }, DIVERSITY_NOTE + " A method has 5 runs, so its counts are coarse: compare the mean distance too. The p-value is a permutation test of (between − within) with the method labels shuffled. " +
+      h("p", { class: "muted" }, DIVERSITY_NOTE + " A method has 5 runs, so its counts are coarse: compare the mean distance too. The summary rows give the mean over the scenarios (colour: low to high in that row). One definition applies to all scenarios on this page, but the tuned preset is not the same for each simulator, so a mean over all scenarios mixes them. The p-value is a permutation test of (between − within) with the method labels shuffled. " +
         "Episode length: the reward is −1 per step, so the total reward is minus the episode length; one episode per run, which is not the reported score."));
   };
   const metric = h("div", { class: "bar" }, h("label", {}, "show", h("select", { onchange: (e) => { state.metric = e.target.value; draw(); } }, OVERVIEW_METRICS.map(([v, t]) => h("option", { value: v }, t)))));

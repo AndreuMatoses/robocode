@@ -32,6 +32,7 @@ from urllib.parse import parse_qs, urlparse
 
 from experiments.contacts import (
     backend,
+    briefing,
     catalog,
     diversity,
     histories,
@@ -45,6 +46,7 @@ from experiments.render_run import DEFAULT_DATA, REPO, RUN_ID
 from experiments.results_viewer import Handler as _BaseHandler
 
 STATIC = Path(__file__).resolve().parent / "static"
+SLIDES = Path(__file__).resolve().parent / "slides"  # a local slide deck, if any
 METHOD_ORDER = [
     "opus55",
     "opus55-source",
@@ -386,6 +388,12 @@ def _versions(run_id: str) -> list[dict[str, Any]]:
     return load_versions(CONFIG.data, CONFIG.traces, run_id)
 
 
+@functools.lru_cache(maxsize=64)
+def _briefing(name: str) -> dict[str, Any]:
+    """The task description and the prompts given to the agents of a scenario."""
+    return briefing.scenario_briefing(CONFIG.data, name, METHOD_ORDER)
+
+
 def _scenario_runs(name: str) -> list[str]:
     """Run ids of a scenario, ordered by method then seed."""
     table = catalog.runs_table(CONFIG.data)
@@ -597,6 +605,8 @@ class Handler(_BaseHandler):
                 self._json(scenario_list())
             elif path == "/api/scenario":
                 self._json(scenario_detail(query["name"]))
+            elif path == "/api/briefing":
+                self._json(_briefing(query["name"]))
             elif path == "/api/trace":
                 self._json(summarise(_trace_dir(query["id"])))
             elif path == "/api/evolution":
@@ -682,6 +692,12 @@ class Handler(_BaseHandler):
                 self._file(catalog.thumbnail_path(CONFIG.traces, query["name"]))
             elif path.startswith("/files/"):
                 self._file(CONFIG.traces / path.removeprefix("/files/"))
+            elif path == "/slides":
+                self.send_response(302)
+                self.send_header("Location", "/slides/")
+                self.end_headers()
+            elif path.startswith("/slides/"):
+                self._slides(path.removeprefix("/slides/") or "index.html")
             else:
                 self._err(404, "not found")
         except (KeyError, FileNotFoundError) as exc:
@@ -707,6 +723,14 @@ class Handler(_BaseHandler):
             raise FileNotFoundError(name)
         ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         self._send(200, path.read_bytes(), ctype)
+
+    def _slides(self, name: str) -> None:
+        """A file of the slide deck folder (pages, figures and videos)."""
+        path = (SLIDES / name).resolve()
+        if not path.is_relative_to(SLIDES) or not path.is_file():
+            raise FileNotFoundError(name)
+        ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        self._send_file(path, ctype)
 
     def _file(self, path: Path) -> None:
         path = path.resolve()

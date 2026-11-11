@@ -191,6 +191,9 @@ table.heat { border-collapse: separate; border-spacing: 2px; font-size: 12.5px; 
 table.heat th { text-align: left; font-weight: 500; color: var(--fg2); padding: 3px 10px 3px 4px; white-space: nowrap; }
 table.heat th .dot { margin-right: 5px; }
 table.heat td { padding: 4px 10px; text-align: right; border-radius: 4px; font-variant-numeric: tabular-nums; min-width: 46px; }
+table.heat tr.foot th { color: var(--fg); font-weight: 600; white-space: normal; max-width: 250px; }
+table.heat tr.foot:first-of-type th, table.heat tr.foot td, table.heat tr.foot th { border-top: 1px solid var(--line); }
+table.heat tr.foot.count td { color: var(--fg2); }
 table.heat td.diag { outline: 1px solid var(--fg3); outline-offset: -1px; }
 .cols > div:first-child { max-width: 500px; }
 .mchip { border: 1px solid var(--line); border-radius: 10px; padding: 1px 8px; font-size: 12px; color: var(--fg2); white-space: nowrap; }
@@ -221,3 +224,25 @@ table.metrics td { padding-top: 6px; padding-bottom: 6px; }
 
 .deftimes { margin-top: 6px; font-size: 12.5px; }
 .ghosttile .mono { overflow-wrap: anywhere; font-size: 11px; }
+
+/* information given to the agent (scenario page) */
+details.brief { margin-top: 12px; padding: 8px 12px; }
+details.brief > summary { cursor: pointer; font-weight: 600; }
+details.brief > summary small { color: var(--fg3); font-weight: 400; }
+.brieftext { max-height: 560px; overflow: auto; border-top: 1px solid var(--grid); padding-top: 6px;
+  max-width: 1000px; font-size: 13px; line-height: 1.5; }
+.brieftext pre { background: var(--grid); border-radius: 6px; padding: 8px 10px; overflow-x: auto;
+  font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 6px 0; }
+.brieftext pre.raw { background: transparent; padding: 0; white-space: pre-wrap; word-break: break-word; }
+.md p { margin: 6px 0; }
+.md code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--grid);
+  border-radius: 3px; padding: 0 3px; }
+.md .mdh { font-weight: 600; margin: 14px 0 4px; }
+.md .mdh1 { font-size: 16px; } .md .mdh2 { font-size: 14.5px; } .md .mdh3, .md .mdh4 { font-size: 13px; }
+.md .mdli { display: flex; gap: 6px; margin: 2px 0; }
+.md .mdmark { color: var(--fg3); flex: none; min-width: 12px; }
+.md .mdtable { overflow-x: auto; margin: 6px 0; }
+.md table { border-collapse: collapse; font-size: 12.5px; }
+.md th, .md td { border-bottom: 1px solid var(--grid); padding: 3px 10px 3px 0; text-align: left;
+  vertical-align: top; }
+.md th { color: var(--fg3); font-weight: 400; }
