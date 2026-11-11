@@ -112,7 +112,7 @@ the MuJoCo recorder is bit-identical before and after this split.
 
 The same two steps as for MuJoCo (gap histogram, repeatability test) were run on
 the 2D data: the final policy of the 140 runs on instances 0 to 3 (560 episodes,
-516 solved) and every policy version on instance 0 (3 130 records: 2 288 solve,
+516 solved) and every policy version on instance 0 (3 270 records: 2 417 solve,
 87 crash in the episode, 6 versions do not load; logs in
 `outputs/contact_record_logs/dyn2d_*.log`).
 
