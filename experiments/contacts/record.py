@@ -43,7 +43,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from experiments.contacts import render2d
+from experiments.contacts import render2d, replay_bullet
 from experiments.contacts.backend import backend_of_scenario, make_recorder, recording
 from experiments.contacts.commits import load_versions, select_commits
 from experiments.contacts.entities import robot_env
@@ -135,7 +135,7 @@ def record_run(args: argparse.Namespace, run_id: str) -> None:
             )
             out.mkdir(parents=True, exist_ok=True)
             np.savez_compressed(out / "trace.npz", **arrays)
-            camera = render_camera_name(ro.env) if backend == "mujoco" else "2d"
+            camera = render_camera_name(ro.env) if backend == "mujoco" else backend
             reeval = commit.reeval_solve_rate
             meta = {
                 "backend": backend,
@@ -161,12 +161,20 @@ def record_run(args: argparse.Namespace, run_id: str) -> None:
                 **recorder.extra_meta(),
             }
             diagram = diagram_dir(args.out, run_id.split("/")[1], seed, args.count)
-            if backend == "pymunk":
-                poses = render2d.poses_of(arrays["qpos"])
-                frames = render2d.episode_frames(meta, poses, args.width, args.height)
+            if backend in render2d.BACKENDS:
+                outlines = render2d.frames_of(meta, arrays)
+                frames = render2d.episode_frames(
+                    meta, outlines, args.width, args.height
+                )
                 if not (diagram / "diagram.json").exists():
                     render2d.write_diagram(
-                        meta, poses[0], diagram, args.width, args.height
+                        meta, outlines[0], diagram, args.width, args.height
+                    )
+            elif backend == "bullet":
+                frames = replay_bullet.frames(recorder.scene, arrays["qpos"])
+                if not (diagram / "diagram.json").exists():
+                    replay_bullet.write_diagram(
+                        recorder.scene, meta, arrays["qpos"][0], diagram
                     )
             else:
                 frames = replay_frames(

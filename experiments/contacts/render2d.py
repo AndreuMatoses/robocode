@@ -1,12 +1,19 @@
-"""Draw recorded dynamic2d episodes from the trace alone.
+"""Draw recorded 2D episodes from the trace alone.
 
-A pymunk trace holds the shape of every entity (in the frame of its body) and the
-pose ``x, y, theta`` of every entity at every env step. That is enough to draw the
-episode, so no environment is built here: videos, contact-highlight videos, ghost
-overlays and the labelled diagram all come from ``meta.json`` and ``trace.npz``.
+A 2D trace holds enough geometry to draw the episode, so no environment is built
+here: videos, contact-highlight videos, ghost overlays and the labelled diagram all
+come from ``meta.json`` and ``trace.npz``. Two layouts:
 
-The picture is not the one of ``env.render()``: it shows the collision shapes that
-the contacts are computed on, in the colours of the state objects.
+* ``pymunk`` (dynamic2d): the shape of every geom in the frame of its body
+  (``meta["shapes"]``) and the pose ``x, y, theta`` of every entity at every env
+  step (``qpos``);
+* ``kin2d`` (kinematic2d): the outline of every geom in world coordinates at every
+  env step (``verts``), because a shape can change there (the arm gets longer).
+
+Both become one array of outlines ``[step, geom, vertex, 2]`` (NaN = no vertex).
+
+The picture is not the one of ``env.render()``: it shows the shapes that the
+contacts are computed on, in the colours of the state objects.
 """
 
 from __future__ import annotations
@@ -30,6 +37,8 @@ KIND_COLOUR: dict[str, Colour] = {
 BACKGROUND = (250, 250, 248)
 ROBOT_TINT, OTHER_TINT = (1.0, 0.45, 0.05), (0.1, 0.75, 1.0)
 SUPERSAMPLE = 2  # draw larger and scale down: smooth edges
+BACKENDS = ("pymunk", "kin2d")  # the traces that this module can draw
+CIRCLE_POINTS = 40
 
 
 def _rgb(colour: Iterable[float], alpha: float | None = None) -> tuple[int, ...]:
@@ -50,7 +59,6 @@ class Scene:
         self.off_y = (big_h + self.scale * (y1 - y0)) / 2 + self.scale * y0
         self.size = (big_w, big_h)
         self.entities = meta["entities"]
-        self.shapes = meta["shapes"]
         z = meta.get("z_order", {})
         self.order = sorted(
             range(len(self.entities)), key=lambda e: (float(z.get(str(e), 1.0)), e)
@@ -64,6 +72,8 @@ class Scene:
             )
             for e in self.entities
         ]  # type: ignore[misc]
+        # entities that are drawn translucent always (a suction zone)
+        self.faint = {int(e) for e in meta.get("faint", [])}
 
     def pixel(self, points: np.ndarray) -> list[tuple[float, float]]:
         """World ``[n, 2]`` points as pixel coordinates (y points down)."""
@@ -71,19 +81,9 @@ class Scene:
         ys = self.off_y - self.scale * points[:, 1]
         return list(zip(xs.tolist(), ys.tolist()))
 
-    def outline(self, geom: int, pose: np.ndarray) -> list[tuple[float, float]]:
-        """The outline of one shape at a body pose, in pixels."""
-        shape = self.shapes[geom]
-        if shape["kind"] == "circle":
-            angles = np.linspace(0.0, 2 * math.pi, 40, endpoint=False)
-            local = np.array(shape["offset"]) + shape["radius"] * np.column_stack(
-                (np.cos(angles), np.sin(angles))
-            )
-        else:
-            local = np.array(shape["points"])
-        cos, sin = math.cos(pose[2]), math.sin(pose[2])
-        world = local @ np.array([[cos, sin], [-sin, cos]]) + pose[:2]
-        return self.pixel(world)
+    def outline(self, points: np.ndarray) -> list[tuple[float, float]]:
+        """One world outline ``[vertex, 2]`` (NaN rows dropped) in pixels."""
+        return self.pixel(points[~np.isnan(points[:, 0])])
 
     def blank(self) -> Image.Image:
         """The background with the parts that have no body (goal regions)."""
@@ -98,12 +98,12 @@ class Scene:
     def paint(
         self,
         image: Image.Image,
-        poses: np.ndarray,
+        frame: np.ndarray,
         entities: Iterable[int],
         colour_of: Callable[[int], Colour] | None = None,
         alpha: float | None = None,
     ) -> None:
-        """Draw ``entities`` at ``poses`` on ``image`` (translucent with ``alpha``)."""
+        """Draw ``entities`` of one ``frame`` on ``image`` (translucent with ``alpha``)."""
         draw = ImageDraw.Draw(image, "RGBA")
         wanted = set(entities)
         line = max(1, SUPERSAMPLE)
@@ -113,14 +113,20 @@ class Scene:
             colour = (
                 colour_of(entity) if colour_of is not None else self.colours[entity]
             )
+            opacity = alpha
+            if entity in self.faint:
+                opacity = 0.3 if alpha is None else alpha * 0.5
             edge = _rgb(
                 [c * 0.45 for c in colour],
-                1.0 if alpha is None else min(1.0, alpha * 2.2),
+                1.0 if opacity is None else min(1.0, opacity * 2.2),
             )
             for geom in self.entities[entity]["geoms"]:
+                outline = self.outline(frame[geom])
+                if len(outline) < 3:  # a geom that is not there at this step
+                    continue
                 draw.polygon(
-                    self.outline(geom, poses[entity]),
-                    fill=_rgb(colour, 1.0 if alpha is None else alpha),
+                    outline,
+                    fill=_rgb(colour, 1.0 if opacity is None else opacity),
                     outline=edge,
                     width=line,
                 )
@@ -132,35 +138,57 @@ class Scene:
         )
 
 
-def poses_of(qpos: np.ndarray) -> np.ndarray:
-    """``[T, E, 3]`` poses from the ``qpos`` array of a trace."""
-    return np.asarray(qpos, dtype=np.float64).reshape(len(qpos), -1, 3)
+def frames_of(meta: dict[str, Any], arrays: Any) -> np.ndarray:
+    """World outlines ``[step, geom, vertex, 2]`` of a trace (``arrays``: its npz)."""
+    if "verts" in arrays:
+        return np.asarray(arrays["verts"], dtype=np.float64)
+    qpos = np.asarray(arrays["qpos"], dtype=np.float64)
+    poses = qpos.reshape(len(qpos), -1, 3)
+    shapes = meta["shapes"]
+    local = np.full((len(shapes), CIRCLE_POINTS, 2), np.nan)
+    owner = np.zeros(len(shapes), dtype=np.int64)
+    for entity in meta["entities"]:
+        owner[entity["geoms"]] = entity["id"]
+    for geom, shape in enumerate(shapes):
+        if shape["kind"] == "circle":
+            angles = np.linspace(0.0, 2 * math.pi, CIRCLE_POINTS, endpoint=False)
+            points = np.array(shape["offset"]) + shape["radius"] * np.column_stack(
+                (np.cos(angles), np.sin(angles))
+            )
+        else:
+            points = np.array(shape["points"], dtype=np.float64)
+        local[geom, : len(points)] = points
+    pose = poses[:, owner]  # [step, geom, 3]
+    cos, sin = np.cos(pose[..., 2])[..., None], np.sin(pose[..., 2])[..., None]
+    x = local[None, :, :, 0] * cos - local[None, :, :, 1] * sin + pose[..., 0, None]
+    y = local[None, :, :, 0] * sin + local[None, :, :, 1] * cos + pose[..., 1, None]
+    return np.stack((x, y), axis=-1)
 
 
 def load(directory: Path) -> tuple[dict[str, Any], np.ndarray]:
-    """``meta.json`` and the poses of a pymunk trace."""
+    """``meta.json`` and the outlines of a 2D trace."""
     meta = json.loads((directory / "meta.json").read_text())
-    if meta.get("backend") != "pymunk":
-        raise ValueError(f"{directory} is not a pymunk trace")
+    if meta.get("backend") not in BACKENDS:
+        raise ValueError(f"{directory} is not a 2D trace")
     with np.load(directory / "trace.npz") as data:
-        return meta, poses_of(data["qpos"])
+        return meta, frames_of(meta, data)
 
 
 def episode_frames(
     meta: dict[str, Any],
-    poses: np.ndarray,
+    frames: np.ndarray,
     width: int,
     height: int,
     tint_for_step: Callable[[int], dict[int, Colour]] | None = None,
 ) -> Iterable[np.ndarray]:
-    """One frame per recorded env step."""
+    """One picture per recorded env step."""
     scene = Scene(meta, width, height)
     blank = scene.blank()
     everything = range(len(scene.entities))
-    for step, pose in enumerate(poses):
+    for step, frame in enumerate(frames):
         image = blank.copy()
         tint = tint_for_step(step) if tint_for_step is not None else {}
-        scene.paint(image, pose, everything, lambda e: tint.get(e, scene.colours[e]))
+        scene.paint(image, frame, everything, lambda e: tint.get(e, scene.colours[e]))
         yield scene.finish(image)
 
 
@@ -169,7 +197,7 @@ def contact_frames(directory: Path, width: int, height: int) -> Iterable[np.ndar
     # pylint: disable-next=import-outside-toplevel
     from experiments.contacts.trace import active_entities_per_step
 
-    meta, poses = load(directory)
+    meta, frames = load(directory)
     active = active_entities_per_step(directory)
     kinds = [e["kind"] for e in meta["entities"]]
 
@@ -179,7 +207,7 @@ def contact_frames(directory: Path, width: int, height: int) -> Iterable[np.ndar
         touching = active[max(step - 1, 0)] | active[min(step, len(active) - 1)]
         return {e: ROBOT_TINT if kinds[e] == "robot" else OTHER_TINT for e in touching}
 
-    return episode_frames(meta, poses, width, height, tint_for_step)
+    return episode_frames(meta, frames, width, height, tint_for_step)
 
 
 def ghost_frames(
@@ -197,8 +225,8 @@ def ghost_frames(
     The same rules as ``replay.ghost_frames``: without ``equal`` the first episode
     is drawn solid and the others are ghosts; with ``equal`` every episode is a
     ghost. With ``robot_only`` the objects are those of the first episode; without
-    it an object is ghosted too, but only while its pose differs between the
-    episodes. An episode that ended holds its last pose.
+    it an object is ghosted too, but only while its outline differs between the
+    episodes. An episode that ended holds its last frame.
     """
     for meta in metas[1:]:
         if meta["signature"] != metas[0]["signature"]:
@@ -209,49 +237,51 @@ def ghost_frames(
     if alpha is None:
         alpha = min(0.35, max(0.15, 1.4 / math.sqrt(max(count, 1))))
     kinds = [e["kind"] for e in scene.entities]
+    geoms_of = [e["geoms"] for e in scene.entities]
     robots = [e for e, kind in enumerate(kinds) if kind == "robot"]
     movable = [
         e for e, kind in enumerate(kinds) if kind in ("robot", "object", "fixture")
     ]
     fixed = [e for e, kind in enumerate(kinds) if kind == "world"]
     for step in range(max(len(t) for t in trajectories)):
-        poses = [t[min(step, len(t) - 1)] for t in trajectories]
+        now = [t[min(step, len(t) - 1)] for t in trajectories]
         image = blank.copy()
-        scene.paint(image, poses[0], fixed)
+        scene.paint(image, now[0], fixed)
         if robot_only:
             ghosted = set(robots)
         else:
-            stack = np.stack(poses)
-            apart = np.abs(stack - stack[0]).max(axis=(0, 2)) > 2e-3
-            ghosted = {e for e in movable if kinds[e] == "robot" or apart[e]}
-        scene.paint(image, poses[0], [e for e in movable if e not in ghosted])
+            stack = np.nan_to_num(np.stack(now), nan=0.0)
+            moved = np.abs(stack - stack[0]).max(axis=(0, 2, 3)) > 2e-3  # per geom
+            ghosted = {
+                e for e in movable if kinds[e] == "robot" or moved[geoms_of[e]].any()
+            }
+        scene.paint(image, now[0], [e for e in movable if e not in ghosted])
         for k in range(count - 1, -1, -1):  # the first episode on top
             if k == 0 and not equal:
-                scene.paint(image, poses[0], ghosted)
+                scene.paint(image, now[0], ghosted)
             else:
-                scene.paint(image, poses[k], ghosted, lambda _e, k=k: colours[k], alpha)
+                scene.paint(image, now[k], ghosted, lambda _e, k=k: colours[k], alpha)
         yield scene.finish(image)
 
 
 def write_diagram(
-    meta: dict[str, Any], pose: np.ndarray, out: Path, width: int, height: int
+    meta: dict[str, Any], frame: np.ndarray, out: Path, width: int, height: int
 ) -> None:
     """The labelled-diagram assets of one state (see ``replay.write_diagram``)."""
     out.mkdir(parents=True, exist_ok=True)
     scene = Scene(meta, width, height)
     image = scene.blank()
     everything = range(len(scene.entities))
-    scene.paint(image, pose, everything)
+    scene.paint(image, frame, everything)
     Image.fromarray(scene.finish(image)).save(out / "scene.png")
     # Entity id of each pixel, as red + 256 * green; 65535 = nothing. No smoothing.
-    plain = Scene(meta, width, height)
-    ids = Image.new("RGB", plain.size, (255, 255, 0))
+    ids = Image.new("RGB", scene.size, (255, 255, 0))
     draw = ImageDraw.Draw(ids)
-    for entity in plain.order:
-        for geom in plain.entities[entity]["geoms"]:
-            draw.polygon(
-                plain.outline(geom, pose[entity]), fill=(entity & 255, entity >> 8, 0)
-            )
+    for entity in scene.order:
+        for geom in scene.entities[entity]["geoms"]:
+            outline = scene.outline(frame[geom])
+            if len(outline) >= 3:
+                draw.polygon(outline, fill=(entity & 255, entity >> 8, 0))
     small = np.asarray(ids.resize((width, height), Image.Resampling.NEAREST))
     Image.fromarray(small).save(out / "scene_ids.png")
     ent = small[..., 0].astype(np.int32) + (small[..., 1].astype(np.int32) << 8)

@@ -17,11 +17,15 @@ Scope so far:
   rearrange3d, scooppour3d, sortclutteredblocks3d, sweepintodrawer3d, sweepsimple3d,
   tossing3d;
 - the 4 dynamic 2D scenarios (pymunk): dynobstruction2d, dynpushpullhook2d,
-  dynpusht2d, dynscooppour2d (see "Simulator backends").
+  dynpusht2d, dynscooppour2d;
+- the 6 kinematic 2D scenarios: clutteredretrieval2d, clutteredstorage2d, motion2d,
+  obstruction2d, pushpullhook2d, stickbutton2d;
+- the 5 kinematic 3D scenarios (PyBullet, TidyBot): basemotion3d, obstruction3d,
+  packing3d, table3d, transport3d;
+- pr2packed, pr2blocked (PyBullet, PR2) and rovers (PyBullet, two rovers).
 
-The kinematic scenarios (2D geometry, PyBullet, PR2, rovers) are listed in the
-viewer but have no contact recording: they have no contacts, only collision checks
-and attachments, and need a definition of "contact" first.
+That is all 28 scenarios of the dataset. The kinematic ones have no contact in the
+simulator; their contacts are built from the geometry (see "Simulator backends").
 
 ## What the branch adds over `main`
 
@@ -34,7 +38,11 @@ and attachments, and need a definition of "contact" first.
 | `experiments/contacts/recorder.py` | Logs MuJoCo contacts at every 0.5 ms substep by wrapping `MjSim.step` / `MujocoEnv.step` |
 | `experiments/contacts/backend.py` | The simulator families: which recorder and which replay a scenario or a trace uses (`mujoco`, `pymunk`), and how to add one |
 | `experiments/contacts/recorder2d.py` | Logs pymunk contacts (arbiters) at every 10 ms substep of the dynamic 2D scenarios, with the grasp as a contact; subclass of the shared `recorder.BaseRecorder` |
-| `experiments/contacts/render2d.py` | Draws a pymunk trace from the trace alone (no environment): episode video, contact video, ghost video, labelled diagram |
+| `experiments/contacts/render2d.py` | Draws a 2D trace (pymunk, kinematic 2D) from the trace alone (no environment): episode video, contact video, ghost video, labelled diagram |
+| `experiments/contacts/recorder_kin2d.py` | Contacts of the kinematic 2D scenarios from the geometry of each env step: touch within a tolerance, hold by suction, rejected motion |
+| `experiments/contacts/recorder_bullet.py` | The same for the kinematic PyBullet scenarios (closest-point query); `KinderScene` adapts the kinematic3d environments |
+| `experiments/contacts/scenes_pddl.py` | Scene adapters for the PR2 and rover environments (the task events of the rovers as pairs) |
+| `experiments/contacts/replay_bullet.py` | Re-renders a PyBullet trace on a rebuilt environment: episode video, contact video (recoloured links), ghost video (blended pictures), labelled diagram (segmentation mask) |
 | `experiments/contacts/record.py` | CLI: roll out a run/commit on fixed instances, write trace + video + diagram |
 | `experiments/contacts/replay.py` | Renders from recorded `qpos`, no policy: episode video, labelled diagram, contact-highlight video, ghost overlay |
 | `experiments/contacts/trace.py` | Loads a trace and summarises it per entity pair (used by the viewer) |
@@ -74,6 +82,8 @@ to draw a recorded episode again. `backend.py` names them and says how to add on
 |---|---|---|---|
 | `mujoco` | the 10 dynamic3d scenarios | `recorder.ContactRecorder` | `replay.py`: sets `qpos` on a new environment and renders |
 | `pymunk` | the 4 dynamic2d scenarios | `recorder2d.PymunkRecorder` | `render2d.py`: draws from the trace alone, no environment |
+| `kin2d` | the 6 kinematic2d scenarios | `recorder_kin2d.Kin2DRecorder` | `render2d.py` (the trace has the outline of every shape at every step) |
+| `bullet` | the 5 kinematic3d scenarios, pr2packed, pr2blocked, rovers | `recorder_bullet.BulletRecorder` with a scene adapter | `replay_bullet.py`: restores each state on a new environment and renders |
 
 Both recorders are subclasses of `recorder.BaseRecorder`, which has the part that
 does not depend on the simulator (intervals, per-step rows, the arrays). A trace of
@@ -152,24 +162,104 @@ times faster), and the interval code has no Python loop over long contacts. The
 first load of the history page of dynscooppour2d (534 traces with about 500 contact
 keys each) takes about 15 s; it took more than 2 minutes before.
 
-### Not done
+### Kinematic scenarios: contacts from the geometry
 
-The kinematic scenarios (kinematic2d, kinematic3d, PR2, rovers) have no contacts: a
-motion into collision is rejected and a grasp is an attachment. A recorder for them
-must first define a contact. The definition nearest to the MuJoCo one ("two bodies
-touch at this instant") has three sources, each with a counterpart that is already
-in the traces:
+The kinematic scenarios (kinematic2d, kinematic3d, PR2, rovers) have no contact in
+the simulator: joints are set, a motion into collision is rejected, and a grasp is
+an attachment. The definition nearest to the MuJoCo one ("two bodies touch at this
+instant") has three sources, each with a counterpart that is already in the other
+traces. The recorders `kin2d` and `bullet` use all three:
 
 | source in a kinematic scenario | counterpart | what it gives |
 |---|---|---|
-| the two shapes are nearer than a small tolerance (PyBullet: closest points; 2D: distance of the geoms) | a MuJoCo contact | object on a table, object on object, the gripper at an object |
-| the robot holds the object (attachment, suction) | the pad contacts of a MuJoCo grasp; the "finger - held object" pair of the pymunk recorder | the grasp, also when the gripper does not touch the object in the geometry |
-| a motion is rejected because the robot or the held object would collide | a MuJoCo contact that stops the robot; the "stopped by the wall" pair of the pymunk recorder | the bump that never appears as an overlap |
+| **touch**: two shapes are nearer than a small tolerance (2D: shapely distance; PyBullet: closest points) | a MuJoCo contact | object on a table, object on object, the closed gripper on the object |
+| **hold**: the robot holds the object (suction zone, attachment) | the pad contacts of a MuJoCo grasp; the "finger - held object" pair of the pymunk recorder | the grasp, also when the gripper does not touch the object in the geometry |
+| **blocked**: the env rejects the motion of the step; the pairs that collide in the rejected configuration | a MuJoCo contact that stops the robot; the "stopped by the wall" pair of the pymunk recorder | the bump that never appears as an overlap |
 
 What stays different: there is no force (so no impact rule and no impulse), the time
-resolution is one env step, and the tolerance is a new parameter that must be tuned
-like the merge gap (too small: a resting object does not touch its table; too
-large: a near miss counts).
+resolution is one env step (one tick = 0.1 s, the debounce times need no factor),
+and the tolerance is a parameter.
+
+- *Tolerance.* Kinematic 2D: 0.01 world units (one step moves 0.05). A shape that
+  collides with nothing (a target region, a button) is touched by a shape that
+  overlaps it, so "the block is in the region" and "the stick is on the button"
+  are pairs. PyBullet: 5 mm, the placement distance of the kinematic3d
+  environments: a closed gripper is 0 to 1 mm inside the held object (the pads
+  touch it, as in MuJoCo), and in obstruction3d an object at rest is within
+  5 mm of its support and the robot is more than 2 cm from an object that it
+  does not hold in 99 % of the steps.
+- *The base on the floor.* In a PyBullet scene the mobile base is within the
+  tolerance of the floor (or of a table next to it) for the whole episode. In the
+  kinematic backends a pair of `robot.base` with a fixture or the world that lasts
+  the whole episode is a resting pair, as an object on a table is.
+- *Names.* The TidyBot of the kinematic3d scenes has the part names of the MuJoCo
+  TidyBot (`robot.gripper.left_pad`, `robot.arm.forearm`, ...), the PR2 the same
+  words (`robot.gripper.left_pad`, `robot.arm.forearm`, `robot.torso`, ...), the 2D
+  robot `robot.base`, `robot.arm`, `robot.gripper.head`, `robot.gripper.suction`.
+- *Rovers.* The rovers manipulate nothing. Their pairs are the task events, read
+  from the progress of the env after each step: a rover takes a sample (rover -
+  rock or soil), takes a picture (rover - objective), sends its results (rover -
+  lander), plus "a rover is stopped by an obstacle". The two rovers are two
+  entities of one class (`robot.rover`).
+- *Videos.* Kinematic 2D: as pymunk, from the trace alone. PyBullet: the
+  environment is built again and each recorded state is restored and rendered with
+  the camera of `env.render()`. The contact video recolours the links in contact.
+  The ghost video blends the pictures of the episodes (PyBullet has no translucent
+  copy of a robot): a pixel of an episode counts where it differs from the picture
+  of the start scene, so a moved object leaves a faint mark at its start place. A
+  picture needs 0.1 to 0.5 s, so a ghost video renders at most 300 pictures: with
+  many runs it shows every n-th step.
+
+Data: the final policy of every run on instances 0 to 3, and every policy version
+on instance 0, as for the other families
+(`outputs/contact_record_logs/{kin2d,kin3d,pddl}_*.log`). Kinematic 2D: 840 final
+episodes (811 solved) and 3 929 version records (2 882 solve, 21 crash in the
+episode, 6 do not load or reach the time limit of 30 minutes). Kinematic 3D: 700
+final episodes (661 solved) and 2 848 version records (1 762 solve, 33 crash in
+the episode, 7 do not load or reach the time limit, 4 of them the time limit).
+PR2 and rovers: 416 final episodes (400 solved; one run reaches the time limit
+after two instances) and 2 099 policy versions on instance 0, of which 2 090 have
+a trace (1 715 solve, 42 crash in the episode) and 9 do not load or reach the
+time limit.
+
+Two records of one policy give the same contact pairs and times in every backend.
+In PyBullet the states differ by 1e-8 and the contact point of two parallel faces
+is not unique, so the surface-level detail there is not exact.
+
+### Tuning for the kinematic scenarios
+
+The same repeatability test (final policies on instances 0 to 3, elastic distance):
+
+| family | best definition | mean AUC | pairs of one policy within the threshold | preset |
+|---|---|---|---|---|
+| kinematic 3D (TidyBot) | all pairs, as named | 0.71 (0.69 with the finger rule) | 88 % within 0.25 | "tuned" (the MuJoCo preset) |
+| kinematic 2D | robot pairs, as named | 0.74 | 65 % within 0.25, 78 % within 0.35 | "tuned kinematic" |
+| PR2, rovers | robot pairs, as named, finger rule off | 0.70 | 61 % within 0.25, 74 % within 0.35 | "tuned kinematic" |
+
+- *Kinematic 3D.* The MuJoCo preset fits: same robot, same kind of pairs. On
+  instance 0 it gives 1 / 2 / 4 / 2 / 8 strategies (basemotion3d, obstruction3d,
+  packing3d, table3d, transport3d). basemotion3d has no contact at all (the robot
+  drives to a target: one strategy), and table3d ends after 3 steps.
+- *Kinematic 2D.* The merge gap has no effect between 0 and 1 s (mean AUC
+  0.737-0.741), and longer shortest times make it worse, so the default times
+  stay. "Kind only" lowers the AUC to 0.66. With the preset (threshold 0.35) the
+  scenarios split in two groups: clutteredstorage2d, motion2d, obstruction2d and
+  pushpullhook2d are repeatable (89-98 % of the pairs of one policy within 0.35;
+  3 / 5 / 6 / 5 strategies), clutteredretrieval2d and stickbutton2d are not (32 %
+  and 44 %; AUC 0.62 and 0.64; 9 and 11 strategies): there a policy changes its
+  sequence with the start scene as much as two runs differ.
+- *PR2.* The finger rule must be off: with it the AUC of pr2packed drops from 0.79
+  to 0.63, because which finger links touch the block is what tells the runs
+  apart there. With the preset: pr2packed 97 % within 0.35 (5 strategies for 35
+  runs), pr2blocked 89 % (4 strategies for 33 runs).
+- *Rovers.* Weak: only 37 % of the pairs of one policy are within 0.35 and the AUC
+  is 0.59 (9 strategies for 34 runs). The order of the task events depends on
+  where the samples and the objectives are, so the strategies there are not
+  reliable.
+
+The preset "tuned kinematic" is: robot pairs only, names as given, full mode
+sequence, finger rule off, elastic distance, threshold 0.35. A scenario page offers
+the preset of its family (`strategy.TUNED_PRESET`, `TUNED_PRESET_OF_ROBOT`).
 
 ## State
 

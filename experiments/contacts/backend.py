@@ -22,7 +22,12 @@ from contextlib import AbstractContextManager
 from typing import Any
 
 # ``catalog.scenario_tags(...)["simulator"]`` -> backend name.
-BACKEND_OF_SIMULATOR = {"MuJoCo": "mujoco", "pymunk": "pymunk"}
+BACKEND_OF_SIMULATOR = {
+    "MuJoCo": "mujoco",
+    "pymunk": "pymunk",
+    "geometric 2D": "kin2d",
+    "PyBullet": "bullet",
+}
 
 
 def backend_of_scenario(scenario: str) -> str:
@@ -50,6 +55,16 @@ def recording(backend: str) -> AbstractContextManager[list[Any]]:
         from experiments.contacts import recorder2d
 
         return recorder2d.recording()
+    if backend == "kin2d":
+        # pylint: disable-next=import-outside-toplevel
+        from experiments.contacts import recorder_kin2d
+
+        return recorder_kin2d.recording()
+    if backend == "bullet":
+        # pylint: disable-next=import-outside-toplevel
+        from experiments.contacts import recorder_bullet
+
+        return recorder_bullet.recording()
     # pylint: disable-next=import-outside-toplevel
     from experiments.contacts import recorder
 
@@ -63,6 +78,16 @@ def make_recorder(backend: str, env: Any) -> Any:
         from experiments.contacts.recorder2d import PymunkRecorder
 
         return PymunkRecorder(env)
+    if backend == "kin2d":
+        # pylint: disable-next=import-outside-toplevel
+        from experiments.contacts.recorder_kin2d import Kin2DRecorder
+
+        return Kin2DRecorder(env)
+    if backend == "bullet":
+        # pylint: disable-next=import-outside-toplevel
+        from experiments.contacts.recorder_bullet import BulletRecorder, scene_of
+
+        return BulletRecorder(scene_of(env))
     # pylint: disable-next=import-outside-toplevel
     from experiments.contacts.entities import robot_env
     from experiments.contacts.recorder import ContactRecorder

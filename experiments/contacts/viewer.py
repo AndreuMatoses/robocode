@@ -511,6 +511,9 @@ def _time_note(name: str) -> str:
 
 def _preset(name: str) -> str:
     """The tuned preset of this scenario's simulator."""
+    robot = catalog.scenario_tags(name)["robot"]
+    if robot in strategy.TUNED_PRESET_OF_ROBOT:
+        return strategy.TUNED_PRESET_OF_ROBOT[robot]
     return strategy.TUNED_PRESET.get(_backend(name), "tuned")
 
 

@@ -455,6 +455,51 @@ def _main_2d(args: argparse.Namespace, meta: dict[str, Any]) -> None:
         write_video(frames, args.out, fps)
 
 
+def _main_bullet(args: argparse.Namespace, meta: dict[str, Any]) -> None:
+    """The four modes for a kinematic PyBullet trace (needs the environment)."""
+    # pylint: disable-next=import-outside-toplevel
+    from experiments.contacts import replay_bullet
+
+    fps = int(meta.get("fps", 10))
+    env, scene, _ = replay_bullet.open_scene(args.traces[0])
+    try:
+        if args.mode == "video":
+            states = replay_bullet.load_states(args.traces[0])
+            write_video(replay_bullet.frames(scene, states), args.out, fps)
+        elif args.mode == "contact":
+            write_video(
+                replay_bullet.contact_frames(scene, args.traces[0], meta), args.out, fps
+            )
+        elif args.mode == "diagram":
+            state = replay_bullet.load_states(args.traces[0])[0]
+            replay_bullet.write_diagram(scene, meta, state, args.out)
+        else:
+            for directory in args.traces[1:]:
+                other = json.loads((directory / "meta.json").read_text())
+                if other["signature"] != meta["signature"]:
+                    raise SystemExit(f"{directory} is a different scene than the first")
+            colours = [
+                _colour(args.colours[i] if i < len(args.colours) else PALETTE[i % 6])
+                for i in range(len(args.traces))
+            ]
+            states = [replay_bullet.load_states(d) for d in args.traces]
+            stride = replay_bullet.ghost_stride(states)
+            write_video(
+                replay_bullet.ghost_frames(
+                    scene,
+                    states,
+                    colours,
+                    alpha=args.alpha,
+                    equal=args.equal,
+                    stride=stride,
+                ),
+                args.out,
+                max(2, round(fps / stride)),
+            )
+    finally:
+        env.close()
+
+
 def main() -> None:
     """Render an episode, contact-highlight or ghost video from recorded traces."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
@@ -472,8 +517,10 @@ def main() -> None:
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
     first = json.loads((args.traces[0] / "meta.json").read_text())
-    if first.get("backend") == "pymunk":
+    if first.get("backend") in ("pymunk", "kin2d"):
         _main_2d(args, first)
+    elif first.get("backend") == "bullet":
+        _main_bullet(args, first)
     elif args.mode == "video":
         env, _, meta = open_trace_env(args.traces[0])
         try:

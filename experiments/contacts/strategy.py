@@ -153,6 +153,20 @@ PRESETS: dict[str, dict[str, Any]] = {
         "group": "similar",
         "tau": 0.35,
     },
+    # Kinematic 2D, PR2 and rover scenarios (contacts from the geometry): robot
+    # pairs only, as in the dynamic 2D scenarios, but with the names: "kind only"
+    # cannot tell the runs apart there (kinematic 2D: mean AUC 0.66 against 0.74).
+    # The finger rule is off: on the PR2 it hides what tells the runs apart
+    # (pr2packed: AUC 0.79 without the rule, 0.63 with it).
+    "tuned kinematic": {
+        "scope": "robot",
+        "identity": "keep",
+        "order": "sequence",
+        "fingers": "all",
+        "metric": "warp",
+        "group": "similar",
+        "tau": 0.35,
+    },
     "detailed": {"scope": "all", "identity": "keep", "order": "sequence"},
     "object-agnostic": {"scope": "all", "identity": "merge", "order": "first"},
     "robot skeleton": {"scope": "robot", "identity": "merge", "order": "onset"},
@@ -226,7 +240,17 @@ class Definition:
         return dataclasses.replace(opts, **change) if change else opts
 
 
-TUNED_PRESET = {"mujoco": "tuned", "pymunk": "tuned 2D"}  # backend -> preset name
+KINEMATIC_BACKENDS = ("kin2d", "bullet")  # no physics: contacts from the geometry
+# backend -> preset name. The kinematic PyBullet scenes have the same robot parts
+# and the same kind of pairs as the MuJoCo scenes, and the same preset fits them.
+TUNED_PRESET = {
+    "mujoco": "tuned",
+    "pymunk": "tuned 2D",
+    "kin2d": "tuned kinematic",
+    "bullet": "tuned",
+}
+# ... but not the PR2 and the rovers (``catalog.scenario_tags(...)["robot"]``).
+TUNED_PRESET_OF_ROBOT = {"PR2": "tuned kinematic", "Rovers": "tuned kinematic"}
 
 # The debounce times of ``Options`` are tuned for the MuJoCo scenarios (an env step
 # of 0.1 s with continuous control). Another simulator has its own clock and its own
@@ -243,7 +267,14 @@ TIME_SCALE: dict[str, dict[str, float]] = {
 
 
 def time_note(backend: str) -> str:
-    """One sentence on the debounce times of a simulator (empty for MuJoCo)."""
+    """What is different about the contacts of a simulator (empty for MuJoCo)."""
+    if backend in KINEMATIC_BACKENDS:
+        return (
+            " This simulator has no physics, so a contact is built from the geometry "
+            "of each env step: two shapes touch within a small tolerance, the robot "
+            "holds the object, or the env rejects a motion because of a collision. "
+            "There are no forces, and the shortest time is one env step (0.1 s)."
+        )
     scale = TIME_SCALE.get(backend)
     if not scale:
         return ""
@@ -320,6 +351,7 @@ def pair_intervals(
     geoms = {g["id"]: g for g in meta["geoms"]}
     entities = meta["entities"]
     opts = scaled(opts, meta)
+    kinematic = meta.get("backend") in KINEMATIC_BACKENDS
 
     def label(geom: int, face: int) -> tuple[str, str]:
         entity = entities[geoms[geom]["entity"]]
@@ -368,7 +400,13 @@ def pair_intervals(
         if _category(kind_a, kind_b) not in opts.categories:
             continue
         name = SEP.join((name_a, name_b))
-        robot[name] = "robot" in (kind_a, kind_b)
+        robot[name] = "robot" in (kind_a, kind_b) and not (
+            # In a kinematic scene the base stands on the floor (or next to a table)
+            # for the whole episode: its support can be a resting pair too.
+            kinematic
+            and name_a.startswith("robot.base")
+            and kind_b in ("fixture", "world")
+        )
         own = key_intervals[key][:, 1:]
         rows = key_steps[key]
         # Force is stored per env step: an interval gets the peak of its steps, and
