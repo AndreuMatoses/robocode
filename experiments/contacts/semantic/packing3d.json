@@ -1,0 +1,841 @@
+{
+ "scenario": "packing3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 33 runs (order, end position and lift of the two parts, base path, contact pairs). part0 starts on the +y side of the rack and part1 on the -y side. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/packing3d.py"
+ },
+ "insights": [
+  "23 of 33 runs put each part on the other side of the rack from its start. 10 runs keep each part on its own side. The motion view sees this (0.81); the contact view does not (0.53).",
+  "The base stays in all opus55-source and opus5-source runs. It moves in all opus55, astra, astra-source and sol runs."
+ ],
+ "codebook": [
+  {
+   "key": "placement",
+   "question": "On which side of the rack does each part end?",
+   "source": "motion",
+   "values": {
+    "own_side": "Each part ends on the side of the rack where it starts (part0 at the larger y).",
+    "crossed": "The parts change sides: part0 ends at the smaller y."
+   },
+   "rule": "y of part0 against y of part1 in the last state"
+  },
+  {
+   "key": "contact",
+   "question": "Do the two parts touch?",
+   "source": "contacts",
+   "values": {
+    "apart": "No contact between the two parts.",
+    "touch": "The two parts touch: they end side by side or one on the other."
+   },
+   "rule": "contact pair part with part"
+  },
+  {
+   "key": "order",
+   "question": "Which part goes first?",
+   "source": "motion",
+   "values": {
+    "part0_first": "part0 moves first.",
+    "part1_first": "part1 moves first."
+   },
+   "rule": "first motion of each part"
+  },
+  {
+   "key": "base",
+   "question": "Does the base move?",
+   "source": "motion",
+   "values": {
+    "fixed": "The base path is below 20 cm: the arm does all the work.",
+    "moves": "The base path is 20 cm or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "carry",
+   "question": "How high does the robot carry a part?",
+   "source": "motion",
+   "values": {
+    "low": "No part goes 12 cm or more above its start.",
+    "high": "A part goes 12 cm or more above its start."
+   },
+   "rule": "largest height of a part above its start"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 54 env steps.",
+    "slow": "More than 54 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/packing3d/seed24": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/packing3d/seed42": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part1_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/packing3d/seed222": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/packing3d/seed424": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part1_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/packing3d/seed444": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/packing3d/seed24": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "opus55-source/packing3d/seed42": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part1_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/packing3d/seed222": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "opus55-source/packing3d/seed424": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "opus55-source/packing3d/seed444": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5/packing3d/seed24": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5/packing3d/seed42": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5/packing3d/seed424": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5/packing3d/seed444": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5-source/packing3d/seed24": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5-source/packing3d/seed42": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part1_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5-source/packing3d/seed222": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5-source/packing3d/seed424": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part1_first",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5-source/packing3d/seed444": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part0_first",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "astra/packing3d/seed24": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/packing3d/seed42": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "astra/packing3d/seed222": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "astra/packing3d/seed424": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/packing3d/seed444": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "astra-source/packing3d/seed24": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "astra-source/packing3d/seed42": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "astra-source/packing3d/seed222": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "astra-source/packing3d/seed424": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part1_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "astra-source/packing3d/seed444": {
+   "placement": "crossed",
+   "contact": "touch",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "sol/packing3d/seed24": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part1_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "sol/packing3d/seed42": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part1_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "sol/packing3d/seed222": {
+   "placement": "own_side",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "sol/packing3d/seed444": {
+   "placement": "crossed",
+   "contact": "apart",
+   "order": "part0_first",
+   "base": "moves",
+   "carry": "low",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/packing3d/seed24": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.23,
+    0.05,
+    0.12
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 1.25,
+   "steps": 20
+  },
+  "opus55/packing3d/seed42": {
+   "end_part0": [
+    0.31,
+    0.08,
+    0.12
+   ],
+   "end_part1": [
+    0.25,
+    -0.11,
+    0.12
+   ],
+   "largest_lift_m": 0.06,
+   "base_path_m": 0.84,
+   "steps": 14
+  },
+  "opus55/packing3d/seed222": {
+   "end_part0": [
+    0.3,
+    -0.07,
+    0.12
+   ],
+   "end_part1": [
+    0.27,
+    0.04,
+    0.12
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 1.16,
+   "steps": 16
+  },
+  "opus55/packing3d/seed424": {
+   "end_part0": [
+    0.3,
+    0.06,
+    0.12
+   ],
+   "end_part1": [
+    0.27,
+    -0.1,
+    0.12
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 1.11,
+   "steps": 21
+  },
+  "opus55/packing3d/seed444": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.32,
+    0.09,
+    0.11
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 1.24,
+   "steps": 24
+  },
+  "opus55-source/packing3d/seed24": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.23,
+    0.12,
+    0.11
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.0,
+   "steps": 98
+  },
+  "opus55-source/packing3d/seed42": {
+   "end_part0": [
+    0.29,
+    0.06,
+    0.12
+   ],
+   "end_part1": [
+    0.32,
+    -0.09,
+    0.12
+   ],
+   "largest_lift_m": 0.07,
+   "base_path_m": 0.0,
+   "steps": 16
+  },
+  "opus55-source/packing3d/seed222": {
+   "end_part0": [
+    0.32,
+    0.07,
+    0.12
+   ],
+   "end_part1": [
+    0.24,
+    -0.11,
+    0.12
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.0,
+   "steps": 72
+  },
+  "opus55-source/packing3d/seed424": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.37,
+    -0.02,
+    0.11
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.0,
+   "steps": 58
+  },
+  "opus55-source/packing3d/seed444": {
+   "end_part0": [
+    0.33,
+    0.08,
+    0.12
+   ],
+   "end_part1": [
+    0.24,
+    -0.03,
+    0.12
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.09,
+   "steps": 45
+  },
+  "opus5/packing3d/seed24": {
+   "end_part0": [
+    0.3,
+    -0.07,
+    0.11
+   ],
+   "end_part1": [
+    0.29,
+    0.05,
+    0.11
+   ],
+   "largest_lift_m": 0.13,
+   "base_path_m": 0.0,
+   "steps": 85
+  },
+  "opus5/packing3d/seed42": {
+   "end_part0": [
+    0.3,
+    -0.07,
+    0.11
+   ],
+   "end_part1": [
+    0.28,
+    0.04,
+    0.11
+   ],
+   "largest_lift_m": 0.23,
+   "base_path_m": 0.0,
+   "steps": 84
+  },
+  "opus5/packing3d/seed424": {
+   "end_part0": [
+    0.3,
+    -0.04,
+    0.11
+   ],
+   "end_part1": [
+    0.28,
+    0.04,
+    0.11
+   ],
+   "largest_lift_m": 0.23,
+   "base_path_m": 0.0,
+   "steps": 66
+  },
+  "opus5/packing3d/seed444": {
+   "end_part0": [
+    0.3,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.3,
+    0.05,
+    0.11
+   ],
+   "largest_lift_m": 0.28,
+   "base_path_m": 0.55,
+   "steps": 249
+  },
+  "opus5-source/packing3d/seed24": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.23,
+    -0.02,
+    0.12
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.0,
+   "steps": 54
+  },
+  "opus5-source/packing3d/seed42": {
+   "end_part0": [
+    0.32,
+    0.03,
+    0.11
+   ],
+   "end_part1": [
+    0.25,
+    -0.1,
+    0.11
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.0,
+   "steps": 37
+  },
+  "opus5-source/packing3d/seed222": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.12
+   ],
+   "end_part1": [
+    0.23,
+    -0.02,
+    0.12
+   ],
+   "largest_lift_m": 0.12,
+   "base_path_m": 0.0,
+   "steps": 54
+  },
+  "opus5-source/packing3d/seed424": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.36,
+    -0.02,
+    0.11
+   ],
+   "largest_lift_m": 0.25,
+   "base_path_m": 0.0,
+   "steps": 100
+  },
+  "opus5-source/packing3d/seed444": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.12
+   ],
+   "end_part1": [
+    0.36,
+    -0.07,
+    0.12
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.0,
+   "steps": 68
+  },
+  "astra/packing3d/seed24": {
+   "end_part0": [
+    0.3,
+    -0.05,
+    0.12
+   ],
+   "end_part1": [
+    0.27,
+    0.02,
+    0.12
+   ],
+   "largest_lift_m": 0.12,
+   "base_path_m": 1.21,
+   "steps": 88
+  },
+  "astra/packing3d/seed42": {
+   "end_part0": [
+    0.3,
+    -0.06,
+    0.12
+   ],
+   "end_part1": [
+    0.27,
+    0.03,
+    0.12
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 1.49,
+   "steps": 30
+  },
+  "astra/packing3d/seed222": {
+   "end_part0": [
+    0.3,
+    -0.06,
+    0.12
+   ],
+   "end_part1": [
+    0.29,
+    0.05,
+    0.12
+   ],
+   "largest_lift_m": 0.14,
+   "base_path_m": 1.69,
+   "steps": 24
+  },
+  "astra/packing3d/seed424": {
+   "end_part0": [
+    0.3,
+    -0.05,
+    0.11
+   ],
+   "end_part1": [
+    0.27,
+    0.02,
+    0.11
+   ],
+   "largest_lift_m": 0.16,
+   "base_path_m": 2.2,
+   "steps": 55
+  },
+  "astra/packing3d/seed444": {
+   "end_part0": [
+    0.3,
+    -0.08,
+    0.11
+   ],
+   "end_part1": [
+    0.27,
+    0.05,
+    0.11
+   ],
+   "largest_lift_m": 0.15,
+   "base_path_m": 1.86,
+   "steps": 37
+  },
+  "astra-source/packing3d/seed24": {
+   "end_part0": [
+    0.3,
+    -0.08,
+    0.11
+   ],
+   "end_part1": [
+    0.27,
+    0.03,
+    0.11
+   ],
+   "largest_lift_m": 0.11,
+   "base_path_m": 1.23,
+   "steps": 46
+  },
+  "astra-source/packing3d/seed42": {
+   "end_part0": [
+    0.34,
+    0.09,
+    0.12
+   ],
+   "end_part1": [
+    0.23,
+    -0.12,
+    0.12
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 1.08,
+   "steps": 42
+  },
+  "astra-source/packing3d/seed222": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.11
+   ],
+   "end_part1": [
+    0.3,
+    0.05,
+    0.11
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 1.21,
+   "steps": 86
+  },
+  "astra-source/packing3d/seed424": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.12
+   ],
+   "end_part1": [
+    0.23,
+    -0.02,
+    0.12
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 1.47,
+   "steps": 51
+  },
+  "astra-source/packing3d/seed444": {
+   "end_part0": [
+    0.26,
+    -0.09,
+    0.12
+   ],
+   "end_part1": [
+    0.37,
+    -0.03,
+    0.12
+   ],
+   "largest_lift_m": 0.18,
+   "base_path_m": 1.13,
+   "steps": 90
+  },
+  "sol/packing3d/seed24": {
+   "end_part0": [
+    0.27,
+    0.07,
+    0.11
+   ],
+   "end_part1": [
+    0.29,
+    -0.07,
+    0.12
+   ],
+   "largest_lift_m": 0.22,
+   "base_path_m": 1.11,
+   "steps": 116
+  },
+  "sol/packing3d/seed42": {
+   "end_part0": [
+    0.28,
+    0.07,
+    0.12
+   ],
+   "end_part1": [
+    0.23,
+    -0.08,
+    0.11
+   ],
+   "largest_lift_m": 0.06,
+   "base_path_m": 1.5,
+   "steps": 39
+  },
+  "sol/packing3d/seed222": {
+   "end_part0": [
+    0.29,
+    0.08,
+    0.12
+   ],
+   "end_part1": [
+    0.25,
+    -0.06,
+    0.12
+   ],
+   "largest_lift_m": 0.17,
+   "base_path_m": 1.31,
+   "steps": 123
+  },
+  "sol/packing3d/seed444": {
+   "end_part0": [
+    0.31,
+    -0.07,
+    0.12
+   ],
+   "end_part1": [
+    0.24,
+    0.02,
+    0.12
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 1.51,
+   "steps": 69
+  }
+ }
+}

@@ -1,0 +1,497 @@
+{
+ "scenario": "basemotion3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 35 runs (base path and end position). All runs drive to the region in 3 env steps and touch nothing, so the scenario has almost no room for different solutions. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/basemotion3d.py"
+ },
+ "insights": [
+  "This scenario has almost no room for different solutions: all 35 runs drive to the region in 3 env steps and touch nothing.",
+  "The contact view finds 1 strategy. The motion view sees only small differences of the path (a bend, the stop point)."
+ ],
+ "codebook": [
+  {
+   "key": "route",
+   "question": "Does the base drive in a straight line?",
+   "source": "motion",
+   "values": {
+    "straight": "The base path is less than 1.02 times the straight line.",
+    "bent": "1.02 times the straight line or more: the path has a bend."
+   },
+   "rule": "length of the base path divided by the distance from start to end"
+  },
+  {
+   "key": "stop",
+   "question": "Where in the target region does the base stop?",
+   "source": "motion",
+   "values": {
+    "edge": "Less than 1.05 m from the start: at the near edge of the region.",
+    "inside": "1.05 m or more from the start: deeper in the region."
+   },
+   "rule": "distance from the start to the end of the base"
+  }
+ ],
+ "labels": {
+  "opus55/basemotion3d/seed24": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "opus55/basemotion3d/seed42": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "opus55/basemotion3d/seed222": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "opus55/basemotion3d/seed424": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "opus55/basemotion3d/seed444": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "opus55-source/basemotion3d/seed24": {
+   "route": "straight",
+   "stop": "edge"
+  },
+  "opus55-source/basemotion3d/seed42": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "opus55-source/basemotion3d/seed222": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "opus55-source/basemotion3d/seed424": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "opus55-source/basemotion3d/seed444": {
+   "route": "straight",
+   "stop": "edge"
+  },
+  "opus5/basemotion3d/seed24": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "opus5/basemotion3d/seed42": {
+   "route": "straight",
+   "stop": "inside"
+  },
+  "opus5/basemotion3d/seed222": {
+   "route": "straight",
+   "stop": "edge"
+  },
+  "opus5/basemotion3d/seed424": {
+   "route": "straight",
+   "stop": "edge"
+  },
+  "opus5/basemotion3d/seed444": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "opus5-source/basemotion3d/seed24": {
+   "route": "straight",
+   "stop": "edge"
+  },
+  "opus5-source/basemotion3d/seed42": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "opus5-source/basemotion3d/seed222": {
+   "route": "straight",
+   "stop": "inside"
+  },
+  "opus5-source/basemotion3d/seed424": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "opus5-source/basemotion3d/seed444": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra/basemotion3d/seed24": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra/basemotion3d/seed42": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra/basemotion3d/seed222": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra/basemotion3d/seed424": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra/basemotion3d/seed444": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra-source/basemotion3d/seed24": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra-source/basemotion3d/seed42": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra-source/basemotion3d/seed222": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra-source/basemotion3d/seed424": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "astra-source/basemotion3d/seed444": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "sol/basemotion3d/seed24": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "sol/basemotion3d/seed42": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "sol/basemotion3d/seed222": {
+   "route": "bent",
+   "stop": "edge"
+  },
+  "sol/basemotion3d/seed424": {
+   "route": "bent",
+   "stop": "inside"
+  },
+  "sol/basemotion3d/seed444": {
+   "route": "bent",
+   "stop": "inside"
+  }
+ },
+ "evidence": {
+  "opus55/basemotion3d/seed24": {
+   "base_end": [
+    0.543,
+    -0.875
+   ],
+   "base_shift_m": 1.03,
+   "path_ratio": 1.033,
+   "steps": 3
+  },
+  "opus55/basemotion3d/seed42": {
+   "base_end": [
+    0.548,
+    -0.877
+   ],
+   "base_shift_m": 1.034,
+   "path_ratio": 1.034,
+   "steps": 3
+  },
+  "opus55/basemotion3d/seed222": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "opus55/basemotion3d/seed424": {
+   "base_end": [
+    0.543,
+    -0.876
+   ],
+   "base_shift_m": 1.031,
+   "path_ratio": 1.033,
+   "steps": 3
+  },
+  "opus55/basemotion3d/seed444": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "opus55-source/basemotion3d/seed24": {
+   "base_end": [
+    0.525,
+    -0.882
+   ],
+   "base_shift_m": 1.026,
+   "path_ratio": 1.0,
+   "steps": 3
+  },
+  "opus55-source/basemotion3d/seed42": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "opus55-source/basemotion3d/seed222": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "opus55-source/basemotion3d/seed424": {
+   "base_end": [
+    0.53,
+    -0.891
+   ],
+   "base_shift_m": 1.036,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "opus55-source/basemotion3d/seed444": {
+   "base_end": [
+    0.548,
+    -0.871
+   ],
+   "base_shift_m": 1.029,
+   "path_ratio": 1.0,
+   "steps": 3
+  },
+  "opus5/basemotion3d/seed24": {
+   "base_end": [
+    0.548,
+    -0.874
+   ],
+   "base_shift_m": 1.031,
+   "path_ratio": 1.034,
+   "steps": 3
+  },
+  "opus5/basemotion3d/seed42": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.0,
+   "steps": 3
+  },
+  "opus5/basemotion3d/seed222": {
+   "base_end": [
+    0.548,
+    -0.871
+   ],
+   "base_shift_m": 1.029,
+   "path_ratio": 1.0,
+   "steps": 3
+  },
+  "opus5/basemotion3d/seed424": {
+   "base_end": [
+    0.548,
+    -0.871
+   ],
+   "base_shift_m": 1.029,
+   "path_ratio": 1.0,
+   "steps": 3
+  },
+  "opus5/basemotion3d/seed444": {
+   "base_end": [
+    0.548,
+    -0.871
+   ],
+   "base_shift_m": 1.029,
+   "path_ratio": 1.033,
+   "steps": 3
+  },
+  "opus5-source/basemotion3d/seed24": {
+   "base_end": [
+    0.548,
+    -0.871
+   ],
+   "base_shift_m": 1.029,
+   "path_ratio": 1.0,
+   "steps": 3
+  },
+  "opus5-source/basemotion3d/seed42": {
+   "base_end": [
+    0.548,
+    -0.871
+   ],
+   "base_shift_m": 1.029,
+   "path_ratio": 1.033,
+   "steps": 3
+  },
+  "opus5-source/basemotion3d/seed222": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.0,
+   "steps": 3
+  },
+  "opus5-source/basemotion3d/seed424": {
+   "base_end": [
+    0.54,
+    -0.92
+   ],
+   "base_shift_m": 1.067,
+   "path_ratio": 1.04,
+   "steps": 3
+  },
+  "opus5-source/basemotion3d/seed444": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra/basemotion3d/seed24": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra/basemotion3d/seed42": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra/basemotion3d/seed222": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra/basemotion3d/seed424": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra/basemotion3d/seed444": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra-source/basemotion3d/seed24": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra-source/basemotion3d/seed42": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra-source/basemotion3d/seed222": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra-source/basemotion3d/seed424": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "astra-source/basemotion3d/seed444": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "sol/basemotion3d/seed24": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "sol/basemotion3d/seed42": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "sol/basemotion3d/seed222": {
+   "base_end": [
+    0.548,
+    -0.872
+   ],
+   "base_shift_m": 1.03,
+   "path_ratio": 1.033,
+   "steps": 3
+  },
+  "sol/basemotion3d/seed424": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  },
+  "sol/basemotion3d/seed444": {
+   "base_end": [
+    0.548,
+    -0.921
+   ],
+   "base_shift_m": 1.071,
+   "path_ratio": 1.039,
+   "steps": 3
+  }
+ }
+}

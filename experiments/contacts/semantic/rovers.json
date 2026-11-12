@@ -1,0 +1,759 @@
+{
+ "scenario": "rovers",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the task text and at the numbers of all 34 runs (the samples that each rover drives to, the path of each rover, the order of the contact events). A sample counts as taken by a rover that comes within 27 cm of it. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/rovers.py"
+ },
+ "insights": [
+  "32 of 34 runs give all the sample work to rover1; rover0 takes pictures only. 2 runs split the samples between the rovers.",
+  "28 runs take the same two samples, rock0 and soil0.",
+  "The contact view finds 9 strategies (effective number 7.9), but the plan is almost the same in all runs. One difference is the order of the events: the first event is a sample in 22 runs and a picture in 12 runs."
+ ],
+ "codebook": [
+  {
+   "key": "sampling",
+   "question": "Which rover takes the samples?",
+   "source": "motion",
+   "values": {
+    "rover1_both": "rover1 takes the stone sample and the soil sample. rover0 takes no sample.",
+    "split": "Each rover takes one sample.",
+    "rover0_both": "rover0 takes the two samples."
+   },
+   "rule": "the rovers that come within 27 cm of a stone or a soil sample"
+  },
+  {
+   "key": "samples",
+   "question": "Which samples do the rovers take?",
+   "source": "motion",
+   "values": {
+    "rock0_soil0": "rock0 and soil0 only: the two samples nearest to each other.",
+    "other": "Another stone or soil sample, or more than two samples."
+   },
+   "rule": "the samples that a rover comes within 27 cm of"
+  },
+  {
+   "key": "first_event",
+   "question": "What is the first event of the episode?",
+   "source": "contacts",
+   "values": {
+    "picture": "A rover is at an objective before a rover is at a sample.",
+    "sample": "A rover is at a sample before a rover is at an objective.",
+    "together": "The two events start in the same contact mode."
+   },
+   "rule": "first contact mode with an objective against the first contact mode with a stone or a soil sample"
+  },
+  {
+   "key": "travel",
+   "question": "How far do the two rovers drive?",
+   "source": "motion",
+   "values": {
+    "short": "The two paths add up to less than 11 m.",
+    "long": "11 m or more."
+   },
+   "rule": "sum of the path lengths of the two rovers"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 26 env steps.",
+    "slow": "More than 26 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/rovers/seed24": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "opus55/rovers/seed42": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "opus55/rovers/seed222": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "opus55/rovers/seed424": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "opus55/rovers/seed444": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/rovers/seed24": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "opus55-source/rovers/seed42": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/rovers/seed222": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/rovers/seed424": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/rovers/seed444": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "opus5/rovers/seed24": {
+   "sampling": "rover1_both",
+   "samples": "other",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "opus5/rovers/seed42": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "opus5/rovers/seed222": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "opus5/rovers/seed424": {
+   "sampling": "split",
+   "samples": "other",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "opus5/rovers/seed444": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "opus5-source/rovers/seed24": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "opus5-source/rovers/seed42": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "opus5-source/rovers/seed222": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "short",
+   "pace": "slow"
+  },
+  "opus5-source/rovers/seed424": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "opus5-source/rovers/seed444": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "astra/rovers/seed24": {
+   "sampling": "split",
+   "samples": "other",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "astra/rovers/seed42": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "astra/rovers/seed222": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "astra/rovers/seed424": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "slow"
+  },
+  "astra/rovers/seed444": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "slow"
+  },
+  "astra-source/rovers/seed24": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "astra-source/rovers/seed42": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "astra-source/rovers/seed222": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "quick"
+  },
+  "astra-source/rovers/seed424": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "quick"
+  },
+  "astra-source/rovers/seed444": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "sol/rovers/seed24": {
+   "sampling": "rover1_both",
+   "samples": "other",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "sol/rovers/seed42": {
+   "sampling": "rover1_both",
+   "samples": "other",
+   "first_event": "picture",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "sol/rovers/seed424": {
+   "sampling": "rover1_both",
+   "samples": "other",
+   "first_event": "sample",
+   "travel": "long",
+   "pace": "slow"
+  },
+  "sol/rovers/seed444": {
+   "sampling": "rover1_both",
+   "samples": "rock0_soil0",
+   "first_event": "sample",
+   "travel": "short",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/rovers/seed24": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.39,
+   "path_rover1_m": 5.44,
+   "contact_modes": 8,
+   "steps": 25
+  },
+  "opus55/rovers/seed42": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.0,
+   "path_rover1_m": 6.45,
+   "contact_modes": 9,
+   "steps": 25
+  },
+  "opus55/rovers/seed222": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.5,
+   "path_rover1_m": 6.56,
+   "contact_modes": 7,
+   "steps": 25
+  },
+  "opus55/rovers/seed424": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 3.9,
+   "path_rover1_m": 5.42,
+   "contact_modes": 7,
+   "steps": 25
+  },
+  "opus55/rovers/seed444": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.1,
+   "path_rover1_m": 5.33,
+   "contact_modes": 7,
+   "steps": 25
+  },
+  "opus55-source/rovers/seed24": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.37,
+   "path_rover1_m": 6.58,
+   "contact_modes": 6,
+   "steps": 25
+  },
+  "opus55-source/rovers/seed42": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.24,
+   "path_rover1_m": 5.25,
+   "contact_modes": 5,
+   "steps": 25
+  },
+  "opus55-source/rovers/seed222": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.52,
+   "path_rover1_m": 5.38,
+   "contact_modes": 5,
+   "steps": 25
+  },
+  "opus55-source/rovers/seed424": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.15,
+   "path_rover1_m": 5.29,
+   "contact_modes": 6,
+   "steps": 25
+  },
+  "opus55-source/rovers/seed444": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.28,
+   "path_rover1_m": 6.47,
+   "contact_modes": 5,
+   "steps": 25
+  },
+  "opus5/rovers/seed24": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil1"
+    ]
+   },
+   "path_rover0_m": 5.59,
+   "path_rover1_m": 7.14,
+   "contact_modes": 9,
+   "steps": 29
+  },
+  "opus5/rovers/seed42": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.82,
+   "path_rover1_m": 5.91,
+   "contact_modes": 12,
+   "steps": 35
+  },
+  "opus5/rovers/seed222": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 6.88,
+   "path_rover1_m": 6.95,
+   "contact_modes": 5,
+   "steps": 27
+  },
+  "opus5/rovers/seed424": {
+   "samples_of_each_rover": {
+    "rover0": [
+     "rock2"
+    ],
+    "rover1": [
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 7.35,
+   "path_rover1_m": 4.9,
+   "contact_modes": 11,
+   "steps": 38
+  },
+  "opus5/rovers/seed444": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.31,
+   "path_rover1_m": 6.64,
+   "contact_modes": 7,
+   "steps": 25
+  },
+  "opus5-source/rovers/seed24": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.14,
+   "path_rover1_m": 6.95,
+   "contact_modes": 8,
+   "steps": 29
+  },
+  "opus5-source/rovers/seed42": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.2,
+   "path_rover1_m": 6.43,
+   "contact_modes": 8,
+   "steps": 25
+  },
+  "opus5-source/rovers/seed222": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.08,
+   "path_rover1_m": 5.81,
+   "contact_modes": 12,
+   "steps": 29
+  },
+  "opus5-source/rovers/seed424": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 6.36,
+   "path_rover1_m": 6.82,
+   "contact_modes": 7,
+   "steps": 26
+  },
+  "opus5-source/rovers/seed444": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.31,
+   "path_rover1_m": 7.01,
+   "contact_modes": 7,
+   "steps": 26
+  },
+  "astra/rovers/seed24": {
+   "samples_of_each_rover": {
+    "rover0": [
+     "rock2"
+    ],
+    "rover1": [
+     "soil1"
+    ]
+   },
+   "path_rover0_m": 8.7,
+   "path_rover1_m": 6.82,
+   "contact_modes": 10,
+   "steps": 34
+  },
+  "astra/rovers/seed42": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.77,
+   "path_rover1_m": 5.38,
+   "contact_modes": 6,
+   "steps": 26
+  },
+  "astra/rovers/seed222": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.16,
+   "path_rover1_m": 5.41,
+   "contact_modes": 8,
+   "steps": 26
+  },
+  "astra/rovers/seed424": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.07,
+   "path_rover1_m": 5.48,
+   "contact_modes": 8,
+   "steps": 28
+  },
+  "astra/rovers/seed444": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 3.95,
+   "path_rover1_m": 5.32,
+   "contact_modes": 6,
+   "steps": 27
+  },
+  "astra-source/rovers/seed24": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.22,
+   "path_rover1_m": 6.84,
+   "contact_modes": 7,
+   "steps": 25
+  },
+  "astra-source/rovers/seed42": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.03,
+   "path_rover1_m": 6.51,
+   "contact_modes": 7,
+   "steps": 25
+  },
+  "astra-source/rovers/seed222": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.11,
+   "path_rover1_m": 6.36,
+   "contact_modes": 6,
+   "steps": 25
+  },
+  "astra-source/rovers/seed424": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 5.19,
+   "path_rover1_m": 6.52,
+   "contact_modes": 7,
+   "steps": 25
+  },
+  "astra-source/rovers/seed444": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.63,
+   "path_rover1_m": 6.66,
+   "contact_modes": 6,
+   "steps": 27
+  },
+  "sol/rovers/seed24": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil1"
+    ]
+   },
+   "path_rover0_m": 7.23,
+   "path_rover1_m": 14.35,
+   "contact_modes": 15,
+   "steps": 68
+  },
+  "sol/rovers/seed42": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil1",
+     "soil2"
+    ]
+   },
+   "path_rover0_m": 5.64,
+   "path_rover1_m": 8.7,
+   "contact_modes": 12,
+   "steps": 42
+  },
+  "sol/rovers/seed424": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0",
+     "soil1"
+    ]
+   },
+   "path_rover0_m": 7.91,
+   "path_rover1_m": 12.12,
+   "contact_modes": 19,
+   "steps": 64
+  },
+  "sol/rovers/seed444": {
+   "samples_of_each_rover": {
+    "rover0": [],
+    "rover1": [
+     "rock0",
+     "soil0"
+    ]
+   },
+   "path_rover0_m": 4.24,
+   "path_rover1_m": 5.58,
+   "contact_modes": 9,
+   "steps": 35
+  }
+ }
+}

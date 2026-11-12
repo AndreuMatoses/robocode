@@ -1,0 +1,554 @@
+{
+ "scenario": "scooppour3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 22 runs (motion of the two bins and of the cubes, contact pairs). The scoop does not move in any run, so no tag group asks for it. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/scooppour3d.py"
+ },
+ "insights": [
+  "No run uses the scoop: it does not move in any of the 22 runs.",
+  "14 runs lift the yellow bin and pour the cubes into the green bin. 5 runs take the cubes out one at a time.",
+  "2 runs (astra-source seed24 and seed444) move no cube: they lift the green bin and bring it to the yellow bin. 1 run puts the yellow bin, with the cubes in it, into the green bin.",
+  "The two views see the transfer type (0.93)."
+ ],
+ "codebook": [
+  {
+   "key": "transfer",
+   "question": "How do the cubes get into the green bin?",
+   "source": "motion",
+   "values": {
+    "pour": "The robot lifts the yellow bin, carries it over the green bin and pours the cubes out.",
+    "pick_each": "The yellow bin stays. The gripper takes the cubes out one at a time.",
+    "nest_bin": "The robot puts the yellow bin, with the cubes in it, into the green bin. The cubes are not poured out.",
+    "move_target": "No cube moves. The robot lifts the green bin and brings it to the yellow bin."
+   },
+   "rule": "shift of the yellow bin (20 cm or more: pour or nest_bin; nest_bin if the cubes end 5 cm or more above the floor of the green bin), else move_target if no cube moves, else pick_each"
+  },
+  {
+   "key": "bins",
+   "question": "Do the two bins touch?",
+   "source": "contacts",
+   "values": {
+    "apart": "No contact between the yellow bin and the green bin.",
+    "touch": "The yellow bin touches the green bin."
+   },
+   "rule": "contact pair of the yellow bin with the green bin"
+  },
+  {
+   "key": "base",
+   "question": "Does the base drive during the task?",
+   "source": "motion",
+   "values": {
+    "stays": "The base path is below 2.5 m.",
+    "drives": "The base path is 2.5 m or more: the base moves for each grasp."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "island",
+   "question": "Does the base touch the kitchen island?",
+   "source": "contacts",
+   "values": {
+    "clear": "No contact of the base with the island.",
+    "bumps": "The base touches a part of the island."
+   },
+   "rule": "contact pairs of the robot base with the kitchen island"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 300 env steps (30 s).",
+    "slow": "More than 300 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/scooppour3d/seed24": {
+   "transfer": "pick_each",
+   "bins": "apart",
+   "base": "drives",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "opus55/scooppour3d/seed42": {
+   "transfer": "pick_each",
+   "bins": "apart",
+   "base": "drives",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "opus55/scooppour3d/seed222": {
+   "transfer": "pick_each",
+   "bins": "apart",
+   "base": "drives",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "opus55/scooppour3d/seed424": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "opus55-source/scooppour3d/seed24": {
+   "transfer": "pour",
+   "bins": "apart",
+   "base": "stays",
+   "island": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/scooppour3d/seed42": {
+   "transfer": "pour",
+   "bins": "apart",
+   "base": "stays",
+   "island": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/scooppour3d/seed222": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "bumps",
+   "pace": "quick"
+  },
+  "opus55-source/scooppour3d/seed424": {
+   "transfer": "pick_each",
+   "bins": "apart",
+   "base": "drives",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "opus55-source/scooppour3d/seed444": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "opus5/scooppour3d/seed42": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "bumps",
+   "pace": "quick"
+  },
+  "opus5/scooppour3d/seed424": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "clear",
+   "pace": "quick"
+  },
+  "opus5-source/scooppour3d/seed24": {
+   "transfer": "pour",
+   "bins": "apart",
+   "base": "stays",
+   "island": "bumps",
+   "pace": "quick"
+  },
+  "opus5-source/scooppour3d/seed42": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "clear",
+   "pace": "quick"
+  },
+  "opus5-source/scooppour3d/seed222": {
+   "transfer": "pour",
+   "bins": "apart",
+   "base": "stays",
+   "island": "bumps",
+   "pace": "quick"
+  },
+  "opus5-source/scooppour3d/seed424": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "bumps",
+   "pace": "slow"
+  },
+  "opus5-source/scooppour3d/seed444": {
+   "transfer": "pour",
+   "bins": "apart",
+   "base": "stays",
+   "island": "bumps",
+   "pace": "slow"
+  },
+  "astra/scooppour3d/seed424": {
+   "transfer": "pour",
+   "bins": "apart",
+   "base": "stays",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "astra/scooppour3d/seed444": {
+   "transfer": "pick_each",
+   "bins": "apart",
+   "base": "drives",
+   "island": "bumps",
+   "pace": "slow"
+  },
+  "astra-source/scooppour3d/seed24": {
+   "transfer": "move_target",
+   "bins": "touch",
+   "base": "stays",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "astra-source/scooppour3d/seed42": {
+   "transfer": "nest_bin",
+   "bins": "touch",
+   "base": "stays",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "astra-source/scooppour3d/seed424": {
+   "transfer": "pour",
+   "bins": "touch",
+   "base": "stays",
+   "island": "clear",
+   "pace": "slow"
+  },
+  "astra-source/scooppour3d/seed444": {
+   "transfer": "move_target",
+   "bins": "apart",
+   "base": "stays",
+   "island": "clear",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/scooppour3d/seed24": {
+   "yellow_bin_shift_m": 0.0,
+   "yellow_bin_lift_m": 0.0,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    45,
+    277
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": true,
+   "base_path_m": 6.27,
+   "steps": 371
+  },
+  "opus55/scooppour3d/seed42": {
+   "yellow_bin_shift_m": 0.0,
+   "yellow_bin_lift_m": 0.0,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    68,
+    479
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": true,
+   "base_path_m": 7.61,
+   "steps": 495
+  },
+  "opus55/scooppour3d/seed222": {
+   "yellow_bin_shift_m": 0.0,
+   "yellow_bin_lift_m": 0.0,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    59,
+    298
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": true,
+   "base_path_m": 6.25,
+   "steps": 340
+  },
+  "opus55/scooppour3d/seed424": {
+   "yellow_bin_shift_m": 0.5,
+   "yellow_bin_lift_m": 0.23,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    79,
+    79
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.86,
+   "steps": 302
+  },
+  "opus55-source/scooppour3d/seed24": {
+   "yellow_bin_shift_m": 0.48,
+   "yellow_bin_lift_m": 0.31,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    20,
+    20
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": true,
+   "base_path_m": 0.74,
+   "steps": 86
+  },
+  "opus55-source/scooppour3d/seed42": {
+   "yellow_bin_shift_m": 0.46,
+   "yellow_bin_lift_m": 0.27,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    63,
+    63
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": true,
+   "base_path_m": 1.04,
+   "steps": 245
+  },
+  "opus55-source/scooppour3d/seed222": {
+   "yellow_bin_shift_m": 0.46,
+   "yellow_bin_lift_m": 0.26,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    75,
+    75
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 1.04,
+   "steps": 252
+  },
+  "opus55-source/scooppour3d/seed424": {
+   "yellow_bin_shift_m": 0.0,
+   "yellow_bin_lift_m": 0.0,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    74,
+    324
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": true,
+   "base_path_m": 7.39,
+   "steps": 333
+  },
+  "opus55-source/scooppour3d/seed444": {
+   "yellow_bin_shift_m": 0.49,
+   "yellow_bin_lift_m": 0.32,
+   "green_bin_shift_m": 0.01,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    103,
+    106
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 1.95,
+   "steps": 359
+  },
+  "opus5/scooppour3d/seed42": {
+   "yellow_bin_shift_m": 0.47,
+   "yellow_bin_lift_m": 0.23,
+   "green_bin_shift_m": 0.1,
+   "green_bin_lift_m": 0.02,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    133,
+    148
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 1.29,
+   "steps": 237
+  },
+  "opus5/scooppour3d/seed424": {
+   "yellow_bin_shift_m": 0.48,
+   "yellow_bin_lift_m": 0.24,
+   "green_bin_shift_m": 0.01,
+   "green_bin_lift_m": 0.03,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    97,
+    97
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.56,
+   "steps": 265
+  },
+  "opus5-source/scooppour3d/seed24": {
+   "yellow_bin_shift_m": 0.52,
+   "yellow_bin_lift_m": 0.25,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    73,
+    73
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.61,
+   "steps": 216
+  },
+  "opus5-source/scooppour3d/seed42": {
+   "yellow_bin_shift_m": 0.47,
+   "yellow_bin_lift_m": 0.26,
+   "green_bin_shift_m": 0.05,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    121,
+    155
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.07,
+   "steps": 288
+  },
+  "opus5-source/scooppour3d/seed222": {
+   "yellow_bin_shift_m": 0.47,
+   "yellow_bin_lift_m": 0.26,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    119,
+    119
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.75,
+   "steps": 228
+  },
+  "opus5-source/scooppour3d/seed424": {
+   "yellow_bin_shift_m": 0.43,
+   "yellow_bin_lift_m": 0.42,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    114,
+    114
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 1.3,
+   "steps": 504
+  },
+  "opus5-source/scooppour3d/seed444": {
+   "yellow_bin_shift_m": 0.49,
+   "yellow_bin_lift_m": 0.22,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    174,
+    174
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 2.21,
+   "steps": 307
+  },
+  "astra/scooppour3d/seed424": {
+   "yellow_bin_shift_m": 0.48,
+   "yellow_bin_lift_m": 0.34,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    150,
+    150
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.49,
+   "steps": 440
+  },
+  "astra/scooppour3d/seed444": {
+   "yellow_bin_shift_m": 0.0,
+   "yellow_bin_lift_m": 0.0,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    110,
+    641
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": true,
+   "base_path_m": 5.99,
+   "steps": 730
+  },
+  "astra-source/scooppour3d/seed24": {
+   "yellow_bin_shift_m": 0.0,
+   "yellow_bin_lift_m": 0.0,
+   "green_bin_shift_m": 0.31,
+   "green_bin_lift_m": 0.81,
+   "cubes_that_move": 0,
+   "first_motion_of_the_cubes_steps": null,
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.57,
+   "steps": 595
+  },
+  "astra-source/scooppour3d/seed42": {
+   "yellow_bin_shift_m": 0.42,
+   "yellow_bin_lift_m": 0.3,
+   "green_bin_shift_m": 0.03,
+   "green_bin_lift_m": 0.03,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    89,
+    89
+   ],
+   "cubes_end_height_change_m": 0.09,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 0.07,
+   "steps": 400
+  },
+  "astra-source/scooppour3d/seed424": {
+   "yellow_bin_shift_m": 0.56,
+   "yellow_bin_lift_m": 0.2,
+   "green_bin_shift_m": 0.0,
+   "green_bin_lift_m": 0.0,
+   "cubes_that_move": 10,
+   "first_motion_of_the_cubes_steps": [
+    140,
+    140
+   ],
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 1.05,
+   "steps": 307
+  },
+  "astra-source/scooppour3d/seed444": {
+   "yellow_bin_shift_m": 0.0,
+   "yellow_bin_lift_m": 0.0,
+   "green_bin_shift_m": 0.31,
+   "green_bin_lift_m": 0.51,
+   "cubes_that_move": 0,
+   "first_motion_of_the_cubes_steps": null,
+   "cubes_end_height_change_m": 0.0,
+   "gripper_touches_a_cube": false,
+   "base_path_m": 1.08,
+   "steps": 365
+  }
+ }
+}

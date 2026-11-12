@@ -1,0 +1,550 @@
+{
+ "scenario": "dynpusht2d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 34 runs (path of the block and of the robot, number of contact modes, contact pairs). The traces give the position of the block; its angle was not read. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/dynpusht2d.py"
+ },
+ "insights": [
+  "9 runs reach the goal in one or two pushes, 19 runs in three to six pushes, and 6 runs with seven or more small corrections. The contact view sees this (0.89); the motion view does not (0.48).",
+  "10 of 34 runs push the block along the top wall or against it.",
+  "The motion view has the position of the block only. It does not have the angle, which the task also sets."
+ ],
+ "codebook": [
+  {
+   "key": "pushes",
+   "question": "In how many pushes does the block reach the goal?",
+   "source": "motion",
+   "values": {
+    "one_or_two": "The block moves one or two times.",
+    "several": "The block moves three to six times.",
+    "many": "The block moves seven times or more: many small corrections."
+   },
+   "rule": "number of separate motions of the block (a pause of more than 3 env steps splits two motions)"
+  },
+  {
+   "key": "wall",
+   "question": "Does the block touch the top wall?",
+   "source": "contacts",
+   "values": {
+    "free": "The block does not touch a wall.",
+    "uses_wall": "The block touches the top wall: the robot pushes it along the wall or against it."
+   },
+   "rule": "contact pair of the block with the top wall"
+  },
+  {
+   "key": "block_path",
+   "question": "Does the block go straight to the goal?",
+   "source": "motion",
+   "values": {
+    "straight": "The path of the block is less than 1.1 times the straight line.",
+    "detour": "1.1 times the straight line or more."
+   },
+   "rule": "path length of the block divided by its shift"
+  },
+  {
+   "key": "robot_travel",
+   "question": "How much does the robot move around the block?",
+   "source": "motion",
+   "values": {
+    "short": "The robot path is less than 3.2 times the block path.",
+    "long": "3.2 times the block path or more: the robot goes around the block again and again."
+   },
+   "rule": "path length of the robot divided by the path length of the block"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 192 env steps.",
+    "slow": "More than 192 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/dynpusht2d/seed24": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus55/dynpusht2d/seed42": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "opus55/dynpusht2d/seed222": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus55/dynpusht2d/seed424": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus55/dynpusht2d/seed444": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/dynpusht2d/seed24": {
+   "pushes": "several",
+   "wall": "uses_wall",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "opus55-source/dynpusht2d/seed42": {
+   "pushes": "several",
+   "wall": "uses_wall",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/dynpusht2d/seed222": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/dynpusht2d/seed424": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus55-source/dynpusht2d/seed444": {
+   "pushes": "several",
+   "wall": "uses_wall",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "opus5/dynpusht2d/seed24": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus5/dynpusht2d/seed42": {
+   "pushes": "many",
+   "wall": "uses_wall",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "opus5/dynpusht2d/seed222": {
+   "pushes": "many",
+   "wall": "uses_wall",
+   "block_path": "detour",
+   "robot_travel": "short",
+   "pace": "slow"
+  },
+  "opus5/dynpusht2d/seed424": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus5/dynpusht2d/seed444": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "opus5-source/dynpusht2d/seed24": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "quick"
+  },
+  "opus5-source/dynpusht2d/seed42": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus5-source/dynpusht2d/seed222": {
+   "pushes": "one_or_two",
+   "wall": "uses_wall",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "opus5-source/dynpusht2d/seed424": {
+   "pushes": "several",
+   "wall": "uses_wall",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "opus5-source/dynpusht2d/seed444": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "astra/dynpusht2d/seed24": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "astra/dynpusht2d/seed42": {
+   "pushes": "many",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "astra/dynpusht2d/seed222": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "astra/dynpusht2d/seed424": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "astra/dynpusht2d/seed444": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "astra-source/dynpusht2d/seed24": {
+   "pushes": "several",
+   "wall": "uses_wall",
+   "block_path": "straight",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "astra-source/dynpusht2d/seed42": {
+   "pushes": "one_or_two",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "astra-source/dynpusht2d/seed222": {
+   "pushes": "several",
+   "wall": "uses_wall",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "astra-source/dynpusht2d/seed424": {
+   "pushes": "several",
+   "wall": "uses_wall",
+   "block_path": "detour",
+   "robot_travel": "short",
+   "pace": "quick"
+  },
+  "astra-source/dynpusht2d/seed444": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "sol/dynpusht2d/seed24": {
+   "pushes": "many",
+   "wall": "free",
+   "block_path": "straight",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "sol/dynpusht2d/seed42": {
+   "pushes": "many",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  },
+  "sol/dynpusht2d/seed222": {
+   "pushes": "several",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "short",
+   "pace": "slow"
+  },
+  "sol/dynpusht2d/seed424": {
+   "pushes": "many",
+   "wall": "free",
+   "block_path": "detour",
+   "robot_travel": "long",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/dynpusht2d/seed24": {
+   "block_motions": 2,
+   "block_path_ratio": 1.02,
+   "robot_path_over_block_path": 2.46,
+   "contact_modes": 4,
+   "steps": 140
+  },
+  "opus55/dynpusht2d/seed42": {
+   "block_motions": 6,
+   "block_path_ratio": 1.05,
+   "robot_path_over_block_path": 3.22,
+   "contact_modes": 16,
+   "steps": 206
+  },
+  "opus55/dynpusht2d/seed222": {
+   "block_motions": 3,
+   "block_path_ratio": 1.04,
+   "robot_path_over_block_path": 2.95,
+   "contact_modes": 6,
+   "steps": 173
+  },
+  "opus55/dynpusht2d/seed424": {
+   "block_motions": 1,
+   "block_path_ratio": 1.03,
+   "robot_path_over_block_path": 2.22,
+   "contact_modes": 2,
+   "steps": 130
+  },
+  "opus55/dynpusht2d/seed444": {
+   "block_motions": 2,
+   "block_path_ratio": 1.02,
+   "robot_path_over_block_path": 2.29,
+   "contact_modes": 4,
+   "steps": 135
+  },
+  "opus55-source/dynpusht2d/seed24": {
+   "block_motions": 5,
+   "block_path_ratio": 1.14,
+   "robot_path_over_block_path": 3.68,
+   "contact_modes": 11,
+   "steps": 246
+  },
+  "opus55-source/dynpusht2d/seed42": {
+   "block_motions": 5,
+   "block_path_ratio": 1.07,
+   "robot_path_over_block_path": 2.66,
+   "contact_modes": 14,
+   "steps": 170
+  },
+  "opus55-source/dynpusht2d/seed222": {
+   "block_motions": 3,
+   "block_path_ratio": 1.05,
+   "robot_path_over_block_path": 2.94,
+   "contact_modes": 6,
+   "steps": 175
+  },
+  "opus55-source/dynpusht2d/seed424": {
+   "block_motions": 2,
+   "block_path_ratio": 1.06,
+   "robot_path_over_block_path": 2.31,
+   "contact_modes": 4,
+   "steps": 124
+  },
+  "opus55-source/dynpusht2d/seed444": {
+   "block_motions": 6,
+   "block_path_ratio": 1.16,
+   "robot_path_over_block_path": 4.37,
+   "contact_modes": 13,
+   "steps": 298
+  },
+  "opus5/dynpusht2d/seed24": {
+   "block_motions": 5,
+   "block_path_ratio": 1.03,
+   "robot_path_over_block_path": 2.67,
+   "contact_modes": 8,
+   "steps": 157
+  },
+  "opus5/dynpusht2d/seed42": {
+   "block_motions": 13,
+   "block_path_ratio": 1.92,
+   "robot_path_over_block_path": 6.15,
+   "contact_modes": 30,
+   "steps": 693
+  },
+  "opus5/dynpusht2d/seed222": {
+   "block_motions": 13,
+   "block_path_ratio": 1.69,
+   "robot_path_over_block_path": 2.84,
+   "contact_modes": 29,
+   "steps": 269
+  },
+  "opus5/dynpusht2d/seed424": {
+   "block_motions": 3,
+   "block_path_ratio": 1.03,
+   "robot_path_over_block_path": 2.83,
+   "contact_modes": 6,
+   "steps": 163
+  },
+  "opus5/dynpusht2d/seed444": {
+   "block_motions": 6,
+   "block_path_ratio": 1.23,
+   "robot_path_over_block_path": 3.57,
+   "contact_modes": 12,
+   "steps": 268
+  },
+  "opus5-source/dynpusht2d/seed24": {
+   "block_motions": 4,
+   "block_path_ratio": 1.11,
+   "robot_path_over_block_path": 3.35,
+   "contact_modes": 8,
+   "steps": 189
+  },
+  "opus5-source/dynpusht2d/seed42": {
+   "block_motions": 2,
+   "block_path_ratio": 1.04,
+   "robot_path_over_block_path": 2.75,
+   "contact_modes": 4,
+   "steps": 163
+  },
+  "opus5-source/dynpusht2d/seed222": {
+   "block_motions": 2,
+   "block_path_ratio": 1.05,
+   "robot_path_over_block_path": 2.38,
+   "contact_modes": 5,
+   "steps": 141
+  },
+  "opus5-source/dynpusht2d/seed424": {
+   "block_motions": 6,
+   "block_path_ratio": 1.32,
+   "robot_path_over_block_path": 3.59,
+   "contact_modes": 13,
+   "steps": 248
+  },
+  "opus5-source/dynpusht2d/seed444": {
+   "block_motions": 1,
+   "block_path_ratio": 1.03,
+   "robot_path_over_block_path": 2.25,
+   "contact_modes": 2,
+   "steps": 118
+  },
+  "astra/dynpusht2d/seed24": {
+   "block_motions": 6,
+   "block_path_ratio": 1.14,
+   "robot_path_over_block_path": 2.69,
+   "contact_modes": 12,
+   "steps": 160
+  },
+  "astra/dynpusht2d/seed42": {
+   "block_motions": 20,
+   "block_path_ratio": 1.26,
+   "robot_path_over_block_path": 9.43,
+   "contact_modes": 40,
+   "steps": 648
+  },
+  "astra/dynpusht2d/seed222": {
+   "block_motions": 4,
+   "block_path_ratio": 1.27,
+   "robot_path_over_block_path": 4.59,
+   "contact_modes": 8,
+   "steps": 317
+  },
+  "astra/dynpusht2d/seed424": {
+   "block_motions": 3,
+   "block_path_ratio": 1.09,
+   "robot_path_over_block_path": 3.37,
+   "contact_modes": 6,
+   "steps": 195
+  },
+  "astra/dynpusht2d/seed444": {
+   "block_motions": 2,
+   "block_path_ratio": 1.25,
+   "robot_path_over_block_path": 2.46,
+   "contact_modes": 4,
+   "steps": 160
+  },
+  "astra-source/dynpusht2d/seed24": {
+   "block_motions": 6,
+   "block_path_ratio": 1.09,
+   "robot_path_over_block_path": 3.64,
+   "contact_modes": 13,
+   "steps": 223
+  },
+  "astra-source/dynpusht2d/seed42": {
+   "block_motions": 2,
+   "block_path_ratio": 1.04,
+   "robot_path_over_block_path": 2.54,
+   "contact_modes": 4,
+   "steps": 143
+  },
+  "astra-source/dynpusht2d/seed222": {
+   "block_motions": 5,
+   "block_path_ratio": 1.18,
+   "robot_path_over_block_path": 3.39,
+   "contact_modes": 11,
+   "steps": 218
+  },
+  "astra-source/dynpusht2d/seed424": {
+   "block_motions": 3,
+   "block_path_ratio": 1.18,
+   "robot_path_over_block_path": 2.91,
+   "contact_modes": 8,
+   "steps": 184
+  },
+  "astra-source/dynpusht2d/seed444": {
+   "block_motions": 3,
+   "block_path_ratio": 1.1,
+   "robot_path_over_block_path": 3.29,
+   "contact_modes": 6,
+   "steps": 214
+  },
+  "sol/dynpusht2d/seed24": {
+   "block_motions": 8,
+   "block_path_ratio": 1.01,
+   "robot_path_over_block_path": 4.24,
+   "contact_modes": 16,
+   "steps": 361
+  },
+  "sol/dynpusht2d/seed42": {
+   "block_motions": 17,
+   "block_path_ratio": 1.28,
+   "robot_path_over_block_path": 10.71,
+   "contact_modes": 34,
+   "steps": 721
+  },
+  "sol/dynpusht2d/seed222": {
+   "block_motions": 6,
+   "block_path_ratio": 1.16,
+   "robot_path_over_block_path": 3.09,
+   "contact_modes": 12,
+   "steps": 218
+  },
+  "sol/dynpusht2d/seed424": {
+   "block_motions": 7,
+   "block_path_ratio": 1.14,
+   "robot_path_over_block_path": 4.35,
+   "contact_modes": 14,
+   "steps": 270
+  }
+ }
+}

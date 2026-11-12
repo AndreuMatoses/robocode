@@ -1,0 +1,950 @@
+{
+ "scenario": "dynobstruction2d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 35 runs (order and shift of the two obstructions and of the target block, contact pairs). No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/dynobstruction2d.py"
+ },
+ "insights": [
+  "30 of 35 runs do not clear the surface first: the robot pushes the target block onto the surface, and the block pushes the obstructions away. 5 runs clear the surface first.",
+  "The fingers push the target block in 26 runs, and the base pushes it in 8 runs.",
+  "In 2 runs an obstruction leaves the table."
+ ],
+ "codebook": [
+  {
+   "key": "plan",
+   "question": "How does the robot clear the surface?",
+   "source": "motion",
+   "values": {
+    "bulldoze": "The target block moves first. The robot pushes it onto the surface, and the block pushes the obstructions away.",
+    "clear_first": "An obstruction moves before the target block: the robot clears the surface, then moves the target block."
+   },
+   "rule": "the first object that moves 5 cm or more"
+  },
+  {
+   "key": "pusher",
+   "question": "Which robot part moves the target block?",
+   "source": "contacts",
+   "values": {
+    "fingers": "The fingers touch the target block; the base does not.",
+    "palm": "The palm touches the target block; the fingers and the base do not.",
+    "base": "The base touches the target block.",
+    "none": "No robot part touches the target block."
+   },
+   "rule": "contact pairs of a robot part with the target block"
+  },
+  {
+   "key": "obstructions",
+   "question": "Where do the obstructions end?",
+   "source": "motion",
+   "values": {
+    "shifted": "Each obstruction ends less than 1 m from its start.",
+    "thrown_off": "An obstruction ends 1 m or more from its start: it leaves the table."
+   },
+   "rule": "largest shift of an obstruction"
+  },
+  {
+   "key": "target_path",
+   "question": "Does the target block go straight to the surface?",
+   "source": "motion",
+   "values": {
+    "straight": "The path of the target block is less than 1.2 times the straight line.",
+    "detour": "1.2 times the straight line or more."
+   },
+   "rule": "path length of the target block divided by its shift"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 57 env steps.",
+    "slow": "More than 57 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/dynobstruction2d/seed24": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus55/dynobstruction2d/seed42": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "opus55/dynobstruction2d/seed222": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus55/dynobstruction2d/seed424": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus55/dynobstruction2d/seed444": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus55-source/dynobstruction2d/seed24": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus55-source/dynobstruction2d/seed42": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus55-source/dynobstruction2d/seed222": {
+   "plan": "clear_first",
+   "pusher": "fingers",
+   "obstructions": "thrown_off",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "opus55-source/dynobstruction2d/seed424": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus55-source/dynobstruction2d/seed444": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "opus5/dynobstruction2d/seed24": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "opus5/dynobstruction2d/seed42": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus5/dynobstruction2d/seed222": {
+   "plan": "clear_first",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "detour",
+   "pace": "slow"
+  },
+  "opus5/dynobstruction2d/seed424": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus5/dynobstruction2d/seed444": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus5-source/dynobstruction2d/seed24": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus5-source/dynobstruction2d/seed42": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus5-source/dynobstruction2d/seed222": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus5-source/dynobstruction2d/seed424": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "opus5-source/dynobstruction2d/seed444": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "astra/dynobstruction2d/seed24": {
+   "plan": "bulldoze",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "astra/dynobstruction2d/seed42": {
+   "plan": "bulldoze",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "astra/dynobstruction2d/seed222": {
+   "plan": "bulldoze",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "astra/dynobstruction2d/seed424": {
+   "plan": "bulldoze",
+   "pusher": "palm",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "astra/dynobstruction2d/seed444": {
+   "plan": "bulldoze",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "astra-source/dynobstruction2d/seed24": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "astra-source/dynobstruction2d/seed42": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "thrown_off",
+   "target_path": "detour",
+   "pace": "slow"
+  },
+  "astra-source/dynobstruction2d/seed222": {
+   "plan": "bulldoze",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "astra-source/dynobstruction2d/seed424": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "astra-source/dynobstruction2d/seed444": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "quick"
+  },
+  "sol/dynobstruction2d/seed24": {
+   "plan": "bulldoze",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "sol/dynobstruction2d/seed42": {
+   "plan": "clear_first",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "detour",
+   "pace": "slow"
+  },
+  "sol/dynobstruction2d/seed222": {
+   "plan": "bulldoze",
+   "pusher": "fingers",
+   "obstructions": "shifted",
+   "target_path": "straight",
+   "pace": "slow"
+  },
+  "sol/dynobstruction2d/seed424": {
+   "plan": "clear_first",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "detour",
+   "pace": "slow"
+  },
+  "sol/dynobstruction2d/seed444": {
+   "plan": "clear_first",
+   "pusher": "base",
+   "obstructions": "shifted",
+   "target_path": "detour",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/dynobstruction2d/seed24": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.58,
+   "steps": 43,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55/dynobstruction2d/seed42": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.25,
+   "steps": 61,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55/dynobstruction2d/seed222": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.06,
+   "steps": 50,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55/dynobstruction2d/seed424": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.66,
+   "steps": 39,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55/dynobstruction2d/seed444": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.93,
+   "steps": 49,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55-source/dynobstruction2d/seed24": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.23,
+   "steps": 57,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55-source/dynobstruction2d/seed42": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.92,
+   "steps": 50,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55-source/dynobstruction2d/seed222": {
+   "order": [
+    "obstruction1",
+    "target_block",
+    "obstruction0"
+   ],
+   "largest_obstruction_shift_m": 1.82,
+   "target_path_ratio": 1.0,
+   "base_path_m": 9.55,
+   "steps": 227,
+   "contacts": [
+    "gripper.finger~obstruction",
+    "gripper.finger~target_block",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55-source/dynobstruction2d/seed424": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.2,
+   "steps": 56,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus55-source/dynobstruction2d/seed444": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.08,
+   "steps": 63,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5/dynobstruction2d/seed24": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 6.04,
+   "steps": 157,
+   "contacts": [
+    "gripper.finger~table",
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5/dynobstruction2d/seed42": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.2,
+   "steps": 47,
+   "contacts": [
+    "gripper.finger~target_block",
+    "gripper.palm~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5/dynobstruction2d/seed222": {
+   "order": [
+    "obstruction0",
+    "target_block",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.33,
+   "base_path_m": 5.74,
+   "steps": 164,
+   "contacts": [
+    "gripper.finger~obstruction",
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5/dynobstruction2d/seed424": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.49,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.68,
+   "steps": 46,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5/dynobstruction2d/seed444": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.84,
+   "steps": 40,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5-source/dynobstruction2d/seed24": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.85,
+   "steps": 47,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5-source/dynobstruction2d/seed42": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.12,
+   "steps": 56,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5-source/dynobstruction2d/seed222": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.5,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.27,
+   "steps": 55,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5-source/dynobstruction2d/seed424": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.66,
+   "steps": 43,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "opus5-source/dynobstruction2d/seed444": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.5,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.05,
+   "steps": 49,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~target_surface"
+   ]
+  },
+  "astra/dynobstruction2d/seed24": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.19,
+   "steps": 57,
+   "contacts": [
+    "base~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "astra/dynobstruction2d/seed42": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.42,
+   "steps": 109,
+   "contacts": [
+    "base~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "astra/dynobstruction2d/seed222": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.01,
+   "steps": 57,
+   "contacts": [
+    "base~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "astra/dynobstruction2d/seed424": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 1.1,
+   "base_path_m": 2.32,
+   "steps": 58,
+   "contacts": [
+    "gripper.palm~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~table",
+    "target_block~target_surface"
+   ]
+  },
+  "astra/dynobstruction2d/seed444": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.0,
+   "base_path_m": 1.61,
+   "steps": 62,
+   "contacts": [
+    "base~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~target_surface"
+   ]
+  },
+  "astra-source/dynobstruction2d/seed24": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "target_path_ratio": 1.14,
+   "base_path_m": 2.46,
+   "steps": 79,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~table",
+    "target_block~target_surface"
+   ]
+  },
+  "astra-source/dynobstruction2d/seed42": {
+   "order": [
+    "target_block",
+    "obstruction0"
+   ],
+   "largest_obstruction_shift_m": 61.25,
+   "target_path_ratio": 6.92,
+   "base_path_m": 6.49,
+   "steps": 159,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~bottom_wall",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~left_wall",
+    "target_block~table"
+   ]
+  },
+  "astra-source/dynobstruction2d/seed222": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.03,
+   "steps": 57,
+   "contacts": [
+    "base~target_block",
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~target_surface"
+   ]
+  },
+  "astra-source/dynobstruction2d/seed424": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.46,
+   "target_path_ratio": 1.05,
+   "base_path_m": 2.24,
+   "steps": 57,
+   "contacts": [
+    "gripper.finger~target_block",
+    "gripper.palm~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "astra-source/dynobstruction2d/seed444": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.47,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.05,
+   "steps": 52,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "sol/dynobstruction2d/seed24": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.43,
+   "target_path_ratio": 1.0,
+   "base_path_m": 2.31,
+   "steps": 62,
+   "contacts": [
+    "arm~table",
+    "base~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "sol/dynobstruction2d/seed42": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.54,
+   "target_path_ratio": 3.65,
+   "base_path_m": 6.84,
+   "steps": 287,
+   "contacts": [
+    "base~obstruction",
+    "base~table",
+    "gripper.finger~table",
+    "gripper.finger~target_block",
+    "gripper.finger~target_surface",
+    "gripper.palm~obstruction",
+    "gripper.palm~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~table",
+    "target_block~target_surface"
+   ]
+  },
+  "sol/dynobstruction2d/seed222": {
+   "order": [
+    "target_block",
+    "obstruction0",
+    "obstruction1"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 1.0,
+   "base_path_m": 3.47,
+   "steps": 103,
+   "contacts": [
+    "gripper.finger~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_surface"
+   ]
+  },
+  "sol/dynobstruction2d/seed424": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.52,
+   "target_path_ratio": 1.3,
+   "base_path_m": 7.52,
+   "steps": 356,
+   "contacts": [
+    "base~obstruction",
+    "base~target_block",
+    "gripper.finger~obstruction",
+    "obstruction~bottom_wall",
+    "obstruction~obstruction",
+    "obstruction~target_surface",
+    "target_block~target_surface"
+   ]
+  },
+  "sol/dynobstruction2d/seed444": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.44,
+   "target_path_ratio": 5.98,
+   "base_path_m": 10.13,
+   "steps": 328,
+   "contacts": [
+    "arm~left_wall",
+    "arm~obstruction",
+    "arm~target_block",
+    "base~obstruction",
+    "base~target_block",
+    "gripper.finger~obstruction",
+    "gripper.finger~target_block",
+    "gripper.palm~obstruction",
+    "gripper.palm~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "obstruction~target_surface",
+    "target_block~target_surface"
+   ]
+  }
+ }
+}

@@ -1,0 +1,1199 @@
+{
+ "scenario": "rearrange3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the object motion and the robot contacts of all 32 runs. Each value is assigned by the rule of its group from numbers of the recorded episode. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/rearrange3d.py"
+ },
+ "insights": [
+  "20 runs lift each object (pick and place), and 11 runs slide the objects on the shelf. No distance sees this difference well (0.60 and 0.61).",
+  "All opus5-source, astra and astra-source runs lift.",
+  "25 of 32 runs move the boxed drink first.",
+  "The contact view sees the hold, the end pose and the side effects (about 0.9). Two of these three tag groups come from the contacts."
+ ],
+ "codebook": [
+  {
+   "key": "transport",
+   "question": "How does the robot move an object on the shelf?",
+   "source": "motion",
+   "values": {
+    "lift": "Each moved object goes 8 cm or more above its start: pick and place.",
+    "slide": "No moved object goes more than 5 cm above its start: the object slides on the shelf.",
+    "mixed": "One object is lifted and one slides, or the lift is between 5 and 8 cm."
+   },
+   "rule": "largest height of the boxed drink and of the can above their start"
+  },
+  {
+   "key": "order",
+   "question": "Which object moves first?",
+   "source": "motion",
+   "values": {
+    "boxed_first": "The boxed drink moves before the can.",
+    "can_first": "The can moves before the boxed drink (or the boxed drink does not move)."
+   },
+   "rule": "first env step in which each object moves"
+  },
+  {
+   "key": "hold",
+   "question": "Does the gripper hold each moved object with its pads?",
+   "source": "contacts",
+   "values": {
+    "pinch": "A finger pad touches each object that moves.",
+    "push": "An object moves with no pad contact: the fingers or the palm push it."
+   },
+   "rule": "contact pairs of the gripper pads with the boxed drink and the can"
+  },
+  {
+   "key": "base",
+   "question": "How much does the base move?",
+   "source": "motion",
+   "values": {
+    "fixed": "The base does not move (path below 5 cm).",
+    "one_approach": "The base path is below 1.2 m: one approach.",
+    "repositions": "The base path is 1.2 m or more: it moves again between the objects."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "end_pose",
+   "question": "Do the objects stay upright?",
+   "source": "motion",
+   "values": {
+    "upright": "Each object ends at the height of its start.",
+    "tipped": "The boxed drink or the can ends 3 cm or more below its start: it lies on its side."
+   },
+   "rule": "height of each object in the last state against its start"
+  },
+  {
+   "key": "side_effect",
+   "question": "Does the robot disturb the scene?",
+   "source": "motion and contacts",
+   "values": {
+    "clean": "No contact of the base with the furniture, and the bowl stays in place.",
+    "bumps": "The base touches the furniture, or the bowl moves 2 cm or more."
+   },
+   "rule": "contact pairs of the robot base, and the shift of the bowl"
+  }
+ ],
+ "labels": {
+  "opus55/rearrange3d/seed24": {
+   "transport": "slide",
+   "order": "can_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55/rearrange3d/seed42": {
+   "transport": "slide",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55/rearrange3d/seed222": {
+   "transport": "slide",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55/rearrange3d/seed424": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55/rearrange3d/seed444": {
+   "transport": "lift",
+   "order": "can_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55-source/rearrange3d/seed24": {
+   "transport": "slide",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55-source/rearrange3d/seed42": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55-source/rearrange3d/seed222": {
+   "transport": "slide",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "repositions",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55-source/rearrange3d/seed424": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus55-source/rearrange3d/seed444": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus5/rearrange3d/seed24": {
+   "transport": "slide",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "repositions",
+   "end_pose": "tipped",
+   "side_effect": "bumps"
+  },
+  "opus5/rearrange3d/seed42": {
+   "transport": "slide",
+   "order": "can_first",
+   "hold": "push",
+   "base": "repositions",
+   "end_pose": "tipped",
+   "side_effect": "clean"
+  },
+  "opus5/rearrange3d/seed222": {
+   "transport": "slide",
+   "order": "can_first",
+   "hold": "pinch",
+   "base": "fixed",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus5/rearrange3d/seed424": {
+   "transport": "slide",
+   "order": "can_first",
+   "hold": "pinch",
+   "base": "repositions",
+   "end_pose": "tipped",
+   "side_effect": "bumps"
+  },
+  "opus5/rearrange3d/seed444": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "fixed",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus5-source/rearrange3d/seed24": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus5-source/rearrange3d/seed222": {
+   "transport": "lift",
+   "order": "can_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus5-source/rearrange3d/seed424": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "opus5-source/rearrange3d/seed444": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "bumps"
+  },
+  "astra/rearrange3d/seed24": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "astra/rearrange3d/seed42": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "repositions",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "astra/rearrange3d/seed222": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "astra/rearrange3d/seed424": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "tipped",
+   "side_effect": "clean"
+  },
+  "astra/rearrange3d/seed444": {
+   "transport": "lift",
+   "order": "can_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "astra-source/rearrange3d/seed24": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "astra-source/rearrange3d/seed42": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "bumps"
+  },
+  "astra-source/rearrange3d/seed222": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "astra-source/rearrange3d/seed424": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "fixed",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "astra-source/rearrange3d/seed444": {
+   "transport": "lift",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "sol/rearrange3d/seed222": {
+   "transport": "mixed",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "one_approach",
+   "end_pose": "upright",
+   "side_effect": "clean"
+  },
+  "sol/rearrange3d/seed424": {
+   "transport": "slide",
+   "order": "boxed_first",
+   "hold": "pinch",
+   "base": "repositions",
+   "end_pose": "tipped",
+   "side_effect": "bumps"
+  },
+  "sol/rearrange3d/seed444": {
+   "transport": "slide",
+   "order": "boxed_first",
+   "hold": "push",
+   "base": "repositions",
+   "end_pose": "tipped",
+   "side_effect": "bumps"
+  }
+ },
+ "evidence": {
+  "opus55/rearrange3d/seed24": {
+   "lift_boxed_m": 0.03,
+   "lift_can_m": 0.03,
+   "first_step_boxed": 205,
+   "first_step_can": 80,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.24,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.63,
+   "end_boxed": [
+    0.31,
+    0.14,
+    0.56
+   ],
+   "end_can": [
+    0.42,
+    -0.08,
+    0.52
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus55/rearrange3d/seed42": {
+   "lift_boxed_m": 0.02,
+   "lift_can_m": 0.02,
+   "first_step_boxed": 39,
+   "first_step_can": 83,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.23,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.01,
+   "end_boxed": [
+    0.32,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.36,
+    -0.1,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus55/rearrange3d/seed222": {
+   "lift_boxed_m": 0.04,
+   "lift_can_m": 0.01,
+   "first_step_boxed": 51,
+   "first_step_can": 103,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.23,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.99,
+   "end_boxed": [
+    0.31,
+    0.14,
+    0.55
+   ],
+   "end_can": [
+    0.43,
+    -0.09,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus55/rearrange3d/seed424": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.15,
+   "first_step_boxed": 57,
+   "first_step_can": 122,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.02,
+   "end_boxed": [
+    0.34,
+    0.14,
+    0.55
+   ],
+   "end_can": [
+    0.31,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus55/rearrange3d/seed444": {
+   "lift_boxed_m": 0.16,
+   "lift_can_m": 0.15,
+   "first_step_boxed": 230,
+   "first_step_can": 95,
+   "shift_boxed_m": 0.14,
+   "shift_can_m": 0.27,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.01,
+   "end_boxed": [
+    0.39,
+    0.11,
+    0.56
+   ],
+   "end_can": [
+    0.42,
+    -0.05,
+    0.52
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus55-source/rearrange3d/seed24": {
+   "lift_boxed_m": 0.04,
+   "lift_can_m": 0.04,
+   "first_step_boxed": 49,
+   "first_step_can": 102,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.24,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.02,
+   "end_boxed": [
+    0.3,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.42,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus55-source/rearrange3d/seed42": {
+   "lift_boxed_m": 0.18,
+   "lift_can_m": 0.2,
+   "first_step_boxed": 58,
+   "first_step_can": 206,
+   "shift_boxed_m": 0.12,
+   "shift_can_m": 0.33,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.52,
+   "end_boxed": [
+    0.26,
+    0.11,
+    0.55
+   ],
+   "end_can": [
+    0.25,
+    -0.04,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus55-source/rearrange3d/seed222": {
+   "lift_boxed_m": 0.04,
+   "lift_can_m": 0.04,
+   "first_step_boxed": 56,
+   "first_step_can": 89,
+   "shift_boxed_m": 0.1,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.28,
+   "end_boxed": [
+    0.33,
+    0.12,
+    0.55
+   ],
+   "end_can": [
+    0.34,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus55-source/rearrange3d/seed424": {
+   "lift_boxed_m": 0.11,
+   "lift_can_m": 0.11,
+   "first_step_boxed": 70,
+   "first_step_can": 188,
+   "shift_boxed_m": 0.15,
+   "shift_can_m": 0.27,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.71,
+   "end_boxed": [
+    0.4,
+    0.11,
+    0.55
+   ],
+   "end_can": [
+    0.4,
+    -0.06,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus55-source/rearrange3d/seed444": {
+   "lift_boxed_m": 0.13,
+   "lift_can_m": 0.14,
+   "first_step_boxed": 68,
+   "first_step_can": 211,
+   "shift_boxed_m": 0.12,
+   "shift_can_m": 0.32,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.61,
+   "end_boxed": [
+    0.24,
+    0.12,
+    0.55
+   ],
+   "end_can": [
+    0.22,
+    -0.07,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus5/rearrange3d/seed24": {
+   "lift_boxed_m": 0.0,
+   "lift_can_m": 0.0,
+   "first_step_boxed": 135,
+   "first_step_can": 364,
+   "shift_boxed_m": 0.18,
+   "shift_can_m": 0.15,
+   "shift_bowl_m": 0.05,
+   "base_path_m": 1.91,
+   "end_boxed": [
+    0.35,
+    0.06,
+    0.48
+   ],
+   "end_can": [
+    0.39,
+    -0.18,
+    0.52
+   ],
+   "robot_contacts": [
+    "base~kitchen_island.back_panel",
+    "base~kitchen_island.shelf1_partition1",
+    "base~kitchen_island.shelf1_partition2",
+    "base~kitchen_island.shelf2",
+    "base~kitchen_island.shelf2_partition1",
+    "base~kitchen_island.shelf2_partition2",
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus5/rearrange3d/seed42": {
+   "lift_boxed_m": 0.0,
+   "lift_can_m": 0.01,
+   "first_step_boxed": 229,
+   "first_step_can": 90,
+   "shift_boxed_m": 0.12,
+   "shift_can_m": 0.24,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 2.56,
+   "end_boxed": [
+    0.32,
+    0.1,
+    0.51
+   ],
+   "end_can": [
+    0.36,
+    -0.1,
+    0.5
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~kitchen_island.shelf3",
+    "gripper.palm~boxed_drink"
+   ]
+  },
+  "opus5/rearrange3d/seed222": {
+   "lift_boxed_m": 0.01,
+   "lift_can_m": 0.03,
+   "first_step_boxed": 334,
+   "first_step_can": 130,
+   "shift_boxed_m": 0.07,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.0,
+   "end_boxed": [
+    0.32,
+    0.16,
+    0.55
+   ],
+   "end_can": [
+    0.33,
+    -0.08,
+    0.52
+   ],
+   "robot_contacts": [
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus5/rearrange3d/seed424": {
+   "lift_boxed_m": 0.0,
+   "lift_can_m": 0.01,
+   "first_step_boxed": null,
+   "first_step_can": 134,
+   "shift_boxed_m": 0.0,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.04,
+   "base_path_m": 1.58,
+   "end_boxed": [
+    0.3,
+    0.22,
+    0.55
+   ],
+   "end_can": [
+    0.42,
+    -0.06,
+    0.49
+   ],
+   "robot_contacts": [
+    "gripper.pad~can",
+    "gripper.pad~kitchen_island.shelf3"
+   ]
+  },
+  "opus5/rearrange3d/seed444": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.23,
+   "first_step_boxed": 86,
+   "first_step_can": 266,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.24,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.0,
+   "end_boxed": [
+    0.34,
+    0.14,
+    0.55
+   ],
+   "end_can": [
+    0.37,
+    -0.09,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus5-source/rearrange3d/seed24": {
+   "lift_boxed_m": 0.12,
+   "lift_can_m": 0.11,
+   "first_step_boxed": 77,
+   "first_step_can": 204,
+   "shift_boxed_m": 0.11,
+   "shift_can_m": 0.25,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.0,
+   "end_boxed": [
+    0.38,
+    0.14,
+    0.55
+   ],
+   "end_can": [
+    0.39,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus5-source/rearrange3d/seed222": {
+   "lift_boxed_m": 0.12,
+   "lift_can_m": 0.12,
+   "first_step_boxed": 277,
+   "first_step_can": 132,
+   "shift_boxed_m": 0.14,
+   "shift_can_m": 0.25,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.98,
+   "end_boxed": [
+    0.41,
+    0.13,
+    0.56
+   ],
+   "end_can": [
+    0.41,
+    -0.07,
+    0.52
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "opus5-source/rearrange3d/seed424": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.15,
+   "first_step_boxed": 65,
+   "first_step_can": 154,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.27,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.08,
+   "end_boxed": [
+    0.34,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.33,
+    -0.07,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "opus5-source/rearrange3d/seed444": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.13,
+   "first_step_boxed": 152,
+   "first_step_can": 481,
+   "shift_boxed_m": 0.12,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.01,
+   "base_path_m": 1.05,
+   "end_boxed": [
+    0.39,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.39,
+    -0.06,
+    0.54
+   ],
+   "robot_contacts": [
+    "base~kitchen_island.back_panel",
+    "base~kitchen_island.shelf1_partition1",
+    "base~kitchen_island.shelf1_partition2",
+    "base~kitchen_island.shelf2",
+    "base~kitchen_island.shelf2_partition1",
+    "base~kitchen_island.shelf2_partition2",
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "astra/rearrange3d/seed24": {
+   "lift_boxed_m": 0.14,
+   "lift_can_m": 0.2,
+   "first_step_boxed": 77,
+   "first_step_can": 189,
+   "shift_boxed_m": 0.08,
+   "shift_can_m": 0.25,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.0,
+   "end_boxed": [
+    0.34,
+    0.15,
+    0.55
+   ],
+   "end_can": [
+    0.34,
+    -0.09,
+    0.52
+   ],
+   "robot_contacts": [
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "astra/rearrange3d/seed42": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.14,
+   "first_step_boxed": 155,
+   "first_step_can": 301,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.79,
+   "end_boxed": [
+    0.34,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.33,
+    -0.07,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "astra/rearrange3d/seed222": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.15,
+   "first_step_boxed": 86,
+   "first_step_can": 231,
+   "shift_boxed_m": 0.08,
+   "shift_can_m": 0.25,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.99,
+   "end_boxed": [
+    0.34,
+    0.15,
+    0.55
+   ],
+   "end_can": [
+    0.34,
+    -0.09,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "astra/rearrange3d/seed424": {
+   "lift_boxed_m": 0.13,
+   "lift_can_m": 0.14,
+   "first_step_boxed": 72,
+   "first_step_can": 281,
+   "shift_boxed_m": 0.15,
+   "shift_can_m": 0.28,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.11,
+   "end_boxed": [
+    0.39,
+    0.11,
+    0.49
+   ],
+   "end_can": [
+    0.32,
+    -0.06,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~boxed_drink",
+    "gripper.palm~can"
+   ]
+  },
+  "astra/rearrange3d/seed444": {
+   "lift_boxed_m": 0.22,
+   "lift_can_m": 0.28,
+   "first_step_boxed": 349,
+   "first_step_can": 147,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.27,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.01,
+   "end_boxed": [
+    0.3,
+    0.13,
+    0.56
+   ],
+   "end_can": [
+    0.33,
+    -0.07,
+    0.52
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~can"
+   ]
+  },
+  "astra-source/rearrange3d/seed24": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.15,
+   "first_step_boxed": 91,
+   "first_step_can": 277,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.25,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.76,
+   "end_boxed": [
+    0.34,
+    0.14,
+    0.55
+   ],
+   "end_can": [
+    0.35,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "astra-source/rearrange3d/seed42": {
+   "lift_boxed_m": 0.17,
+   "lift_can_m": 0.17,
+   "first_step_boxed": 105,
+   "first_step_can": 337,
+   "shift_boxed_m": 0.11,
+   "shift_can_m": 0.25,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.15,
+   "end_boxed": [
+    0.36,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.36,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "base~kitchen_island.back_panel",
+    "base~kitchen_island.drawer_s0c1.back",
+    "base~kitchen_island.drawer_s1c1.back",
+    "base~kitchen_island.drawer_s1c1.bottom",
+    "base~kitchen_island.shelf2",
+    "gripper.finger~boxed_drink",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "astra-source/rearrange3d/seed222": {
+   "lift_boxed_m": 0.17,
+   "lift_can_m": 0.18,
+   "first_step_boxed": 127,
+   "first_step_can": 374,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.55,
+   "end_boxed": [
+    0.33,
+    0.14,
+    0.55
+   ],
+   "end_can": [
+    0.34,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "astra-source/rearrange3d/seed424": {
+   "lift_boxed_m": 0.15,
+   "lift_can_m": 0.24,
+   "first_step_boxed": 56,
+   "first_step_can": 204,
+   "shift_boxed_m": 0.09,
+   "shift_can_m": 0.26,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 0.0,
+   "end_boxed": [
+    0.32,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.32,
+    -0.08,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "astra-source/rearrange3d/seed444": {
+   "lift_boxed_m": 0.1,
+   "lift_can_m": 0.1,
+   "first_step_boxed": 78,
+   "first_step_can": 185,
+   "shift_boxed_m": 0.15,
+   "shift_can_m": 0.25,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.01,
+   "end_boxed": [
+    0.43,
+    0.13,
+    0.55
+   ],
+   "end_can": [
+    0.43,
+    -0.07,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "sol/rearrange3d/seed222": {
+   "lift_boxed_m": 0.03,
+   "lift_can_m": 0.08,
+   "first_step_boxed": 40,
+   "first_step_can": 178,
+   "shift_boxed_m": 0.12,
+   "shift_can_m": 0.31,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.08,
+   "end_boxed": [
+    0.29,
+    0.11,
+    0.55
+   ],
+   "end_can": [
+    0.28,
+    -0.05,
+    0.53
+   ],
+   "robot_contacts": [
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can",
+    "gripper.palm~can"
+   ]
+  },
+  "sol/rearrange3d/seed424": {
+   "lift_boxed_m": 0.0,
+   "lift_can_m": 0.01,
+   "first_step_boxed": 100,
+   "first_step_can": 246,
+   "shift_boxed_m": 0.12,
+   "shift_can_m": 0.23,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.67,
+   "end_boxed": [
+    0.29,
+    0.11,
+    0.49
+   ],
+   "end_can": [
+    0.42,
+    -0.09,
+    0.49
+   ],
+   "robot_contacts": [
+    "base~kitchen_island.back_panel",
+    "base~kitchen_island.shelf1_partition2",
+    "base~kitchen_island.shelf2",
+    "base~kitchen_island.shelf2_partition2",
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~boxed_drink",
+    "gripper.pad~can"
+   ]
+  },
+  "sol/rearrange3d/seed444": {
+   "lift_boxed_m": 0.0,
+   "lift_can_m": 0.01,
+   "first_step_boxed": 43,
+   "first_step_can": 229,
+   "shift_boxed_m": 0.13,
+   "shift_can_m": 0.23,
+   "shift_bowl_m": 0.0,
+   "base_path_m": 1.45,
+   "end_boxed": [
+    0.29,
+    0.12,
+    0.48
+   ],
+   "end_can": [
+    0.42,
+    -0.1,
+    0.49
+   ],
+   "robot_contacts": [
+    "base~kitchen_island.back_panel",
+    "base~kitchen_island.shelf2",
+    "gripper.finger~boxed_drink",
+    "gripper.finger~can",
+    "gripper.pad~can",
+    "gripper.pad~kitchen_island.shelf3"
+   ]
+  }
+ }
+}

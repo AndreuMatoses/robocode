@@ -1,0 +1,716 @@
+{
+ "scenario": "tossing3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the release numbers of all 30 runs and at film strips of 18 runs. Each value is assigned by the rule of its group from numbers of the recorded episode; 'aim' is read in the program text.",
+  "rules": "experiments/contacts/tag_rules/tossing3d.py"
+ },
+ "insights": [
+  "There are two swing types: 18 runs throw overhand (the cube starts behind the base), and 12 runs swing forward from the front. All opus55 and opus55-source runs throw overhand; all astra-source runs swing forward.",
+  "The contact view does not see the swing type (0.49); the motion view sees it (0.83). No distance sees the direction of the cube at the release.",
+  "8 programs simulate candidate throws before they act. All 8 are from methods that see the simulator code.",
+  "1 run (opus55 seed222) throws at an angle of 29 degrees to the room axis, so its base drives less."
+ ],
+ "codebook": [
+  {
+   "key": "swing",
+   "question": "From where does the arm swing?",
+   "source": "motion",
+   "values": {
+    "overhand": "The cube is behind the base before the swing. The arm swings up and over the top.",
+    "underarm": "The cube is in front of the base, low or at middle height. The arm swings forward and up."
+   },
+   "rule": "overhand if the end effector is behind the base (against the throw direction) in the last slow state before the swing"
+  },
+  {
+   "key": "arc",
+   "question": "In which direction does the cube leave the gripper?",
+   "source": "motion",
+   "values": {
+    "lob": "The cube leaves at 25 degrees or more above the horizontal: a high arc.",
+    "flat": "The cube leaves between -12 and 25 degrees.",
+    "downward": "The cube leaves at less than -12 degrees: thrown down from a high release point."
+   },
+   "rule": "elevation of the cube velocity in the first step after the release"
+  },
+  {
+   "key": "alignment",
+   "question": "Does the robot throw along the room axis?",
+   "source": "motion",
+   "values": {
+    "straight": "The base drives to the line through the bin and throws straight along the room axis.",
+    "diagonal": "The base stops before that line and throws at an angle, so it drives less."
+   },
+   "rule": "diagonal if the direction from the base to the bin at the release is 3 degrees or more from the room axis"
+  },
+  {
+   "key": "standoff",
+   "question": "How far from the bin does the robot throw?",
+   "source": "motion",
+   "values": {
+    "near": "Less than 2.25 m: close to the barrier.",
+    "middle": "2.25 m to 3 m.",
+    "far": "More than 3 m."
+   },
+   "rule": "horizontal distance from the base to the bin at the release"
+  },
+  {
+   "key": "base",
+   "question": "Does the base move during the throw?",
+   "source": "motion",
+   "values": {
+    "standing": "The base is at rest at the release.",
+    "moving": "The base moves at 0.2 m/s or more at the release."
+   },
+   "rule": "speed of the base at the release"
+  },
+  {
+   "key": "aim",
+   "question": "How does the program select the throw?",
+   "source": "program",
+   "values": {
+    "calibrated": "Fixed motion or a table of constants that the agent tuned in its tests (open loop).",
+    "rollout": "The program has a simulator model of its own and simulates candidate throws before it acts."
+   },
+   "rule": "rollout if the program text has a rollout function, or a shadow or twin copy of the simulator that it steps"
+  }
+ ],
+ "labels": {
+  "opus55/tossing3d/seed24": {
+   "swing": "overhand",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55/tossing3d/seed42": {
+   "swing": "overhand",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55/tossing3d/seed222": {
+   "swing": "overhand",
+   "arc": "lob",
+   "alignment": "diagonal",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55/tossing3d/seed424": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55/tossing3d/seed444": {
+   "swing": "overhand",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55-source/tossing3d/seed24": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "far",
+   "base": "moving",
+   "aim": "calibrated"
+  },
+  "opus55-source/tossing3d/seed42": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55-source/tossing3d/seed222": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55-source/tossing3d/seed424": {
+   "swing": "overhand",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus55-source/tossing3d/seed444": {
+   "swing": "overhand",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "far",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus5/tossing3d/seed24": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus5/tossing3d/seed42": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus5/tossing3d/seed222": {
+   "swing": "underarm",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus5/tossing3d/seed424": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus5/tossing3d/seed444": {
+   "swing": "overhand",
+   "arc": "downward",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "moving",
+   "aim": "calibrated"
+  },
+  "opus5-source/tossing3d/seed24": {
+   "swing": "overhand",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus5-source/tossing3d/seed42": {
+   "swing": "underarm",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "rollout"
+  },
+  "opus5-source/tossing3d/seed222": {
+   "swing": "overhand",
+   "arc": "downward",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "opus5-source/tossing3d/seed424": {
+   "swing": "underarm",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "moving",
+   "aim": "rollout"
+  },
+  "opus5-source/tossing3d/seed444": {
+   "swing": "overhand",
+   "arc": "downward",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "standing",
+   "aim": "rollout"
+  },
+  "astra/tossing3d/seed24": {
+   "swing": "underarm",
+   "arc": "downward",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "moving",
+   "aim": "calibrated"
+  },
+  "astra/tossing3d/seed42": {
+   "swing": "underarm",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "astra/tossing3d/seed222": {
+   "swing": "overhand",
+   "arc": "downward",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "astra/tossing3d/seed424": {
+   "swing": "underarm",
+   "arc": "lob",
+   "alignment": "diagonal",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "astra/tossing3d/seed444": {
+   "swing": "underarm",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "middle",
+   "base": "standing",
+   "aim": "calibrated"
+  },
+  "astra-source/tossing3d/seed24": {
+   "swing": "underarm",
+   "arc": "lob",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "standing",
+   "aim": "rollout"
+  },
+  "astra-source/tossing3d/seed42": {
+   "swing": "underarm",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "standing",
+   "aim": "rollout"
+  },
+  "astra-source/tossing3d/seed222": {
+   "swing": "underarm",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "moving",
+   "aim": "rollout"
+  },
+  "astra-source/tossing3d/seed424": {
+   "swing": "underarm",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "standing",
+   "aim": "rollout"
+  },
+  "astra-source/tossing3d/seed444": {
+   "swing": "underarm",
+   "arc": "flat",
+   "alignment": "straight",
+   "standoff": "near",
+   "base": "standing",
+   "aim": "rollout"
+  }
+ },
+ "evidence": {
+  "opus55/tossing3d/seed24": {
+   "windup_ahead_m": -0.76,
+   "windup_height_m": 0.86,
+   "release_height_m": 1.22,
+   "release_elevation_deg": 59,
+   "cube_speed_m_s": 4.8,
+   "apex_m": 2.84,
+   "heading_deg": -1,
+   "standoff_m": 2.5,
+   "base_speed_m_s": 0.0,
+   "release_step": 144,
+   "rollout_words_in_program": 0
+  },
+  "opus55/tossing3d/seed42": {
+   "windup_ahead_m": -0.69,
+   "windup_height_m": 0.99,
+   "release_height_m": 1.31,
+   "release_elevation_deg": 50,
+   "cube_speed_m_s": 4.4,
+   "apex_m": 2.49,
+   "heading_deg": 0,
+   "standoff_m": 2.66,
+   "base_speed_m_s": 0.0,
+   "release_step": 66,
+   "rollout_words_in_program": 0
+  },
+  "opus55/tossing3d/seed222": {
+   "windup_ahead_m": -0.58,
+   "windup_height_m": 0.75,
+   "release_height_m": 1.38,
+   "release_elevation_deg": 26,
+   "cube_speed_m_s": 3.8,
+   "apex_m": 1.88,
+   "heading_deg": 29,
+   "standoff_m": 2.65,
+   "base_speed_m_s": 0.0,
+   "release_step": 60,
+   "rollout_words_in_program": 0
+  },
+  "opus55/tossing3d/seed424": {
+   "windup_ahead_m": -0.62,
+   "windup_height_m": 0.86,
+   "release_height_m": 1.5,
+   "release_elevation_deg": 21,
+   "cube_speed_m_s": 3.6,
+   "apex_m": 1.93,
+   "heading_deg": 0,
+   "standoff_m": 2.59,
+   "base_speed_m_s": 0.0,
+   "release_step": 104,
+   "rollout_words_in_program": 0
+  },
+  "opus55/tossing3d/seed444": {
+   "windup_ahead_m": -0.83,
+   "windup_height_m": 0.59,
+   "release_height_m": 1.23,
+   "release_elevation_deg": 32,
+   "cube_speed_m_s": 4.0,
+   "apex_m": 1.91,
+   "heading_deg": -1,
+   "standoff_m": 2.62,
+   "base_speed_m_s": 0.0,
+   "release_step": 72,
+   "rollout_words_in_program": 0
+  },
+  "opus55-source/tossing3d/seed24": {
+   "windup_ahead_m": -0.32,
+   "windup_height_m": 1.17,
+   "release_height_m": 1.4,
+   "release_elevation_deg": 8,
+   "cube_speed_m_s": 4.5,
+   "apex_m": 1.66,
+   "heading_deg": 0,
+   "standoff_m": 3.41,
+   "base_speed_m_s": 0.4,
+   "release_step": 128,
+   "rollout_words_in_program": 0
+  },
+  "opus55-source/tossing3d/seed42": {
+   "windup_ahead_m": -0.84,
+   "windup_height_m": 0.72,
+   "release_height_m": 1.68,
+   "release_elevation_deg": -11,
+   "cube_speed_m_s": 3.7,
+   "apex_m": 1.78,
+   "heading_deg": 0,
+   "standoff_m": 2.33,
+   "base_speed_m_s": 0.0,
+   "release_step": 105,
+   "rollout_words_in_program": 0
+  },
+  "opus55-source/tossing3d/seed222": {
+   "windup_ahead_m": -0.75,
+   "windup_height_m": 1.2,
+   "release_height_m": 1.39,
+   "release_elevation_deg": 11,
+   "cube_speed_m_s": 4.2,
+   "apex_m": 1.68,
+   "heading_deg": 0,
+   "standoff_m": 2.67,
+   "base_speed_m_s": 0.0,
+   "release_step": 96,
+   "rollout_words_in_program": 0
+  },
+  "opus55-source/tossing3d/seed424": {
+   "windup_ahead_m": -0.79,
+   "windup_height_m": 0.39,
+   "release_height_m": 1.42,
+   "release_elevation_deg": 29,
+   "cube_speed_m_s": 4.1,
+   "apex_m": 2.04,
+   "heading_deg": 0,
+   "standoff_m": 2.73,
+   "base_speed_m_s": 0.0,
+   "release_step": 113,
+   "rollout_words_in_program": 0
+  },
+  "opus55-source/tossing3d/seed444": {
+   "windup_ahead_m": -0.95,
+   "windup_height_m": 0.85,
+   "release_height_m": 1.19,
+   "release_elevation_deg": 41,
+   "cube_speed_m_s": 4.6,
+   "apex_m": 2.23,
+   "heading_deg": 0,
+   "standoff_m": 3.13,
+   "base_speed_m_s": 0.0,
+   "release_step": 108,
+   "rollout_words_in_program": 0
+  },
+  "opus5/tossing3d/seed24": {
+   "windup_ahead_m": -0.7,
+   "windup_height_m": 1.15,
+   "release_height_m": 1.54,
+   "release_elevation_deg": -4,
+   "cube_speed_m_s": 3.8,
+   "apex_m": 1.68,
+   "heading_deg": 0,
+   "standoff_m": 2.39,
+   "base_speed_m_s": 0.0,
+   "release_step": 80,
+   "rollout_words_in_program": 0
+  },
+  "opus5/tossing3d/seed42": {
+   "windup_ahead_m": -0.65,
+   "windup_height_m": 1.32,
+   "release_height_m": 1.53,
+   "release_elevation_deg": 17,
+   "cube_speed_m_s": 3.6,
+   "apex_m": 1.89,
+   "heading_deg": 0,
+   "standoff_m": 2.52,
+   "base_speed_m_s": 0.0,
+   "release_step": 99,
+   "rollout_words_in_program": 0
+  },
+  "opus5/tossing3d/seed222": {
+   "windup_ahead_m": 0.65,
+   "windup_height_m": 0.23,
+   "release_height_m": 0.42,
+   "release_elevation_deg": 46,
+   "cube_speed_m_s": 3.1,
+   "apex_m": 1.07,
+   "heading_deg": 0,
+   "standoff_m": 2.69,
+   "base_speed_m_s": 0.0,
+   "release_step": 91,
+   "rollout_words_in_program": 0
+  },
+  "opus5/tossing3d/seed424": {
+   "windup_ahead_m": -0.91,
+   "windup_height_m": 0.67,
+   "release_height_m": 1.56,
+   "release_elevation_deg": 11,
+   "cube_speed_m_s": 3.7,
+   "apex_m": 1.83,
+   "heading_deg": 0,
+   "standoff_m": 2.52,
+   "base_speed_m_s": 0.0,
+   "release_step": 75,
+   "rollout_words_in_program": 0
+  },
+  "opus5/tossing3d/seed444": {
+   "windup_ahead_m": -0.64,
+   "windup_height_m": 0.67,
+   "release_height_m": 1.67,
+   "release_elevation_deg": -28,
+   "cube_speed_m_s": 3.9,
+   "apex_m": 1.74,
+   "heading_deg": -1,
+   "standoff_m": 2.19,
+   "base_speed_m_s": 0.4,
+   "release_step": 119,
+   "rollout_words_in_program": 0
+  },
+  "opus5-source/tossing3d/seed24": {
+   "windup_ahead_m": -0.93,
+   "windup_height_m": 0.92,
+   "release_height_m": 1.6,
+   "release_elevation_deg": -4,
+   "cube_speed_m_s": 3.4,
+   "apex_m": 1.74,
+   "heading_deg": 0,
+   "standoff_m": 2.24,
+   "base_speed_m_s": 0.0,
+   "release_step": 142,
+   "rollout_words_in_program": 0
+  },
+  "opus5-source/tossing3d/seed42": {
+   "windup_ahead_m": 0.58,
+   "windup_height_m": 0.45,
+   "release_height_m": 0.79,
+   "release_elevation_deg": 42,
+   "cube_speed_m_s": 2.4,
+   "apex_m": 1.24,
+   "heading_deg": 0,
+   "standoff_m": 2.31,
+   "base_speed_m_s": 0.0,
+   "release_step": 84,
+   "rollout_words_in_program": 2
+  },
+  "opus5-source/tossing3d/seed222": {
+   "windup_ahead_m": -0.76,
+   "windup_height_m": 0.32,
+   "release_height_m": 1.66,
+   "release_elevation_deg": -20,
+   "cube_speed_m_s": 4.7,
+   "apex_m": 1.7,
+   "heading_deg": 0,
+   "standoff_m": 2.47,
+   "base_speed_m_s": 0.0,
+   "release_step": 115,
+   "rollout_words_in_program": 0
+  },
+  "opus5-source/tossing3d/seed424": {
+   "windup_ahead_m": 0.3,
+   "windup_height_m": 0.16,
+   "release_height_m": 0.47,
+   "release_elevation_deg": 38,
+   "cube_speed_m_s": 2.5,
+   "apex_m": 0.91,
+   "heading_deg": 0,
+   "standoff_m": 2.17,
+   "base_speed_m_s": 0.9,
+   "release_step": 99,
+   "rollout_words_in_program": 1
+  },
+  "opus5-source/tossing3d/seed444": {
+   "windup_ahead_m": -0.73,
+   "windup_height_m": 0.77,
+   "release_height_m": 1.37,
+   "release_elevation_deg": -37,
+   "cube_speed_m_s": 4.3,
+   "apex_m": 1.5,
+   "heading_deg": 0,
+   "standoff_m": 1.99,
+   "base_speed_m_s": 0.1,
+   "release_step": 106,
+   "rollout_words_in_program": 4
+  },
+  "astra/tossing3d/seed24": {
+   "windup_ahead_m": 0.41,
+   "windup_height_m": 0.87,
+   "release_height_m": 1.28,
+   "release_elevation_deg": -24,
+   "cube_speed_m_s": 2.6,
+   "apex_m": 1.31,
+   "heading_deg": 0,
+   "standoff_m": 2.13,
+   "base_speed_m_s": 0.4,
+   "release_step": 138,
+   "rollout_words_in_program": 0
+  },
+  "astra/tossing3d/seed42": {
+   "windup_ahead_m": 0.56,
+   "windup_height_m": 0.39,
+   "release_height_m": 0.49,
+   "release_elevation_deg": 15,
+   "cube_speed_m_s": 3.0,
+   "apex_m": 0.69,
+   "heading_deg": 0,
+   "standoff_m": 2.44,
+   "base_speed_m_s": 0.0,
+   "release_step": 118,
+   "rollout_words_in_program": 0
+  },
+  "astra/tossing3d/seed222": {
+   "windup_ahead_m": -0.87,
+   "windup_height_m": 1.1,
+   "release_height_m": 1.7,
+   "release_elevation_deg": -20,
+   "cube_speed_m_s": 3.9,
+   "apex_m": 1.75,
+   "heading_deg": 0,
+   "standoff_m": 2.34,
+   "base_speed_m_s": 0.0,
+   "release_step": 127,
+   "rollout_words_in_program": 0
+  },
+  "astra/tossing3d/seed424": {
+   "windup_ahead_m": 0.56,
+   "windup_height_m": 0.46,
+   "release_height_m": 0.62,
+   "release_elevation_deg": 37,
+   "cube_speed_m_s": 2.6,
+   "apex_m": 1.07,
+   "heading_deg": 6,
+   "standoff_m": 2.38,
+   "base_speed_m_s": 0.0,
+   "release_step": 117,
+   "rollout_words_in_program": 0
+  },
+  "astra/tossing3d/seed444": {
+   "windup_ahead_m": 0.58,
+   "windup_height_m": 0.26,
+   "release_height_m": 0.44,
+   "release_elevation_deg": 39,
+   "cube_speed_m_s": 2.8,
+   "apex_m": 0.95,
+   "heading_deg": 0,
+   "standoff_m": 2.43,
+   "base_speed_m_s": 0.0,
+   "release_step": 114,
+   "rollout_words_in_program": 0
+  },
+  "astra-source/tossing3d/seed24": {
+   "windup_ahead_m": 0.48,
+   "windup_height_m": 0.48,
+   "release_height_m": 0.52,
+   "release_elevation_deg": 40,
+   "cube_speed_m_s": 2.8,
+   "apex_m": 1.02,
+   "heading_deg": 0,
+   "standoff_m": 2.1,
+   "base_speed_m_s": 0.0,
+   "release_step": 88,
+   "rollout_words_in_program": 9
+  },
+  "astra-source/tossing3d/seed42": {
+   "windup_ahead_m": 0.34,
+   "windup_height_m": 0.5,
+   "release_height_m": 0.61,
+   "release_elevation_deg": 16,
+   "cube_speed_m_s": 2.4,
+   "apex_m": 0.82,
+   "heading_deg": 0,
+   "standoff_m": 2.04,
+   "base_speed_m_s": 0.0,
+   "release_step": 103,
+   "rollout_words_in_program": 17
+  },
+  "astra-source/tossing3d/seed222": {
+   "windup_ahead_m": 0.34,
+   "windup_height_m": 0.68,
+   "release_height_m": 1.19,
+   "release_elevation_deg": 19,
+   "cube_speed_m_s": 2.2,
+   "apex_m": 1.42,
+   "heading_deg": 0,
+   "standoff_m": 2.01,
+   "base_speed_m_s": 0.4,
+   "release_step": 100,
+   "rollout_words_in_program": 9
+  },
+  "astra-source/tossing3d/seed424": {
+   "windup_ahead_m": 0.29,
+   "windup_height_m": 0.5,
+   "release_height_m": 0.66,
+   "release_elevation_deg": 23,
+   "cube_speed_m_s": 2.7,
+   "apex_m": 0.96,
+   "heading_deg": 0,
+   "standoff_m": 2.02,
+   "base_speed_m_s": 0.0,
+   "release_step": 159,
+   "rollout_words_in_program": 7
+  },
+  "astra-source/tossing3d/seed444": {
+   "windup_ahead_m": 0.34,
+   "windup_height_m": 0.4,
+   "release_height_m": 0.64,
+   "release_elevation_deg": 9,
+   "cube_speed_m_s": 2.3,
+   "apex_m": 0.85,
+   "heading_deg": 0,
+   "standoff_m": 2.04,
+   "base_speed_m_s": 0.0,
+   "release_step": 103,
+   "rollout_words_in_program": 3
+  }
+ }
+}

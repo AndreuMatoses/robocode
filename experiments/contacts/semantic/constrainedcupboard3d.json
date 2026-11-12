@@ -1,0 +1,454 @@
+{
+ "scenario": "constrainedcupboard3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 18 runs (order, lift, path and contact pairs). The end position of each rod is given by the task, so it is not a tag group. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/constrainedcupboard3d.py"
+ },
+ "insights": [
+  "Only 18 final policies solve the first start scene.",
+  "16 of 18 runs start with the rod that is farthest from the cupboard.",
+  "The arm or the gripper touches the cupboard in 14 of 18 runs when a rod goes in. 4 runs put the rods in with no contact.",
+  "The motion view separates the order fully (1.00). The contact view does not see it (0.45)."
+ ],
+ "codebook": [
+  {
+   "key": "order",
+   "question": "In which order does the robot move the rods?",
+   "source": "motion",
+   "values": {
+    "0_1_2": "cuboid_0 (the rod farthest from the cupboard), then cuboid_1, then cuboid_2.",
+    "0_2_1": "cuboid_0, then cuboid_2, then cuboid_1.",
+    "1_2_0": "cuboid_1, then cuboid_2, then cuboid_0: the far rod is last.",
+    "other": "Another order."
+   },
+   "rule": "order of the first motion of each rod"
+  },
+  {
+   "key": "carry",
+   "question": "How high does the robot carry a rod?",
+   "source": "motion",
+   "values": {
+    "low": "No rod goes 30 cm or more above its start: the rod goes in at about the height of the row.",
+    "high": "A rod goes 30 cm or more above its start, then comes down to the row."
+   },
+   "rule": "largest height of a rod above its start"
+  },
+  {
+   "key": "insertion",
+   "question": "Does the robot touch the cupboard when it puts a rod in?",
+   "source": "contacts",
+   "values": {
+    "free": "No contact of the arm or the gripper with the cupboard.",
+    "gripper": "The gripper touches a cupboard panel, the arm does not.",
+    "arm": "An arm link touches the cupboard."
+   },
+   "rule": "contact pairs of a robot part with a part of the cupboard"
+  },
+  {
+   "key": "pick",
+   "question": "Does the gripper touch the floor at the grasp?",
+   "source": "contacts",
+   "values": {
+    "floor_touch": "A finger pad touches the floor at a grasp.",
+    "above_floor": "No pad contact with the floor."
+   },
+   "rule": "contact pair of a finger pad with the floor"
+  },
+  {
+   "key": "base",
+   "question": "How far does the base drive?",
+   "source": "motion",
+   "values": {
+    "short": "The base path is below 5 m.",
+    "long": "The base path is 5 m or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 400 env steps (40 s).",
+    "slow": "More than 400 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/constrainedcupboard3d/seed24": {
+   "order": "0_2_1",
+   "carry": "low",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55/constrainedcupboard3d/seed222": {
+   "order": "0_2_1",
+   "carry": "high",
+   "insertion": "gripper",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "slow"
+  },
+  "opus55/constrainedcupboard3d/seed424": {
+   "order": "0_1_2",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55/constrainedcupboard3d/seed444": {
+   "order": "0_1_2",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "slow"
+  },
+  "opus55-source/constrainedcupboard3d/seed24": {
+   "order": "1_2_0",
+   "carry": "low",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55-source/constrainedcupboard3d/seed42": {
+   "order": "0_2_1",
+   "carry": "low",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55-source/constrainedcupboard3d/seed222": {
+   "order": "0_2_1",
+   "carry": "low",
+   "insertion": "gripper",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55-source/constrainedcupboard3d/seed424": {
+   "order": "0_1_2",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55-source/constrainedcupboard3d/seed444": {
+   "order": "1_2_0",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "opus5-source/constrainedcupboard3d/seed222": {
+   "order": "0_1_2",
+   "carry": "high",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "opus5-source/constrainedcupboard3d/seed444": {
+   "order": "0_1_2",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "astra/constrainedcupboard3d/seed42": {
+   "order": "0_1_2",
+   "carry": "high",
+   "insertion": "gripper",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "slow"
+  },
+  "astra/constrainedcupboard3d/seed424": {
+   "order": "0_1_2",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "astra-source/constrainedcupboard3d/seed24": {
+   "order": "0_2_1",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "above_floor",
+   "base": "short",
+   "pace": "quick"
+  },
+  "astra-source/constrainedcupboard3d/seed42": {
+   "order": "0_1_2",
+   "carry": "high",
+   "insertion": "gripper",
+   "pick": "above_floor",
+   "base": "short",
+   "pace": "slow"
+  },
+  "astra-source/constrainedcupboard3d/seed222": {
+   "order": "0_1_2",
+   "carry": "low",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "short",
+   "pace": "slow"
+  },
+  "astra-source/constrainedcupboard3d/seed424": {
+   "order": "0_2_1",
+   "carry": "low",
+   "insertion": "arm",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "slow"
+  },
+  "astra-source/constrainedcupboard3d/seed444": {
+   "order": "0_1_2",
+   "carry": "high",
+   "insertion": "gripper",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/constrainedcupboard3d/seed24": {
+   "order": "0_2_1",
+   "largest_lift_m": 0.28,
+   "base_path_m": 5.7,
+   "steps": 251,
+   "robot_contacts": [
+    "gripper.pad~cuboid"
+   ]
+  },
+  "opus55/constrainedcupboard3d/seed222": {
+   "order": "0_2_1",
+   "largest_lift_m": 0.32,
+   "base_path_m": 4.59,
+   "steps": 564,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~cupboard.left_panel",
+    "gripper.pad~cupboard.right_panel",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55/constrainedcupboard3d/seed424": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.23,
+   "base_path_m": 5.97,
+   "steps": 291,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55/constrainedcupboard3d/seed444": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.21,
+   "base_path_m": 4.16,
+   "steps": 478,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/constrainedcupboard3d/seed24": {
+   "order": "1_2_0",
+   "largest_lift_m": 0.18,
+   "base_path_m": 5.92,
+   "steps": 349,
+   "robot_contacts": [
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/constrainedcupboard3d/seed42": {
+   "order": "0_2_1",
+   "largest_lift_m": 0.24,
+   "base_path_m": 5.18,
+   "steps": 171,
+   "robot_contacts": [
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/constrainedcupboard3d/seed222": {
+   "order": "0_2_1",
+   "largest_lift_m": 0.18,
+   "base_path_m": 5.32,
+   "steps": 259,
+   "robot_contacts": [
+    "gripper.pad~cuboid",
+    "gripper.pad~cupboard.left_panel",
+    "gripper.pad~cupboard.right_panel",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/constrainedcupboard3d/seed424": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.18,
+   "base_path_m": 6.36,
+   "steps": 285,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "gripper.finger~cuboid",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/constrainedcupboard3d/seed444": {
+   "order": "1_2_0",
+   "largest_lift_m": 0.2,
+   "base_path_m": 6.46,
+   "steps": 440,
+   "robot_contacts": [
+    "arm.forearm~cupboard.shelf3",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus5-source/constrainedcupboard3d/seed222": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.7,
+   "base_path_m": 5.21,
+   "steps": 947,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus5-source/constrainedcupboard3d/seed444": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.21,
+   "base_path_m": 6.67,
+   "steps": 395,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "astra/constrainedcupboard3d/seed42": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.33,
+   "base_path_m": 4.65,
+   "steps": 603,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  },
+  "astra/constrainedcupboard3d/seed424": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.3,
+   "base_path_m": 5.93,
+   "steps": 892,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "arm.bracelet~cupboard.shelf2",
+    "arm.spherical_wrist_2~cupboard.left_panel",
+    "arm.spherical_wrist_2~cupboard.right_panel",
+    "arm.spherical_wrist_2~cupboard.shelf3",
+    "gripper.finger~cuboid",
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~cupboard.left_panel",
+    "gripper.pad~cupboard.right_panel",
+    "gripper.pad~floor",
+    "gripper.palm~cuboid",
+    "gripper.palm~cupboard.right_panel"
+   ]
+  },
+  "astra-source/constrainedcupboard3d/seed24": {
+   "order": "0_2_1",
+   "largest_lift_m": 0.24,
+   "base_path_m": 4.21,
+   "steps": 330,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "gripper.pad~cuboid"
+   ]
+  },
+  "astra-source/constrainedcupboard3d/seed42": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.54,
+   "base_path_m": 4.43,
+   "steps": 782,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~cupboard.left_panel",
+    "gripper.pad~cupboard.right_panel"
+   ]
+  },
+  "astra-source/constrainedcupboard3d/seed222": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.26,
+   "base_path_m": 4.64,
+   "steps": 511,
+   "robot_contacts": [
+    "gripper.pad~cuboid"
+   ]
+  },
+  "astra-source/constrainedcupboard3d/seed424": {
+   "order": "0_2_1",
+   "largest_lift_m": 0.26,
+   "base_path_m": 4.01,
+   "steps": 425,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.left_panel",
+    "arm.bracelet~cupboard.right_panel",
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~cupboard.left_panel",
+    "gripper.pad~cupboard.right_panel",
+    "gripper.pad~floor"
+   ]
+  },
+  "astra-source/constrainedcupboard3d/seed444": {
+   "order": "0_1_2",
+   "largest_lift_m": 0.35,
+   "base_path_m": 4.92,
+   "steps": 565,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cuboid",
+    "gripper.pad~floor"
+   ]
+  }
+ }
+}

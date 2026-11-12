@@ -1,0 +1,904 @@
+{
+ "scenario": "stickbutton2d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 35 runs (path and end of the stick, end of the base, contact pairs) and at the place of the three buttons in the scene: button0 and button1 are on the table, button2 is on the floor. All runs take the stick. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/stickbutton2d.py"
+ },
+ "insights": [
+  "All 35 runs take the stick. Two buttons are on the table, out of reach.",
+  "There are three plans. 18 runs press the table buttons, then drive to the floor button with the stick. 9 runs press the table buttons, then reach to the floor button from a distance. 8 runs press the floor button first.",
+  "In the 8 runs that start with the floor button, a robot part presses a button directly. In the other 27 runs the stick presses all buttons.",
+  "The motion view sees the plan (0.91). The contact view does not (0.55), with 11 contact strategies."
+ ],
+ "codebook": [
+  {
+   "key": "plan",
+   "question": "In which order does the robot press the buttons, and from where?",
+   "source": "motion",
+   "values": {
+    "table_then_reach": "The table buttons first. Then the robot reaches with the stick to the floor button from a distance (the base stays on the left of x = 2.2 m).",
+    "table_then_drive": "The table buttons first. Then the base drives to the floor button with the stick in the gripper.",
+    "floor_then_table": "The floor button first. The episode ends with the stick at the table buttons."
+   },
+   "rule": "height of the stick in the last state (1.2 m or more: at the table), and x of the base in the last state"
+  },
+  {
+   "key": "floor_button",
+   "question": "What presses the floor button?",
+   "source": "contacts",
+   "values": {
+    "stick": "No robot part touches a button: the stick presses all buttons.",
+    "robot": "The base, the arm or the gripper head touches a button."
+   },
+   "rule": "contact pair of a robot part with a button"
+  },
+  {
+   "key": "walls",
+   "question": "Does the base touch a wall?",
+   "source": "contacts",
+   "values": {
+    "clear": "No contact of the base with a wall.",
+    "touches": "The base touches a wall."
+   },
+   "rule": "contact pair of the base with a wall"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 99 env steps.",
+    "slow": "More than 99 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/stickbutton2d/seed24": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus55/stickbutton2d/seed42": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus55/stickbutton2d/seed222": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "slow"
+  },
+  "opus55/stickbutton2d/seed424": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "opus55/stickbutton2d/seed444": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/stickbutton2d/seed24": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "opus55-source/stickbutton2d/seed42": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/stickbutton2d/seed222": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/stickbutton2d/seed424": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/stickbutton2d/seed444": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "slow"
+  },
+  "opus5/stickbutton2d/seed24": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "opus5/stickbutton2d/seed42": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "opus5/stickbutton2d/seed222": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "opus5/stickbutton2d/seed424": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "opus5/stickbutton2d/seed444": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus5-source/stickbutton2d/seed24": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "slow"
+  },
+  "opus5-source/stickbutton2d/seed42": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "opus5-source/stickbutton2d/seed222": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "opus5-source/stickbutton2d/seed424": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "opus5-source/stickbutton2d/seed444": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "astra/stickbutton2d/seed24": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "astra/stickbutton2d/seed42": {
+   "plan": "table_then_reach",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "quick"
+  },
+  "astra/stickbutton2d/seed222": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "astra/stickbutton2d/seed424": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "slow"
+  },
+  "astra/stickbutton2d/seed444": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "astra-source/stickbutton2d/seed24": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "slow"
+  },
+  "astra-source/stickbutton2d/seed42": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "astra-source/stickbutton2d/seed222": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "astra-source/stickbutton2d/seed424": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "slow"
+  },
+  "astra-source/stickbutton2d/seed444": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "touches",
+   "pace": "quick"
+  },
+  "sol/stickbutton2d/seed24": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "sol/stickbutton2d/seed42": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "sol/stickbutton2d/seed222": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "touches",
+   "pace": "slow"
+  },
+  "sol/stickbutton2d/seed424": {
+   "plan": "table_then_drive",
+   "floor_button": "stick",
+   "walls": "clear",
+   "pace": "slow"
+  },
+  "sol/stickbutton2d/seed444": {
+   "plan": "floor_then_table",
+   "floor_button": "robot",
+   "walls": "clear",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/stickbutton2d/seed24": {
+   "stick_end": [
+    2.41,
+    0.5
+   ],
+   "base_end": [
+    1.81,
+    0.74
+   ],
+   "base_path_m": 3.6,
+   "steps": 69,
+   "contacts": [
+    "arm~stick",
+    "base~table",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55/stickbutton2d/seed42": {
+   "stick_end": [
+    2.32,
+    0.48
+   ],
+   "base_end": [
+    1.66,
+    0.71
+   ],
+   "base_path_m": 3.43,
+   "steps": 65,
+   "contacts": [
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55/stickbutton2d/seed222": {
+   "stick_end": [
+    2.72,
+    0.99
+   ],
+   "base_end": [
+    2.74,
+    0.16
+   ],
+   "base_path_m": 5.11,
+   "steps": 105,
+   "contacts": [
+    "arm~stick",
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55/stickbutton2d/seed424": {
+   "stick_end": [
+    2.22,
+    0.31
+   ],
+   "base_end": [
+    1.46,
+    0.65
+   ],
+   "base_path_m": 3.74,
+   "steps": 71,
+   "contacts": [
+    "arm~stick",
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55/stickbutton2d/seed444": {
+   "stick_end": [
+    2.31,
+    0.47
+   ],
+   "base_end": [
+    1.7,
+    0.72
+   ],
+   "base_path_m": 3.45,
+   "steps": 65,
+   "contacts": [
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55-source/stickbutton2d/seed24": {
+   "stick_end": [
+    2.71,
+    0.99
+   ],
+   "base_end": [
+    2.73,
+    0.15
+   ],
+   "base_path_m": 5.05,
+   "steps": 99,
+   "contacts": [
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55-source/stickbutton2d/seed42": {
+   "stick_end": [
+    1.55,
+    1.75
+   ],
+   "base_end": [
+    1.38,
+    1.15
+   ],
+   "base_path_m": 4.74,
+   "steps": 86,
+   "contacts": [
+    "base~button",
+    "base~table",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55-source/stickbutton2d/seed222": {
+   "stick_end": [
+    2.31,
+    0.45
+   ],
+   "base_end": [
+    1.69,
+    0.7
+   ],
+   "base_path_m": 3.94,
+   "steps": 71,
+   "contacts": [
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55-source/stickbutton2d/seed424": {
+   "stick_end": [
+    2.34,
+    0.49
+   ],
+   "base_end": [
+    1.68,
+    0.7
+   ],
+   "base_path_m": 3.46,
+   "steps": 66,
+   "contacts": [
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus55-source/stickbutton2d/seed444": {
+   "stick_end": [
+    2.78,
+    1.03
+   ],
+   "base_end": [
+    2.8,
+    0.19
+   ],
+   "base_path_m": 5.39,
+   "steps": 108,
+   "contacts": [
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5/stickbutton2d/seed24": {
+   "stick_end": [
+    1.71,
+    1.54
+   ],
+   "base_end": [
+    1.02,
+    1.06
+   ],
+   "base_path_m": 4.64,
+   "steps": 88,
+   "contacts": [
+    "base~bottom_wall",
+    "base~button",
+    "base~left_wall",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5/stickbutton2d/seed42": {
+   "stick_end": [
+    2.72,
+    0.99
+   ],
+   "base_end": [
+    2.74,
+    0.16
+   ],
+   "base_path_m": 5.28,
+   "steps": 95,
+   "contacts": [
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button",
+    "stick~top_wall"
+   ]
+  },
+  "opus5/stickbutton2d/seed222": {
+   "stick_end": [
+    2.22,
+    0.35
+   ],
+   "base_end": [
+    1.45,
+    0.68
+   ],
+   "base_path_m": 3.83,
+   "steps": 70,
+   "contacts": [
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5/stickbutton2d/seed424": {
+   "stick_end": [
+    1.75,
+    1.55
+   ],
+   "base_end": [
+    1.14,
+    0.98
+   ],
+   "base_path_m": 4.78,
+   "steps": 89,
+   "contacts": [
+    "arm~stick",
+    "base~button",
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5/stickbutton2d/seed444": {
+   "stick_end": [
+    2.58,
+    0.85
+   ],
+   "base_end": [
+    2.82,
+    0.21
+   ],
+   "base_path_m": 4.88,
+   "steps": 96,
+   "contacts": [
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5-source/stickbutton2d/seed24": {
+   "stick_end": [
+    2.73,
+    0.89
+   ],
+   "base_end": [
+    2.73,
+    0.15
+   ],
+   "base_path_m": 5.57,
+   "steps": 116,
+   "contacts": [
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5-source/stickbutton2d/seed42": {
+   "stick_end": [
+    2.82,
+    1.0
+   ],
+   "base_end": [
+    2.82,
+    0.16
+   ],
+   "base_path_m": 6.17,
+   "steps": 124,
+   "contacts": [
+    "gripper.suction~stick",
+    "stick~button",
+    "stick~top_wall"
+   ]
+  },
+  "opus5-source/stickbutton2d/seed222": {
+   "stick_end": [
+    2.73,
+    1.03
+   ],
+   "base_end": [
+    2.77,
+    0.19
+   ],
+   "base_path_m": 5.21,
+   "steps": 102,
+   "contacts": [
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5-source/stickbutton2d/seed424": {
+   "stick_end": [
+    2.73,
+    1.02
+   ],
+   "base_end": [
+    2.76,
+    0.18
+   ],
+   "base_path_m": 5.1,
+   "steps": 97,
+   "contacts": [
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "opus5-source/stickbutton2d/seed444": {
+   "stick_end": [
+    2.68,
+    0.89
+   ],
+   "base_end": [
+    2.71,
+    0.11
+   ],
+   "base_path_m": 5.33,
+   "steps": 94,
+   "contacts": [
+    "base~bottom_wall",
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra/stickbutton2d/seed24": {
+   "stick_end": [
+    2.26,
+    0.34
+   ],
+   "base_end": [
+    1.48,
+    0.64
+   ],
+   "base_path_m": 3.99,
+   "steps": 82,
+   "contacts": [
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra/stickbutton2d/seed42": {
+   "stick_end": [
+    2.32,
+    0.48
+   ],
+   "base_end": [
+    1.67,
+    0.71
+   ],
+   "base_path_m": 3.92,
+   "steps": 75,
+   "contacts": [
+    "base~table",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra/stickbutton2d/seed222": {
+   "stick_end": [
+    2.75,
+    1.0
+   ],
+   "base_end": [
+    2.75,
+    0.16
+   ],
+   "base_path_m": 6.48,
+   "steps": 133,
+   "contacts": [
+    "arm~stick",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra/stickbutton2d/seed424": {
+   "stick_end": [
+    2.77,
+    0.99
+   ],
+   "base_end": [
+    2.77,
+    0.15
+   ],
+   "base_path_m": 5.4,
+   "steps": 104,
+   "contacts": [
+    "base~left_wall",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra/stickbutton2d/seed444": {
+   "stick_end": [
+    2.08,
+    1.68
+   ],
+   "base_end": [
+    2.08,
+    0.85
+   ],
+   "base_path_m": 6.91,
+   "steps": 152,
+   "contacts": [
+    "arm~stick",
+    "gripper.head~button",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra-source/stickbutton2d/seed24": {
+   "stick_end": [
+    2.78,
+    1.02
+   ],
+   "base_end": [
+    2.78,
+    0.19
+   ],
+   "base_path_m": 5.18,
+   "steps": 100,
+   "contacts": [
+    "arm~stick",
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra-source/stickbutton2d/seed42": {
+   "stick_end": [
+    2.78,
+    0.99
+   ],
+   "base_end": [
+    2.78,
+    0.15
+   ],
+   "base_path_m": 5.56,
+   "steps": 112,
+   "contacts": [
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra-source/stickbutton2d/seed222": {
+   "stick_end": [
+    2.72,
+    0.9
+   ],
+   "base_end": [
+    2.72,
+    0.16
+   ],
+   "base_path_m": 5.26,
+   "steps": 105,
+   "contacts": [
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra-source/stickbutton2d/seed424": {
+   "stick_end": [
+    3.0,
+    0.88
+   ],
+   "base_end": [
+    2.68,
+    0.1
+   ],
+   "base_path_m": 5.77,
+   "steps": 108,
+   "contacts": [
+    "base~bottom_wall",
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "astra-source/stickbutton2d/seed444": {
+   "stick_end": [
+    2.72,
+    1.01
+   ],
+   "base_end": [
+    2.73,
+    0.17
+   ],
+   "base_path_m": 5.1,
+   "steps": 95,
+   "contacts": [
+    "base~left_wall",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "sol/stickbutton2d/seed24": {
+   "stick_end": [
+    2.06,
+    1.85
+   ],
+   "base_end": [
+    1.93,
+    1.01
+   ],
+   "base_path_m": 7.5,
+   "steps": 217,
+   "contacts": [
+    "arm~stick",
+    "base~button",
+    "base~table",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button",
+    "stick~top_wall"
+   ]
+  },
+  "sol/stickbutton2d/seed42": {
+   "stick_end": [
+    2.08,
+    1.66
+   ],
+   "base_end": [
+    2.31,
+    0.96
+   ],
+   "base_path_m": 6.0,
+   "steps": 135,
+   "contacts": [
+    "arm~button",
+    "gripper.head~button",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "sol/stickbutton2d/seed222": {
+   "stick_end": [
+    2.08,
+    1.68
+   ],
+   "base_end": [
+    2.34,
+    1.1
+   ],
+   "base_path_m": 6.64,
+   "steps": 233,
+   "contacts": [
+    "base~bottom_wall",
+    "base~button",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "sol/stickbutton2d/seed424": {
+   "stick_end": [
+    2.48,
+    0.78
+   ],
+   "base_end": [
+    2.72,
+    0.15
+   ],
+   "base_path_m": 5.84,
+   "steps": 131,
+   "contacts": [
+    "arm~stick",
+    "gripper.head~stick",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  },
+  "sol/stickbutton2d/seed444": {
+   "stick_end": [
+    2.04,
+    1.67
+   ],
+   "base_end": [
+    2.08,
+    0.84
+   ],
+   "base_path_m": 5.42,
+   "steps": 118,
+   "contacts": [
+    "base~button",
+    "gripper.suction~stick",
+    "stick~button"
+   ]
+  }
+ }
+}

@@ -1,0 +1,555 @@
+{
+ "scenario": "table3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 35 runs (which cube moves, its lift, base path, number of env steps). No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/table3d.py"
+ },
+ "insights": [
+  "The task needs one cube only. 24 of 35 runs take cube1, the nearest cube; 7 runs take cube0 and 4 runs take cube2. No run takes cube3.",
+  "19 runs end in at most 4 env steps.",
+  "The contact view finds 2 strategies and does not see which cube the robot takes (0.43). The motion view sees it (0.95)."
+ ],
+ "codebook": [
+  {
+   "key": "cube",
+   "question": "Which cube does the robot take?",
+   "source": "motion",
+   "values": {
+    "cube1": "cube1, the cube nearest to the robot.",
+    "cube0": "cube0.",
+    "cube2": "cube2.",
+    "cube3": "cube3."
+   },
+   "rule": "the cube that moves"
+  },
+  {
+   "key": "base",
+   "question": "Does the base move to the cube?",
+   "source": "motion",
+   "values": {
+    "fixed": "The base path is below 10 cm: the arm reaches the cube.",
+    "moves": "The base path is 10 cm or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "lift",
+   "question": "How high does the cube go?",
+   "source": "motion",
+   "values": {
+    "just_enough": "Less than 15 cm (the task needs 10 cm).",
+    "high": "15 cm or more."
+   },
+   "rule": "largest height of the cube above its start"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "minimal": "At most 4 env steps.",
+    "longer": "More than 4 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/table3d/seed24": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "opus55/table3d/seed42": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "high",
+   "pace": "minimal"
+  },
+  "opus55/table3d/seed222": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "opus55/table3d/seed424": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "high",
+   "pace": "minimal"
+  },
+  "opus55/table3d/seed444": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "opus55-source/table3d/seed24": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus55-source/table3d/seed42": {
+   "cube": "cube2",
+   "base": "fixed",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "opus55-source/table3d/seed222": {
+   "cube": "cube0",
+   "base": "fixed",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus55-source/table3d/seed424": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "opus55-source/table3d/seed444": {
+   "cube": "cube1",
+   "base": "fixed",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus5/table3d/seed24": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus5/table3d/seed42": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus5/table3d/seed222": {
+   "cube": "cube0",
+   "base": "fixed",
+   "lift": "high",
+   "pace": "minimal"
+  },
+  "opus5/table3d/seed424": {
+   "cube": "cube2",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus5/table3d/seed444": {
+   "cube": "cube2",
+   "base": "fixed",
+   "lift": "high",
+   "pace": "minimal"
+  },
+  "opus5-source/table3d/seed24": {
+   "cube": "cube1",
+   "base": "fixed",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus5-source/table3d/seed42": {
+   "cube": "cube0",
+   "base": "fixed",
+   "lift": "high",
+   "pace": "longer"
+  },
+  "opus5-source/table3d/seed222": {
+   "cube": "cube1",
+   "base": "fixed",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "opus5-source/table3d/seed424": {
+   "cube": "cube0",
+   "base": "moves",
+   "lift": "high",
+   "pace": "longer"
+  },
+  "opus5-source/table3d/seed444": {
+   "cube": "cube1",
+   "base": "fixed",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "astra/table3d/seed24": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "astra/table3d/seed42": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "astra/table3d/seed222": {
+   "cube": "cube0",
+   "base": "moves",
+   "lift": "high",
+   "pace": "longer"
+  },
+  "astra/table3d/seed424": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "astra/table3d/seed444": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "high",
+   "pace": "minimal"
+  },
+  "astra-source/table3d/seed24": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "astra-source/table3d/seed42": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "astra-source/table3d/seed222": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "astra-source/table3d/seed424": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "astra-source/table3d/seed444": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "sol/table3d/seed24": {
+   "cube": "cube2",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "minimal"
+  },
+  "sol/table3d/seed42": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "sol/table3d/seed222": {
+   "cube": "cube0",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "sol/table3d/seed424": {
+   "cube": "cube1",
+   "base": "moves",
+   "lift": "just_enough",
+   "pace": "longer"
+  },
+  "sol/table3d/seed444": {
+   "cube": "cube0",
+   "base": "fixed",
+   "lift": "just_enough",
+   "pace": "longer"
+  }
+ },
+ "evidence": {
+  "opus55/table3d/seed24": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.28,
+   "steps": 3
+  },
+  "opus55/table3d/seed42": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.18,
+   "base_path_m": 0.46,
+   "steps": 3
+  },
+  "opus55/table3d/seed222": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.11,
+   "base_path_m": 0.36,
+   "steps": 3
+  },
+  "opus55/table3d/seed424": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.37,
+   "base_path_m": 0.21,
+   "steps": 3
+  },
+  "opus55/table3d/seed444": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.32,
+   "steps": 4
+  },
+  "opus55-source/table3d/seed24": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.26,
+   "steps": 13
+  },
+  "opus55-source/table3d/seed42": {
+   "cubes_that_move": [
+    "cube2"
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.0,
+   "steps": 4
+  },
+  "opus55-source/table3d/seed222": {
+   "cubes_that_move": [
+    "cube0"
+   ],
+   "largest_lift_m": 0.12,
+   "base_path_m": 0.0,
+   "steps": 10
+  },
+  "opus55-source/table3d/seed424": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.12,
+   "base_path_m": 0.28,
+   "steps": 3
+  },
+  "opus55-source/table3d/seed444": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.0,
+   "steps": 6
+  },
+  "opus5/table3d/seed24": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.3,
+   "steps": 71
+  },
+  "opus5/table3d/seed42": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.26,
+   "steps": 22
+  },
+  "opus5/table3d/seed222": {
+   "cubes_that_move": [
+    "cube0"
+   ],
+   "largest_lift_m": 0.21,
+   "base_path_m": 0.0,
+   "steps": 4
+  },
+  "opus5/table3d/seed424": {
+   "cubes_that_move": [
+    "cube2"
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.27,
+   "steps": 22
+  },
+  "opus5/table3d/seed444": {
+   "cubes_that_move": [
+    "cube2"
+   ],
+   "largest_lift_m": 0.27,
+   "base_path_m": 0.0,
+   "steps": 4
+  },
+  "opus5-source/table3d/seed24": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.0,
+   "steps": 37
+  },
+  "opus5-source/table3d/seed42": {
+   "cubes_that_move": [
+    "cube0"
+   ],
+   "largest_lift_m": 0.26,
+   "base_path_m": 0.0,
+   "steps": 10
+  },
+  "opus5-source/table3d/seed222": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.11,
+   "base_path_m": 0.0,
+   "steps": 5
+  },
+  "opus5-source/table3d/seed424": {
+   "cubes_that_move": [
+    "cube0"
+   ],
+   "largest_lift_m": 0.3,
+   "base_path_m": 0.18,
+   "steps": 7
+  },
+  "opus5-source/table3d/seed444": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.0,
+   "steps": 9
+  },
+  "astra/table3d/seed24": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.14,
+   "base_path_m": 0.24,
+   "steps": 3
+  },
+  "astra/table3d/seed42": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.15,
+   "base_path_m": 0.23,
+   "steps": 3
+  },
+  "astra/table3d/seed222": {
+   "cubes_that_move": [
+    "cube0"
+   ],
+   "largest_lift_m": 0.21,
+   "base_path_m": 0.17,
+   "steps": 8
+  },
+  "astra/table3d/seed424": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.24,
+   "steps": 3
+  },
+  "astra/table3d/seed444": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.18,
+   "base_path_m": 0.23,
+   "steps": 3
+  },
+  "astra-source/table3d/seed24": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.24,
+   "steps": 3
+  },
+  "astra-source/table3d/seed42": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.23,
+   "steps": 3
+  },
+  "astra-source/table3d/seed222": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.13,
+   "base_path_m": 0.24,
+   "steps": 3
+  },
+  "astra-source/table3d/seed424": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.24,
+   "steps": 3
+  },
+  "astra-source/table3d/seed444": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.24,
+   "steps": 3
+  },
+  "sol/table3d/seed24": {
+   "cubes_that_move": [
+    "cube2"
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.18,
+   "steps": 4
+  },
+  "sol/table3d/seed42": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.14,
+   "base_path_m": 0.23,
+   "steps": 6
+  },
+  "sol/table3d/seed222": {
+   "cubes_that_move": [
+    "cube0"
+   ],
+   "largest_lift_m": 0.14,
+   "base_path_m": 0.17,
+   "steps": 34
+  },
+  "sol/table3d/seed424": {
+   "cubes_that_move": [
+    "cube1"
+   ],
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.23,
+   "steps": 9
+  },
+  "sol/table3d/seed444": {
+   "cubes_that_move": [
+    "cube0"
+   ],
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.06,
+   "steps": 8
+  }
+ }
+}

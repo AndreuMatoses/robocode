@@ -1,0 +1,591 @@
+{
+ "scenario": "sweepintodrawer3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 22 runs (lift, drop and first motion of each cube, motion of the wiper, base path, contact pairs). No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/sweepintodrawer3d.py"
+ },
+ "insights": [
+  "21 of 22 runs do not use the wiper: the gripper moves the cubes. 1 run sweeps with the wiper.",
+  "14 runs sweep the cubes to the edge, and the cubes fall into the drawer. 8 runs pick each cube and drop it. All astra runs pick; all opus55-source and astra-source runs sweep.",
+  "The contact view finds 17 strategies for 22 runs: almost each run is a strategy of its own."
+ ],
+ "codebook": [
+  {
+   "key": "tool",
+   "question": "What moves the cubes?",
+   "source": "motion",
+   "values": {
+    "gripper": "The gripper moves the cubes. The wiper stays in its place.",
+    "wiper": "The robot takes the wiper and sweeps with it."
+   },
+   "rule": "wiper if the wiper moves 5 cm or more"
+  },
+  {
+   "key": "transfer",
+   "question": "Do the cubes slide or does the robot lift them?",
+   "source": "motion",
+   "values": {
+    "sweep": "No cube goes 4 cm or more above the counter: the cubes slide to the edge and fall into the drawer.",
+    "pick": "Each cube goes 4 cm or more above the counter: pick and drop.",
+    "mixed": "Some cubes slide and some are lifted."
+   },
+   "rule": "number of cubes with a lift of 4 cm or more"
+  },
+  {
+   "key": "batches",
+   "question": "How many cubes move together?",
+   "source": "motion",
+   "values": {
+    "one_by_one": "The five cubes start to move at five separate times.",
+    "groups": "The cubes start to move in two to four groups.",
+    "one_sweep": "All cubes start to move within 1.5 s: one sweep."
+   },
+   "rule": "number of groups of the first-motion steps of the cubes (a gap of more than 15 env steps splits two groups)"
+  },
+  {
+   "key": "drawer",
+   "question": "How does the robot open the drawer?",
+   "source": "contacts",
+   "values": {
+    "handle": "A finger pad touches the drawer handle.",
+    "other": "No pad contact with the handle."
+   },
+   "rule": "contact pair of a finger pad with the drawer handle"
+  },
+  {
+   "key": "base",
+   "question": "Does the base drive during the task?",
+   "source": "motion",
+   "values": {
+    "stays": "The base path is below 2 m.",
+    "drives": "The base path is 2 m or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 400 env steps (40 s).",
+    "slow": "More than 400 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/sweepintodrawer3d/seed24": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "quick"
+  },
+  "opus55/sweepintodrawer3d/seed42": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "quick"
+  },
+  "opus55/sweepintodrawer3d/seed222": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "quick"
+  },
+  "opus55/sweepintodrawer3d/seed424": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "opus55/sweepintodrawer3d/seed444": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "opus55-source/sweepintodrawer3d/seed24": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "quick"
+  },
+  "opus55-source/sweepintodrawer3d/seed42": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "quick"
+  },
+  "opus55-source/sweepintodrawer3d/seed222": {
+   "tool": "wiper",
+   "transfer": "sweep",
+   "batches": "one_sweep",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "quick"
+  },
+  "opus55-source/sweepintodrawer3d/seed424": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "quick"
+  },
+  "opus55-source/sweepintodrawer3d/seed444": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "quick"
+  },
+  "opus5-source/sweepintodrawer3d/seed42": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "opus5-source/sweepintodrawer3d/seed222": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "opus5-source/sweepintodrawer3d/seed444": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "slow"
+  },
+  "astra/sweepintodrawer3d/seed24": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "one_by_one",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "astra/sweepintodrawer3d/seed42": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "astra/sweepintodrawer3d/seed222": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "groups",
+   "drawer": "other",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "astra/sweepintodrawer3d/seed444": {
+   "tool": "gripper",
+   "transfer": "pick",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "drives",
+   "pace": "slow"
+  },
+  "astra-source/sweepintodrawer3d/seed24": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "one_by_one",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "slow"
+  },
+  "astra-source/sweepintodrawer3d/seed42": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "slow"
+  },
+  "astra-source/sweepintodrawer3d/seed222": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "slow"
+  },
+  "astra-source/sweepintodrawer3d/seed424": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "slow"
+  },
+  "astra-source/sweepintodrawer3d/seed444": {
+   "tool": "gripper",
+   "transfer": "sweep",
+   "batches": "groups",
+   "drawer": "handle",
+   "base": "stays",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/sweepintodrawer3d/seed24": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    212,
+    240,
+    271,
+    304,
+    304
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 3.44,
+   "steps": 339
+  },
+  "opus55/sweepintodrawer3d/seed42": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    132,
+    134,
+    146,
+    207,
+    207
+   ],
+   "groups": 2,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 7.1,
+   "steps": 332
+  },
+  "opus55/sweepintodrawer3d/seed222": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    46,
+    97,
+    119,
+    135,
+    136
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 3.85,
+   "steps": 345
+  },
+  "opus55/sweepintodrawer3d/seed424": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.11,
+   "first_motion_steps": [
+    380,
+    446,
+    517,
+    567,
+    567
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 4.15,
+   "steps": 617
+  },
+  "opus55/sweepintodrawer3d/seed444": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.07,
+   "first_motion_steps": [
+    338,
+    339,
+    454,
+    498,
+    498
+   ],
+   "groups": 3,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 5.14,
+   "steps": 610
+  },
+  "opus55-source/sweepintodrawer3d/seed24": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    66,
+    68,
+    69,
+    88,
+    108
+   ],
+   "groups": 3,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 1.2,
+   "steps": 129
+  },
+  "opus55-source/sweepintodrawer3d/seed42": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.04,
+   "first_motion_steps": [
+    154,
+    175,
+    221,
+    244,
+    245
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 2.76,
+   "steps": 278
+  },
+  "opus55-source/sweepintodrawer3d/seed222": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.0,
+   "first_motion_steps": [
+    64,
+    68,
+    68,
+    70,
+    71
+   ],
+   "groups": 1,
+   "wiper_shift_m": 0.32,
+   "base_path_m": 1.75,
+   "steps": 241
+  },
+  "opus55-source/sweepintodrawer3d/seed424": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    108,
+    133,
+    159,
+    187,
+    187
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 3.38,
+   "steps": 237
+  },
+  "opus55-source/sweepintodrawer3d/seed444": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    260,
+    265,
+    292,
+    292,
+    320
+   ],
+   "groups": 3,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 3.49,
+   "steps": 389
+  },
+  "opus5-source/sweepintodrawer3d/seed42": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    323,
+    326,
+    358,
+    358,
+    427
+   ],
+   "groups": 3,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 4.32,
+   "steps": 467
+  },
+  "opus5-source/sweepintodrawer3d/seed222": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.08,
+   "first_motion_steps": [
+    267,
+    268,
+    278,
+    406,
+    711
+   ],
+   "groups": 3,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 5.79,
+   "steps": 867
+  },
+  "opus5-source/sweepintodrawer3d/seed444": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.29,
+   "first_motion_steps": [
+    265,
+    368,
+    464,
+    465,
+    819
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 1.06,
+   "steps": 884
+  },
+  "astra/sweepintodrawer3d/seed24": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.15,
+   "first_motion_steps": [
+    276,
+    414,
+    535,
+    648,
+    765
+   ],
+   "groups": 5,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 6.22,
+   "steps": 812
+  },
+  "astra/sweepintodrawer3d/seed42": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.11,
+   "first_motion_steps": [
+    401,
+    488,
+    547,
+    547,
+    705
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 4.42,
+   "steps": 870
+  },
+  "astra/sweepintodrawer3d/seed222": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.1,
+   "first_motion_steps": [
+    53,
+    120,
+    185,
+    185,
+    250
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 8.35,
+   "steps": 865
+  },
+  "astra/sweepintodrawer3d/seed444": {
+   "cubes_lifted": 5,
+   "largest_lift_m": 0.16,
+   "first_motion_steps": [
+    423,
+    512,
+    599,
+    599,
+    822
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 2.75,
+   "steps": 857
+  },
+  "astra-source/sweepintodrawer3d/seed24": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.0,
+   "first_motion_steps": [
+    260,
+    346,
+    460,
+    595,
+    716
+   ],
+   "groups": 5,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 0.97,
+   "steps": 760
+  },
+  "astra-source/sweepintodrawer3d/seed42": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.0,
+   "first_motion_steps": [
+    484,
+    618,
+    620,
+    709,
+    787
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 1.28,
+   "steps": 878
+  },
+  "astra-source/sweepintodrawer3d/seed222": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.0,
+   "first_motion_steps": [
+    314,
+    438,
+    591,
+    596,
+    881
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 0.83,
+   "steps": 907
+  },
+  "astra-source/sweepintodrawer3d/seed424": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.01,
+   "first_motion_steps": [
+    262,
+    297,
+    374,
+    376,
+    469
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 0.7,
+   "steps": 612
+  },
+  "astra-source/sweepintodrawer3d/seed444": {
+   "cubes_lifted": 0,
+   "largest_lift_m": 0.0,
+   "first_motion_steps": [
+    371,
+    475,
+    582,
+    594,
+    783
+   ],
+   "groups": 4,
+   "wiper_shift_m": 0.0,
+   "base_path_m": 0.94,
+   "steps": 837
+  }
+ }
+}

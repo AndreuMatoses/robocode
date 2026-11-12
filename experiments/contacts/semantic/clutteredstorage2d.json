@@ -1,0 +1,634 @@
+{
+ "scenario": "clutteredstorage2d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 31 runs (which blocks move and in which order, end position of each block, contact pairs). Blocks 0 to 2 start at the mouth of the shelf; blocks 3 to 6 start in the room. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/clutteredstorage2d.py"
+ },
+ "insights": [
+  "Three blocks start at the mouth of the shelf. 21 of 31 runs move the three deeper first: 12 from right to left and 9 from left to right. 9 runs move only one or two of them.",
+  "The room blocks end in one column of the shelf in 10 runs, and in three columns or more in 15 runs.",
+  "The contact view finds 3 strategies and sees none of these differences (all near 0.55). The motion view sees the order of the two farthest blocks (0.96)."
+ ],
+ "codebook": [
+  {
+   "key": "shelf_blocks",
+   "question": "What does the robot do with the three blocks at the shelf?",
+   "source": "motion",
+   "values": {
+    "right_to_left": "It moves the three blocks deeper, block2 first, then block1, then block0.",
+    "left_to_right": "It moves the three blocks deeper, block0 first, then block1, then block2.",
+    "partial": "It moves one or two of the three blocks only.",
+    "other": "It moves the three blocks in another order, or between the room blocks."
+   },
+   "rule": "the blocks 0 to 2 that move 5 cm or more, and their order"
+  },
+  {
+   "key": "columns",
+   "question": "In how many columns of the shelf do the room blocks end?",
+   "source": "motion",
+   "values": {
+    "one": "The four room blocks end in one column (the same x within 15 cm).",
+    "two": "They end in two columns.",
+    "three_or_more": "They end in three columns or more."
+   },
+   "rule": "number of groups of the end x of the blocks 3 to 6 (a gap of more than 15 cm splits two groups)"
+  },
+  {
+   "key": "far_order",
+   "question": "Which of the two farthest blocks goes first?",
+   "source": "motion",
+   "values": {
+    "block3_first": "block3 moves before block4.",
+    "block4_first": "block4 moves before block3."
+   },
+   "rule": "first motion of block3 and of block4"
+  },
+  {
+   "key": "base",
+   "question": "Does the base touch a block?",
+   "source": "contacts",
+   "values": {
+    "clear": "No contact of the base with a block.",
+    "bumps": "The base touches a block."
+   },
+   "rule": "contact pair of the base with a block"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 420 env steps.",
+    "slow": "More than 420 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/clutteredstorage2d/seed24": {
+   "shelf_blocks": "partial",
+   "columns": "one",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55/clutteredstorage2d/seed42": {
+   "shelf_blocks": "partial",
+   "columns": "three_or_more",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55/clutteredstorage2d/seed222": {
+   "shelf_blocks": "partial",
+   "columns": "one",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55/clutteredstorage2d/seed424": {
+   "shelf_blocks": "partial",
+   "columns": "one",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55/clutteredstorage2d/seed444": {
+   "shelf_blocks": "right_to_left",
+   "columns": "two",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredstorage2d/seed24": {
+   "shelf_blocks": "partial",
+   "columns": "two",
+   "far_order": "block3_first",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredstorage2d/seed42": {
+   "shelf_blocks": "left_to_right",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredstorage2d/seed222": {
+   "shelf_blocks": "other",
+   "columns": "one",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredstorage2d/seed424": {
+   "shelf_blocks": "right_to_left",
+   "columns": "two",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredstorage2d/seed444": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "opus5/clutteredstorage2d/seed24": {
+   "shelf_blocks": "left_to_right",
+   "columns": "three_or_more",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5/clutteredstorage2d/seed42": {
+   "shelf_blocks": "left_to_right",
+   "columns": "three_or_more",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5/clutteredstorage2d/seed222": {
+   "shelf_blocks": "partial",
+   "columns": "one",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5/clutteredstorage2d/seed424": {
+   "shelf_blocks": "partial",
+   "columns": "one",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus5/clutteredstorage2d/seed444": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5-source/clutteredstorage2d/seed24": {
+   "shelf_blocks": "left_to_right",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "opus5-source/clutteredstorage2d/seed42": {
+   "shelf_blocks": "left_to_right",
+   "columns": "three_or_more",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus5-source/clutteredstorage2d/seed222": {
+   "shelf_blocks": "left_to_right",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5-source/clutteredstorage2d/seed424": {
+   "shelf_blocks": "left_to_right",
+   "columns": "two",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5-source/clutteredstorage2d/seed444": {
+   "shelf_blocks": "left_to_right",
+   "columns": "one",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "astra/clutteredstorage2d/seed24": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block4_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "astra/clutteredstorage2d/seed42": {
+   "shelf_blocks": "right_to_left",
+   "columns": "one",
+   "far_order": "block3_first",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "astra/clutteredstorage2d/seed222": {
+   "shelf_blocks": "partial",
+   "columns": "one",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "astra/clutteredstorage2d/seed424": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "astra/clutteredstorage2d/seed444": {
+   "shelf_blocks": "right_to_left",
+   "columns": "two",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "astra-source/clutteredstorage2d/seed24": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block4_first",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "astra-source/clutteredstorage2d/seed42": {
+   "shelf_blocks": "partial",
+   "columns": "one",
+   "far_order": "block3_first",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "astra-source/clutteredstorage2d/seed222": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "astra-source/clutteredstorage2d/seed424": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "astra-source/clutteredstorage2d/seed444": {
+   "shelf_blocks": "right_to_left",
+   "columns": "three_or_more",
+   "far_order": "block3_first",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "sol/clutteredstorage2d/seed42": {
+   "shelf_blocks": "left_to_right",
+   "columns": "two",
+   "far_order": "block4_first",
+   "base": "bumps",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/clutteredstorage2d/seed24": {
+   "order": "25634",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 17.39,
+   "steps": 375
+  },
+  "opus55/clutteredstorage2d/seed42": {
+   "order": "51643",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.54,
+    0.86
+   ],
+   "base_path_m": 18.7,
+   "steps": 372
+  },
+  "opus55/clutteredstorage2d/seed222": {
+   "order": "25643",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 17.4,
+   "steps": 316
+  },
+  "opus55/clutteredstorage2d/seed424": {
+   "order": "25643",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 16.77,
+   "steps": 365
+  },
+  "opus55/clutteredstorage2d/seed444": {
+   "order": "2105643",
+   "end_x_of_blocks_3_to_6": [
+    0.54,
+    0.54,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 18.77,
+   "steps": 410
+  },
+  "opus55-source/clutteredstorage2d/seed24": {
+   "order": "25634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 17.15,
+   "steps": 316
+  },
+  "opus55-source/clutteredstorage2d/seed42": {
+   "order": "0125634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.67,
+    0.86
+   ],
+   "base_path_m": 18.44,
+   "steps": 378
+  },
+  "opus55-source/clutteredstorage2d/seed222": {
+   "order": "5210643",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 20.67,
+   "steps": 405
+  },
+  "opus55-source/clutteredstorage2d/seed424": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.54,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 22.35,
+   "steps": 329
+  },
+  "opus55-source/clutteredstorage2d/seed444": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 18.04,
+   "steps": 575
+  },
+  "opus5/clutteredstorage2d/seed24": {
+   "order": "0125643",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.23,
+    0.54,
+    0.86
+   ],
+   "base_path_m": 27.19,
+   "steps": 626
+  },
+  "opus5/clutteredstorage2d/seed42": {
+   "order": "0125643",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.23,
+    0.54,
+    0.86
+   ],
+   "base_path_m": 24.85,
+   "steps": 478
+  },
+  "opus5/clutteredstorage2d/seed222": {
+   "order": "23465",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 18.95,
+   "steps": 461
+  },
+  "opus5/clutteredstorage2d/seed424": {
+   "order": "25643",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 16.89,
+   "steps": 376
+  },
+  "opus5/clutteredstorage2d/seed444": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 19.47,
+   "steps": 444
+  },
+  "opus5-source/clutteredstorage2d/seed24": {
+   "order": "0125364",
+   "end_x_of_blocks_3_to_6": [
+    0.22,
+    0.55,
+    0.87,
+    0.87
+   ],
+   "base_path_m": 26.43,
+   "steps": 591
+  },
+  "opus5-source/clutteredstorage2d/seed42": {
+   "order": "0125643",
+   "end_x_of_blocks_3_to_6": [
+    0.21,
+    0.21,
+    0.54,
+    0.87
+   ],
+   "base_path_m": 20.0,
+   "steps": 412
+  },
+  "opus5-source/clutteredstorage2d/seed222": {
+   "order": "0125634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.23,
+    0.54,
+    0.86
+   ],
+   "base_path_m": 22.78,
+   "steps": 527
+  },
+  "opus5-source/clutteredstorage2d/seed424": {
+   "order": "0125634",
+   "end_x_of_blocks_3_to_6": [
+    0.54,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 21.64,
+   "steps": 511
+  },
+  "opus5-source/clutteredstorage2d/seed444": {
+   "order": "0125634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.23,
+    0.23,
+    0.23
+   ],
+   "base_path_m": 27.57,
+   "steps": 683
+  },
+  "astra/clutteredstorage2d/seed24": {
+   "order": "2105643",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 25.02,
+   "steps": 510
+  },
+  "astra/clutteredstorage2d/seed42": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 27.13,
+   "steps": 536
+  },
+  "astra/clutteredstorage2d/seed222": {
+   "order": "25634",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.87
+   ],
+   "base_path_m": 18.78,
+   "steps": 396
+  },
+  "astra/clutteredstorage2d/seed424": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.65,
+    0.86
+   ],
+   "base_path_m": 20.55,
+   "steps": 444
+  },
+  "astra/clutteredstorage2d/seed444": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.54,
+    0.54,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 18.93,
+   "steps": 414
+  },
+  "astra-source/clutteredstorage2d/seed24": {
+   "order": "2105643",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.42,
+    0.54,
+    0.86
+   ],
+   "base_path_m": 20.79,
+   "steps": 423
+  },
+  "astra-source/clutteredstorage2d/seed42": {
+   "order": "25634",
+   "end_x_of_blocks_3_to_6": [
+    0.86,
+    0.86,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 17.39,
+   "steps": 352
+  },
+  "astra-source/clutteredstorage2d/seed222": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.78,
+    0.86
+   ],
+   "base_path_m": 22.41,
+   "steps": 462
+  },
+  "astra-source/clutteredstorage2d/seed424": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.76,
+    0.86
+   ],
+   "base_path_m": 19.49,
+   "steps": 405
+  },
+  "astra-source/clutteredstorage2d/seed444": {
+   "order": "2105634",
+   "end_x_of_blocks_3_to_6": [
+    0.23,
+    0.54,
+    0.83,
+    0.86
+   ],
+   "base_path_m": 21.79,
+   "steps": 435
+  },
+  "sol/clutteredstorage2d/seed42": {
+   "order": "0126543",
+   "end_x_of_blocks_3_to_6": [
+    0.54,
+    0.54,
+    0.86,
+    0.86
+   ],
+   "base_path_m": 39.4,
+   "steps": 989
+  }
+ }
+}

@@ -1,0 +1,934 @@
+{
+ "scenario": "balancebeam3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 34 runs (order, end position, lift, path and contact pairs of each block). The end layout is the same in all runs (the task gives the target of each block), so it is not a tag group. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/balancebeam3d.py"
+ },
+ "insights": [
+  "28 of 34 runs put the large block on the beam first. It goes to the centre, so the beam stays level. 6 runs start with a small block.",
+  "The end layout is the same in all runs, because the task gives the target of each block. The differences are in the order and in the style of the motion.",
+  "The carry height depends on the method: all opus55 and opus55-source runs carry low, and all astra-source runs carry high.",
+  "The contact view finds 3 strategies, and it separates the order fully (1.00)."
+ ],
+ "codebook": [
+  {
+   "key": "order",
+   "question": "Which block goes on the beam first?",
+   "source": "motion",
+   "values": {
+    "large_first": "The large block moves first. It goes to the centre of the beam, so the beam stays level.",
+    "small_first": "A small block moves first, and the large block moves last."
+   },
+   "rule": "the block with the first motion"
+  },
+  {
+   "key": "carry",
+   "question": "How high does the robot carry a block?",
+   "source": "motion",
+   "values": {
+    "low": "No block goes 15 cm or more above its start.",
+    "high": "A block goes 15 cm or more above its start."
+   },
+   "rule": "largest height of a block above its start"
+  },
+  {
+   "key": "transfer",
+   "question": "Does each block move in one motion?",
+   "source": "motion",
+   "values": {
+    "continuous": "Each block moves in one motion without a pause.",
+    "interrupted": "A block has a pause of more than 1 s in its transfer, or it moves again later (a correction or a second grasp)."
+   },
+   "rule": "number of separate motions of each block (a pause of more than 10 env steps splits a motion)"
+  },
+  {
+   "key": "base",
+   "question": "How far does the base drive?",
+   "source": "motion",
+   "values": {
+    "direct": "The base path is below 5 m.",
+    "detour": "The base path is 5 m or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "beam",
+   "question": "Does the robot disturb the beam?",
+   "source": "contacts",
+   "values": {
+    "steady": "The gripper does not touch the beam, and the beam does not touch the floor.",
+    "disturbed": "The gripper touches the beam, or the beam tips to the floor."
+   },
+   "rule": "contact pairs of the beam with the gripper and with the floor"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 300 env steps (30 s).",
+    "slow": "More than 300 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/balancebeam3d/seed24": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus55/balancebeam3d/seed42": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus55/balancebeam3d/seed222": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "opus55/balancebeam3d/seed424": {
+   "order": "small_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "quick"
+  },
+  "opus55/balancebeam3d/seed444": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "quick"
+  },
+  "opus55-source/balancebeam3d/seed24": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus55-source/balancebeam3d/seed42": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "detour",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus55-source/balancebeam3d/seed222": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "detour",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus55-source/balancebeam3d/seed424": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus55-source/balancebeam3d/seed444": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus5/balancebeam3d/seed24": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "quick"
+  },
+  "opus5/balancebeam3d/seed42": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "opus5/balancebeam3d/seed222": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "opus5/balancebeam3d/seed424": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus5/balancebeam3d/seed444": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "detour",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "opus5-source/balancebeam3d/seed24": {
+   "order": "small_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "opus5-source/balancebeam3d/seed42": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "detour",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "opus5-source/balancebeam3d/seed222": {
+   "order": "small_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "opus5-source/balancebeam3d/seed424": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "detour",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "opus5-source/balancebeam3d/seed444": {
+   "order": "small_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "quick"
+  },
+  "astra/balancebeam3d/seed24": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "astra/balancebeam3d/seed42": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "astra/balancebeam3d/seed222": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "astra/balancebeam3d/seed424": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "astra/balancebeam3d/seed444": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "quick"
+  },
+  "astra-source/balancebeam3d/seed24": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "continuous",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "astra-source/balancebeam3d/seed42": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "astra-source/balancebeam3d/seed222": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "astra-source/balancebeam3d/seed424": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "detour",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "astra-source/balancebeam3d/seed444": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "sol/balancebeam3d/seed24": {
+   "order": "large_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  },
+  "sol/balancebeam3d/seed42": {
+   "order": "large_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "sol/balancebeam3d/seed222": {
+   "order": "small_first",
+   "carry": "high",
+   "transfer": "interrupted",
+   "base": "detour",
+   "beam": "disturbed",
+   "pace": "slow"
+  },
+  "sol/balancebeam3d/seed424": {
+   "order": "small_first",
+   "carry": "low",
+   "transfer": "interrupted",
+   "base": "direct",
+   "beam": "steady",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/balancebeam3d/seed24": {
+   "order": [
+    "large_block",
+    "small_block_2",
+    "small_block_1"
+   ],
+   "largest_lift_m": 0.1,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 3.94,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 161
+  },
+  "opus55/balancebeam3d/seed42": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.1,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 3.49,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 182
+  },
+  "opus55/balancebeam3d/seed222": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.1,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 2,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.07,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": false,
+   "steps": 333
+  },
+  "opus55/balancebeam3d/seed424": {
+   "order": [
+    "small_block_1",
+    "small_block_2",
+    "large_block"
+   ],
+   "largest_lift_m": 0.09,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 2,
+    "small_block_2": 1
+   },
+   "base_path_m": 3.84,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": false,
+   "steps": 168
+  },
+  "opus55/balancebeam3d/seed444": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.07,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.33,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": false,
+   "steps": 183
+  },
+  "opus55-source/balancebeam3d/seed24": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.12,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.28,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 288
+  },
+  "opus55-source/balancebeam3d/seed42": {
+   "order": [
+    "large_block",
+    "small_block_2",
+    "small_block_1"
+   ],
+   "largest_lift_m": 0.11,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 5.99,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 226
+  },
+  "opus55-source/balancebeam3d/seed222": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.15,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 8.74,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 283
+  },
+  "opus55-source/balancebeam3d/seed424": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.11,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.61,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 221
+  },
+  "opus55-source/balancebeam3d/seed444": {
+   "order": [
+    "large_block",
+    "small_block_2",
+    "small_block_1"
+   ],
+   "largest_lift_m": 0.1,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 3.35,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 227
+  },
+  "opus5/balancebeam3d/seed24": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.11,
+   "motions_of_each_block": {
+    "large_block": 3,
+    "small_block_1": 2,
+    "small_block_2": 1
+   },
+   "base_path_m": 3.45,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": true,
+   "steps": 246
+  },
+  "opus5/balancebeam3d/seed42": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.21,
+   "motions_of_each_block": {
+    "large_block": 3,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.04,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": false,
+   "steps": 558
+  },
+  "opus5/balancebeam3d/seed222": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.11,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.21,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 308
+  },
+  "opus5/balancebeam3d/seed424": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.07,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.11,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 187
+  },
+  "opus5/balancebeam3d/seed444": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.18,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 2,
+    "small_block_2": 2
+   },
+   "base_path_m": 5.1,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 500
+  },
+  "opus5-source/balancebeam3d/seed24": {
+   "order": [
+    "small_block_2",
+    "small_block_1",
+    "large_block"
+   ],
+   "largest_lift_m": 0.17,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 2,
+    "small_block_2": 3
+   },
+   "base_path_m": 3.82,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": true,
+   "steps": 318
+  },
+  "opus5-source/balancebeam3d/seed42": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.12,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 14.0,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 462
+  },
+  "opus5-source/balancebeam3d/seed222": {
+   "order": [
+    "small_block_2",
+    "small_block_1",
+    "large_block"
+   ],
+   "largest_lift_m": 0.07,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.25,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 209
+  },
+  "opus5-source/balancebeam3d/seed424": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.3,
+   "motions_of_each_block": {
+    "large_block": 3,
+    "small_block_1": 2,
+    "small_block_2": 1
+   },
+   "base_path_m": 5.13,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": true,
+   "steps": 387
+  },
+  "opus5-source/balancebeam3d/seed444": {
+   "order": [
+    "small_block_1",
+    "small_block_2",
+    "large_block"
+   ],
+   "largest_lift_m": 0.11,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 2,
+    "small_block_2": 1
+   },
+   "base_path_m": 3.9,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": false,
+   "steps": 268
+  },
+  "astra/balancebeam3d/seed24": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.16,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 3.94,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 472
+  },
+  "astra/balancebeam3d/seed42": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.2,
+   "motions_of_each_block": {
+    "large_block": 3,
+    "small_block_1": 2,
+    "small_block_2": 2
+   },
+   "base_path_m": 4.24,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 452
+  },
+  "astra/balancebeam3d/seed222": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.14,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.08,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 356
+  },
+  "astra/balancebeam3d/seed424": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.1,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.16,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 244
+  },
+  "astra/balancebeam3d/seed444": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.1,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.01,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 241
+  },
+  "astra-source/balancebeam3d/seed24": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.24,
+   "motions_of_each_block": {
+    "large_block": 1,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.08,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": false,
+   "steps": 493
+  },
+  "astra-source/balancebeam3d/seed42": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.25,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 3,
+    "small_block_2": 2
+   },
+   "base_path_m": 4.08,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 624
+  },
+  "astra-source/balancebeam3d/seed222": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.21,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 1,
+    "small_block_2": 1
+   },
+   "base_path_m": 4.06,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 444
+  },
+  "astra-source/balancebeam3d/seed424": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.2,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 2,
+    "small_block_2": 1
+   },
+   "base_path_m": 9.52,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 850
+  },
+  "astra-source/balancebeam3d/seed444": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.25,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 3,
+    "small_block_2": 2
+   },
+   "base_path_m": 4.1,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": false,
+   "steps": 601
+  },
+  "sol/balancebeam3d/seed24": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.3,
+   "motions_of_each_block": {
+    "large_block": 5,
+    "small_block_1": 4,
+    "small_block_2": 3
+   },
+   "base_path_m": 4.12,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 804
+  },
+  "sol/balancebeam3d/seed42": {
+   "order": [
+    "large_block",
+    "small_block_1",
+    "small_block_2"
+   ],
+   "largest_lift_m": 0.11,
+   "motions_of_each_block": {
+    "large_block": 3,
+    "small_block_1": 2,
+    "small_block_2": 2
+   },
+   "base_path_m": 3.32,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": true,
+   "steps": 389
+  },
+  "sol/balancebeam3d/seed222": {
+   "order": [
+    "small_block_1",
+    "small_block_2",
+    "large_block"
+   ],
+   "largest_lift_m": 0.46,
+   "motions_of_each_block": {
+    "large_block": 3,
+    "small_block_1": 4,
+    "small_block_2": 3
+   },
+   "base_path_m": 6.52,
+   "gripper_touches_beam": true,
+   "beam_touches_floor": true,
+   "steps": 867
+  },
+  "sol/balancebeam3d/seed424": {
+   "order": [
+    "small_block_1",
+    "small_block_2",
+    "large_block"
+   ],
+   "largest_lift_m": 0.08,
+   "motions_of_each_block": {
+    "large_block": 2,
+    "small_block_1": 4,
+    "small_block_2": 3
+   },
+   "base_path_m": 4.38,
+   "gripper_touches_beam": false,
+   "beam_touches_floor": false,
+   "steps": 788
+  }
+ }
+}

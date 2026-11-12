@@ -1,0 +1,820 @@
+{
+ "scenario": "clutteredretrieval2d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 30 runs (which blocks move and in which order, path of the target block, contact pairs). No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/clutteredretrieval2d.py"
+ },
+ "insights": [
+  "24 of 30 runs move an obstruction away before they take the target block. 6 runs take the target block first.",
+  "Each run that moves an obstruction holds it with the suction pad. No run pushes an obstruction away.",
+  "The base touches an obstruction in 13 runs."
+ ],
+ "codebook": [
+  {
+   "key": "clearing",
+   "question": "Does the robot move an obstruction before it takes the target?",
+   "source": "motion",
+   "values": {
+    "clears_one": "One obstruction moves before the target block.",
+    "clears_more": "Two or more obstructions move before the target block.",
+    "direct": "The target block moves first. No obstruction moves before it."
+   },
+   "rule": "the blocks that move 10 cm or more before the first motion of the target block"
+  },
+  {
+   "key": "removal",
+   "question": "How does an obstruction move?",
+   "source": "contacts",
+   "values": {
+    "suction": "The suction pad holds the obstruction: pick and place.",
+    "push": "An obstruction moves with no suction contact: a robot part or the target block pushes it.",
+    "none": "No obstruction moves."
+   },
+   "rule": "contact pair of the suction pad with an obstruction, for the runs in which an obstruction moves"
+  },
+  {
+   "key": "carry",
+   "question": "Does the target block go straight to the region?",
+   "source": "motion",
+   "values": {
+    "straight": "The path of the target block is less than 1.15 times the straight line.",
+    "detour": "1.15 times the straight line or more."
+   },
+   "rule": "path length of the target block divided by its shift"
+  },
+  {
+   "key": "base",
+   "question": "Does the base touch an obstruction?",
+   "source": "contacts",
+   "values": {
+    "clear": "No contact of the base with an obstruction.",
+    "bumps": "The base touches an obstruction."
+   },
+   "rule": "contact pair of the base with an obstruction"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 70 env steps.",
+    "slow": "More than 70 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/clutteredretrieval2d/seed24": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus55/clutteredretrieval2d/seed42": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55/clutteredretrieval2d/seed222": {
+   "clearing": "direct",
+   "removal": "none",
+   "carry": "detour",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "opus55/clutteredretrieval2d/seed424": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55/clutteredretrieval2d/seed444": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredretrieval2d/seed24": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredretrieval2d/seed42": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus55-source/clutteredretrieval2d/seed222": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "opus55-source/clutteredretrieval2d/seed424": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus55-source/clutteredretrieval2d/seed444": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "opus5/clutteredretrieval2d/seed24": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5/clutteredretrieval2d/seed42": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5/clutteredretrieval2d/seed222": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "opus5/clutteredretrieval2d/seed444": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5-source/clutteredretrieval2d/seed24": {
+   "clearing": "direct",
+   "removal": "none",
+   "carry": "detour",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "opus5-source/clutteredretrieval2d/seed42": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "opus5-source/clutteredretrieval2d/seed222": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "opus5-source/clutteredretrieval2d/seed424": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "opus5-source/clutteredretrieval2d/seed444": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "astra/clutteredretrieval2d/seed24": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "astra/clutteredretrieval2d/seed42": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "astra/clutteredretrieval2d/seed222": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "clear",
+   "pace": "slow"
+  },
+  "astra/clutteredretrieval2d/seed424": {
+   "clearing": "clears_more",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "astra/clutteredretrieval2d/seed444": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "bumps",
+   "pace": "slow"
+  },
+  "astra-source/clutteredretrieval2d/seed24": {
+   "clearing": "direct",
+   "removal": "none",
+   "carry": "detour",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "astra-source/clutteredretrieval2d/seed42": {
+   "clearing": "direct",
+   "removal": "none",
+   "carry": "detour",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "astra-source/clutteredretrieval2d/seed222": {
+   "clearing": "clears_one",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "astra-source/clutteredretrieval2d/seed424": {
+   "clearing": "direct",
+   "removal": "suction",
+   "carry": "straight",
+   "base": "bumps",
+   "pace": "quick"
+  },
+  "astra-source/clutteredretrieval2d/seed444": {
+   "clearing": "direct",
+   "removal": "none",
+   "carry": "detour",
+   "base": "clear",
+   "pace": "quick"
+  },
+  "sol/clutteredretrieval2d/seed24": {
+   "clearing": "clears_more",
+   "removal": "suction",
+   "carry": "detour",
+   "base": "bumps",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/clutteredretrieval2d/seed24": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.01,
+   "base_path_m": 3.9,
+   "steps": 77,
+   "contacts": [
+    "arm~target_region",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus55/clutteredretrieval2d/seed42": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.07,
+   "base_path_m": 2.81,
+   "steps": 63,
+   "contacts": [
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus55/clutteredretrieval2d/seed222": {
+   "order": [
+    "target_block"
+   ],
+   "target_path_ratio": 1.36,
+   "base_path_m": 3.36,
+   "steps": 54,
+   "contacts": [
+    "arm~target_region",
+    "base~obstruction",
+    "base~target_region",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus55/clutteredretrieval2d/seed424": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.07,
+   "base_path_m": 3.14,
+   "steps": 61,
+   "contacts": [
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus55/clutteredretrieval2d/seed444": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.08,
+   "base_path_m": 3.24,
+   "steps": 53,
+   "contacts": [
+    "arm~obstruction",
+    "arm~target_block",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus55-source/clutteredretrieval2d/seed24": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.11,
+   "base_path_m": 3.82,
+   "steps": 57,
+   "contacts": [
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus55-source/clutteredretrieval2d/seed42": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.07,
+   "base_path_m": 4.12,
+   "steps": 72,
+   "contacts": [
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~obstruction",
+    "target_block~target_region"
+   ]
+  },
+  "opus55-source/clutteredretrieval2d/seed222": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.07,
+   "base_path_m": 4.14,
+   "steps": 74,
+   "contacts": [
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus55-source/clutteredretrieval2d/seed424": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.04,
+   "base_path_m": 3.04,
+   "steps": 68,
+   "contacts": [
+    "arm~target_region",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~obstruction",
+    "target_block~target_region"
+   ]
+  },
+  "opus55-source/clutteredretrieval2d/seed444": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.12,
+   "base_path_m": 2.89,
+   "steps": 49,
+   "contacts": [
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~obstruction",
+    "target_block~target_region"
+   ]
+  },
+  "opus5/clutteredretrieval2d/seed24": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.34,
+   "base_path_m": 3.9,
+   "steps": 91,
+   "contacts": [
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus5/clutteredretrieval2d/seed42": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.36,
+   "base_path_m": 4.05,
+   "steps": 89,
+   "contacts": [
+    "arm~target_region",
+    "base~target_region",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus5/clutteredretrieval2d/seed222": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.31,
+   "base_path_m": 3.65,
+   "steps": 86,
+   "contacts": [
+    "base~obstruction",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus5/clutteredretrieval2d/seed444": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.18,
+   "base_path_m": 3.94,
+   "steps": 72,
+   "contacts": [
+    "arm~target_region",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus5-source/clutteredretrieval2d/seed24": {
+   "order": [
+    "target_block"
+   ],
+   "target_path_ratio": 1.29,
+   "base_path_m": 3.01,
+   "steps": 68,
+   "contacts": [
+    "base~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~right_wall",
+    "target_block~target_region"
+   ]
+  },
+  "opus5-source/clutteredretrieval2d/seed42": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.38,
+   "base_path_m": 3.64,
+   "steps": 56,
+   "contacts": [
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus5-source/clutteredretrieval2d/seed222": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.04,
+   "base_path_m": 5.94,
+   "steps": 218,
+   "contacts": [
+    "arm~target_region",
+    "base~target_region",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_region",
+    "target_block~target_region"
+   ]
+  },
+  "opus5-source/clutteredretrieval2d/seed424": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.0,
+   "base_path_m": 4.81,
+   "steps": 106,
+   "contacts": [
+    "arm~target_region",
+    "base~obstruction",
+    "base~target_region",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~obstruction",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "opus5-source/clutteredretrieval2d/seed444": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.04,
+   "base_path_m": 4.49,
+   "steps": 109,
+   "contacts": [
+    "arm~target_region",
+    "base~target_region",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra/clutteredretrieval2d/seed24": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.13,
+   "base_path_m": 3.2,
+   "steps": 66,
+   "contacts": [
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra/clutteredretrieval2d/seed42": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.1,
+   "base_path_m": 2.99,
+   "steps": 65,
+   "contacts": [
+    "arm~obstruction",
+    "arm~target_block",
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra/clutteredretrieval2d/seed222": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.04,
+   "base_path_m": 3.72,
+   "steps": 79,
+   "contacts": [
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra/clutteredretrieval2d/seed424": {
+   "order": [
+    "obstruction5",
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.19,
+   "base_path_m": 5.03,
+   "steps": 112,
+   "contacts": [
+    "arm~obstruction",
+    "arm~target_block",
+    "arm~target_region",
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra/clutteredretrieval2d/seed444": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.18,
+   "base_path_m": 3.76,
+   "steps": 88,
+   "contacts": [
+    "arm~target_region",
+    "base~obstruction",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra-source/clutteredretrieval2d/seed24": {
+   "order": [
+    "target_block"
+   ],
+   "target_path_ratio": 1.3,
+   "base_path_m": 2.58,
+   "steps": 56,
+   "contacts": [
+    "base~right_wall",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra-source/clutteredretrieval2d/seed42": {
+   "order": [
+    "target_block"
+   ],
+   "target_path_ratio": 1.2,
+   "base_path_m": 2.41,
+   "steps": 52,
+   "contacts": [
+    "arm~obstruction",
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "astra-source/clutteredretrieval2d/seed222": {
+   "order": [
+    "obstruction0",
+    "target_block"
+   ],
+   "target_path_ratio": 1.04,
+   "base_path_m": 2.89,
+   "steps": 59,
+   "contacts": [
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.head~target_region",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~obstruction",
+    "target_block~target_region"
+   ]
+  },
+  "astra-source/clutteredretrieval2d/seed424": {
+   "order": [
+    "target_block",
+    "obstruction0"
+   ],
+   "target_path_ratio": 1.08,
+   "base_path_m": 2.37,
+   "steps": 49,
+   "contacts": [
+    "arm~obstruction",
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "obstruction~target_region",
+    "target_block~target_region"
+   ]
+  },
+  "astra-source/clutteredretrieval2d/seed444": {
+   "order": [
+    "target_block"
+   ],
+   "target_path_ratio": 1.16,
+   "base_path_m": 2.94,
+   "steps": 57,
+   "contacts": [
+    "base~right_wall",
+    "gripper.head~target_block",
+    "gripper.suction~target_block",
+    "obstruction~target_block",
+    "target_block~target_region"
+   ]
+  },
+  "sol/clutteredretrieval2d/seed24": {
+   "order": [
+    "obstruction5",
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "target_path_ratio": 1.27,
+   "base_path_m": 13.83,
+   "steps": 500,
+   "contacts": [
+    "arm~obstruction",
+    "arm~target_block",
+    "base~obstruction",
+    "gripper.head~obstruction",
+    "gripper.head~target_block",
+    "gripper.suction~obstruction",
+    "gripper.suction~target_block",
+    "target_block~target_region"
+   ]
+  }
+ }
+}

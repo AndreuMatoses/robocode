@@ -1,0 +1,704 @@
+{
+ "scenario": "transport3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 30 runs (order, end position and lift of the box and of the two cubes, base path, contact pairs). In some runs the cubes end at the place of the box, so one tag group asks if a cube travels in the box. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/transport3d.py"
+ },
+ "insights": [
+  "5 of 30 runs use the box as a tray: a cube travels in the box to the table. 25 runs carry each object by itself.",
+  "The box goes first in 18 runs, and the two cubes go first in 10 runs.",
+  "The base touches a cube or the box in 22 runs."
+ ],
+ "codebook": [
+  {
+   "key": "box_use",
+   "question": "Does the robot use the box to carry a cube?",
+   "source": "motion",
+   "values": {
+    "tray": "A cube stays within 10 cm of the box for 5 env steps or more while the box moves: the cube travels in the box.",
+    "plain": "No cube travels with the box: each object goes to the table by itself."
+   },
+   "rule": "env steps in which the box moves and a cube is within 10 cm of it"
+  },
+  {
+   "key": "order",
+   "question": "Does the box move before the cubes?",
+   "source": "motion",
+   "values": {
+    "box_first": "The box moves first.",
+    "cubes_first": "The two cubes move before the box.",
+    "box_between": "The box moves between the two cubes."
+   },
+   "rule": "order of the first motion of the box and of the cubes"
+  },
+  {
+   "key": "base",
+   "question": "Does the base touch an object?",
+   "source": "contacts",
+   "values": {
+    "clear": "No contact of the base with a cube or with the box.",
+    "bumps": "The base touches a cube or the box."
+   },
+   "rule": "contact pairs of the base with a cube or with the box"
+  },
+  {
+   "key": "carry",
+   "question": "How high does the robot carry an object?",
+   "source": "motion",
+   "values": {
+    "low": "No object goes 65 cm or more above its start.",
+    "high": "An object goes 65 cm or more above its start."
+   },
+   "rule": "largest height of an object above its start"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 115 env steps.",
+    "slow": "More than 115 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/transport3d/seed24": {
+   "box_use": "tray",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/transport3d/seed42": {
+   "box_use": "tray",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/transport3d/seed222": {
+   "box_use": "plain",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/transport3d/seed424": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/transport3d/seed444": {
+   "box_use": "plain",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/transport3d/seed24": {
+   "box_use": "plain",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/transport3d/seed42": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "clear",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "opus55-source/transport3d/seed222": {
+   "box_use": "tray",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/transport3d/seed424": {
+   "box_use": "tray",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/transport3d/seed444": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "clear",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5/transport3d/seed24": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "opus5/transport3d/seed42": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "clear",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5/transport3d/seed222": {
+   "box_use": "plain",
+   "order": "box_between",
+   "base": "clear",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5/transport3d/seed424": {
+   "box_use": "plain",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5/transport3d/seed444": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "clear",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5-source/transport3d/seed24": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5-source/transport3d/seed42": {
+   "box_use": "plain",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5-source/transport3d/seed222": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5-source/transport3d/seed424": {
+   "box_use": "plain",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5-source/transport3d/seed444": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/transport3d/seed24": {
+   "box_use": "plain",
+   "order": "box_between",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/transport3d/seed42": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/transport3d/seed222": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "clear",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/transport3d/seed444": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "clear",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra-source/transport3d/seed24": {
+   "box_use": "tray",
+   "order": "box_first",
+   "base": "clear",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "astra-source/transport3d/seed42": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra-source/transport3d/seed222": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra-source/transport3d/seed424": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "astra-source/transport3d/seed444": {
+   "box_use": "plain",
+   "order": "box_first",
+   "base": "bumps",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "sol/transport3d/seed24": {
+   "box_use": "plain",
+   "order": "cubes_first",
+   "base": "bumps",
+   "carry": "high",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/transport3d/seed24": {
+   "order": [
+    "cube1",
+    "cube0",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 20,
+    "cube1": 20
+   },
+   "largest_lift_m": 0.56,
+   "base_path_m": 5.21,
+   "steps": 91
+  },
+  "opus55/transport3d/seed42": {
+   "order": [
+    "cube0",
+    "cube1",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 14,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.45,
+   "base_path_m": 6.65,
+   "steps": 77
+  },
+  "opus55/transport3d/seed222": {
+   "order": [
+    "cube1",
+    "cube0",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 4,
+    "cube1": 4
+   },
+   "largest_lift_m": 0.3,
+   "base_path_m": 1.91,
+   "steps": 61
+  },
+  "opus55/transport3d/seed424": {
+   "order": [
+    "box0",
+    "cube1",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.64,
+   "base_path_m": 5.7,
+   "steps": 86
+  },
+  "opus55/transport3d/seed444": {
+   "order": [
+    "cube1",
+    "cube0",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 1,
+    "cube1": 1
+   },
+   "largest_lift_m": 0.5,
+   "base_path_m": 5.97,
+   "steps": 74
+  },
+  "opus55-source/transport3d/seed24": {
+   "order": [
+    "cube0",
+    "cube1",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 3,
+    "cube1": 3
+   },
+   "largest_lift_m": 0.28,
+   "base_path_m": 4.36,
+   "steps": 30
+  },
+  "opus55-source/transport3d/seed42": {
+   "order": [
+    "box0",
+    "cube1",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.74,
+   "base_path_m": 4.03,
+   "steps": 60
+  },
+  "opus55-source/transport3d/seed222": {
+   "order": [
+    "cube0",
+    "cube1",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 14,
+    "cube1": 14
+   },
+   "largest_lift_m": 0.47,
+   "base_path_m": 5.57,
+   "steps": 68
+  },
+  "opus55-source/transport3d/seed424": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 11,
+    "cube1": 2
+   },
+   "largest_lift_m": 0.29,
+   "base_path_m": 4.86,
+   "steps": 23
+  },
+  "opus55-source/transport3d/seed444": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.48,
+   "base_path_m": 6.36,
+   "steps": 58
+  },
+  "opus5/transport3d/seed24": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.64,
+   "base_path_m": 8.49,
+   "steps": 125
+  },
+  "opus5/transport3d/seed42": {
+   "order": [
+    "box0",
+    "cube1",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.69,
+   "base_path_m": 4.27,
+   "steps": 268
+  },
+  "opus5/transport3d/seed222": {
+   "order": [
+    "cube1",
+    "box0",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.67,
+   "base_path_m": 6.2,
+   "steps": 229
+  },
+  "opus5/transport3d/seed424": {
+   "order": [
+    "cube1",
+    "cube0",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.63,
+   "base_path_m": 5.65,
+   "steps": 115
+  },
+  "opus5/transport3d/seed444": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.57,
+   "base_path_m": 4.72,
+   "steps": 103
+  },
+  "opus5-source/transport3d/seed24": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.8,
+   "base_path_m": 9.4,
+   "steps": 229
+  },
+  "opus5-source/transport3d/seed42": {
+   "order": [
+    "cube1",
+    "cube0",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.73,
+   "base_path_m": 6.35,
+   "steps": 339
+  },
+  "opus5-source/transport3d/seed222": {
+   "order": [
+    "box0",
+    "cube1",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.69,
+   "base_path_m": 3.39,
+   "steps": 116
+  },
+  "opus5-source/transport3d/seed424": {
+   "order": [
+    "cube0",
+    "cube1",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.64,
+   "base_path_m": 3.37,
+   "steps": 115
+  },
+  "opus5-source/transport3d/seed444": {
+   "order": [
+    "box0",
+    "cube1",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.71,
+   "base_path_m": 5.07,
+   "steps": 128
+  },
+  "astra/transport3d/seed24": {
+   "order": [
+    "cube1",
+    "box0",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.76,
+   "base_path_m": 8.37,
+   "steps": 168
+  },
+  "astra/transport3d/seed42": {
+   "order": [
+    "box0",
+    "cube1",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.66,
+   "base_path_m": 6.52,
+   "steps": 152
+  },
+  "astra/transport3d/seed222": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.66,
+   "base_path_m": 8.4,
+   "steps": 207
+  },
+  "astra/transport3d/seed444": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.75,
+   "base_path_m": 5.08,
+   "steps": 238
+  },
+  "astra-source/transport3d/seed24": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 14
+   },
+   "largest_lift_m": 0.62,
+   "base_path_m": 5.1,
+   "steps": 37
+  },
+  "astra-source/transport3d/seed42": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.72,
+   "base_path_m": 10.13,
+   "steps": 181
+  },
+  "astra-source/transport3d/seed222": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.77,
+   "base_path_m": 6.94,
+   "steps": 156
+  },
+  "astra-source/transport3d/seed424": {
+   "order": [
+    "box0",
+    "cube1",
+    "cube0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.71,
+   "base_path_m": 6.55,
+   "steps": 90
+  },
+  "astra-source/transport3d/seed444": {
+   "order": [
+    "box0",
+    "cube0",
+    "cube1"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.64,
+   "base_path_m": 7.42,
+   "steps": 110
+  },
+  "sol/transport3d/seed24": {
+   "order": [
+    "cube0",
+    "cube1",
+    "box0"
+   ],
+   "steps_a_cube_travels_with_the_box": {
+    "cube0": 0,
+    "cube1": 0
+   },
+   "largest_lift_m": 0.86,
+   "base_path_m": 22.54,
+   "steps": 589
+  }
+ }
+}

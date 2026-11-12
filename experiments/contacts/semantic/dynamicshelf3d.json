@@ -1,0 +1,919 @@
+{
+ "scenario": "dynamicshelf3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 29 runs (order, end position of each cube on the shelf, base path, contact pairs). No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/dynamicshelf3d.py"
+ },
+ "insights": [
+  "The cubes end close together near the middle of the shelf in 18 runs, and one on each side in 11 runs. No distance sees this difference (0.54 and 0.52).",
+  "27 of 29 runs take the nearer cube first.",
+  "No opus55, opus55-source or astra run touches the cupboard. The 9 runs that touch it are from the other methods."
+ ],
+ "codebook": [
+  {
+   "key": "layout",
+   "question": "Where do the two cubes go on the shelf?",
+   "source": "motion",
+   "values": {
+    "close": "The cubes end less than 20 cm apart, near the middle of the shelf.",
+    "apart": "The cubes end 20 cm or more apart: one on each side of the shelf."
+   },
+   "rule": "distance between the two cubes along the shelf in the last state"
+  },
+  {
+   "key": "depth",
+   "question": "How deep on the shelf do the cubes go?",
+   "source": "motion",
+   "values": {
+    "front": "The cubes end at the front part of the shelf (x below 1.52 m).",
+    "deep": "The cubes end at x = 1.52 m or more."
+   },
+   "rule": "mean x of the two cubes in the last state"
+  },
+  {
+   "key": "order",
+   "question": "Which cube goes first?",
+   "source": "motion",
+   "values": {
+    "near_first": "cube1, the cube nearer to the robot at the start.",
+    "far_first": "cube2, the cube on the other side of the room."
+   },
+   "rule": "the cube with the first motion"
+  },
+  {
+   "key": "insertion",
+   "question": "Does the robot touch the cupboard when it puts a cube in?",
+   "source": "contacts",
+   "values": {
+    "free": "No contact of the arm or the gripper with the cupboard.",
+    "touches": "The gripper or an arm link touches the cupboard."
+   },
+   "rule": "contact pairs of a robot part with a part of the cupboard"
+  },
+  {
+   "key": "pick",
+   "question": "Does the gripper touch the floor at the grasp?",
+   "source": "contacts",
+   "values": {
+    "floor_touch": "A finger pad touches the floor at a grasp.",
+    "above_floor": "No pad contact with the floor."
+   },
+   "rule": "contact pair of a finger pad with the floor"
+  },
+  {
+   "key": "base",
+   "question": "How far does the base drive?",
+   "source": "motion",
+   "values": {
+    "short": "The base path is below 4.6 m.",
+    "long": "The base path is 4.6 m or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 300 env steps (30 s).",
+    "slow": "More than 300 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/dynamicshelf3d/seed24": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "short",
+   "pace": "quick"
+  },
+  "opus55/dynamicshelf3d/seed42": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55/dynamicshelf3d/seed222": {
+   "layout": "apart",
+   "depth": "deep",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55/dynamicshelf3d/seed424": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55/dynamicshelf3d/seed444": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus55-source/dynamicshelf3d/seed24": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "quick"
+  },
+  "opus55-source/dynamicshelf3d/seed42": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "quick"
+  },
+  "opus55-source/dynamicshelf3d/seed222": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "quick"
+  },
+  "opus55-source/dynamicshelf3d/seed424": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "slow"
+  },
+  "opus55-source/dynamicshelf3d/seed444": {
+   "layout": "close",
+   "depth": "deep",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus5/dynamicshelf3d/seed24": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "slow"
+  },
+  "opus5/dynamicshelf3d/seed42": {
+   "layout": "apart",
+   "depth": "deep",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "slow"
+  },
+  "opus5/dynamicshelf3d/seed222": {
+   "layout": "close",
+   "depth": "front",
+   "order": "far_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "opus5/dynamicshelf3d/seed424": {
+   "layout": "close",
+   "depth": "deep",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "opus5-source/dynamicshelf3d/seed24": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "opus5-source/dynamicshelf3d/seed222": {
+   "layout": "close",
+   "depth": "deep",
+   "order": "far_first",
+   "insertion": "touches",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "opus5-source/dynamicshelf3d/seed424": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "short",
+   "pace": "slow"
+  },
+  "astra/dynamicshelf3d/seed24": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "astra/dynamicshelf3d/seed42": {
+   "layout": "close",
+   "depth": "deep",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "astra/dynamicshelf3d/seed222": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "astra/dynamicshelf3d/seed424": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "slow"
+  },
+  "astra/dynamicshelf3d/seed444": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "slow"
+  },
+  "astra-source/dynamicshelf3d/seed24": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "astra-source/dynamicshelf3d/seed42": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "quick"
+  },
+  "astra-source/dynamicshelf3d/seed222": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "astra-source/dynamicshelf3d/seed424": {
+   "layout": "apart",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "astra-source/dynamicshelf3d/seed444": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  },
+  "sol/dynamicshelf3d/seed42": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "free",
+   "pick": "floor_touch",
+   "base": "long",
+   "pace": "slow"
+  },
+  "sol/dynamicshelf3d/seed444": {
+   "layout": "close",
+   "depth": "front",
+   "order": "near_first",
+   "insertion": "touches",
+   "pick": "above_floor",
+   "base": "long",
+   "pace": "quick"
+  }
+ },
+ "evidence": {
+  "opus55/dynamicshelf3d/seed24": {
+   "end_cube1": [
+    1.51,
+    -0.06,
+    0.57
+   ],
+   "end_cube2": [
+    1.51,
+    0.07,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.13,
+   "base_path_m": 4.12,
+   "steps": 208,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "opus55/dynamicshelf3d/seed42": {
+   "end_cube1": [
+    1.49,
+    -0.19,
+    0.57
+   ],
+   "end_cube2": [
+    1.47,
+    0.22,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.41,
+   "base_path_m": 5.16,
+   "steps": 158,
+   "robot_contacts": [
+    "gripper.finger~cube",
+    "gripper.pad~cube",
+    "gripper.palm~cube"
+   ]
+  },
+  "opus55/dynamicshelf3d/seed222": {
+   "end_cube1": [
+    1.59,
+    -0.16,
+    0.57
+   ],
+   "end_cube2": [
+    1.59,
+    0.16,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.32,
+   "base_path_m": 6.02,
+   "steps": 210,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55/dynamicshelf3d/seed424": {
+   "end_cube1": [
+    1.44,
+    -0.05,
+    0.57
+   ],
+   "end_cube2": [
+    1.44,
+    0.05,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.1,
+   "base_path_m": 5.27,
+   "steps": 187,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55/dynamicshelf3d/seed444": {
+   "end_cube1": [
+    1.47,
+    -0.0,
+    0.57
+   ],
+   "end_cube2": [
+    1.48,
+    -0.1,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.1,
+   "base_path_m": 6.26,
+   "steps": 173,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "opus55-source/dynamicshelf3d/seed24": {
+   "end_cube1": [
+    1.5,
+    -0.06,
+    0.57
+   ],
+   "end_cube2": [
+    1.4,
+    0.06,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.12,
+   "base_path_m": 2.86,
+   "steps": 212,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/dynamicshelf3d/seed42": {
+   "end_cube1": [
+    1.45,
+    -0.07,
+    0.57
+   ],
+   "end_cube2": [
+    1.45,
+    0.07,
+    0.56
+   ],
+   "gap_on_shelf_m": 0.14,
+   "base_path_m": 3.97,
+   "steps": 195,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/dynamicshelf3d/seed222": {
+   "end_cube1": [
+    1.46,
+    -0.21,
+    0.57
+   ],
+   "end_cube2": [
+    1.46,
+    0.21,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.42,
+   "base_path_m": 3.48,
+   "steps": 265,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/dynamicshelf3d/seed424": {
+   "end_cube1": [
+    1.43,
+    -0.06,
+    0.57
+   ],
+   "end_cube2": [
+    1.43,
+    0.06,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.12,
+   "base_path_m": 4.46,
+   "steps": 403,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus55-source/dynamicshelf3d/seed444": {
+   "end_cube1": [
+    1.54,
+    -0.0,
+    0.57
+   ],
+   "end_cube2": [
+    1.55,
+    -0.15,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.15,
+   "base_path_m": 5.1,
+   "steps": 245,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus5/dynamicshelf3d/seed24": {
+   "end_cube1": [
+    1.47,
+    0.23,
+    0.57
+   ],
+   "end_cube2": [
+    1.49,
+    0.14,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.09,
+   "base_path_m": 5.64,
+   "steps": 581,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.shelf3",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.finger~cupboard.shelf3",
+    "gripper.pad~cube",
+    "gripper.pad~cupboard.shelf3",
+    "gripper.palm~cupboard.shelf3"
+   ]
+  },
+  "opus5/dynamicshelf3d/seed42": {
+   "end_cube1": [
+    1.59,
+    -0.18,
+    0.58
+   ],
+   "end_cube2": [
+    1.58,
+    0.18,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.36,
+   "base_path_m": 5.9,
+   "steps": 552,
+   "robot_contacts": [
+    "gripper.finger~cupboard.shelf3",
+    "gripper.pad~cube"
+   ]
+  },
+  "opus5/dynamicshelf3d/seed222": {
+   "end_cube1": [
+    1.48,
+    -0.05,
+    0.57
+   ],
+   "end_cube2": [
+    1.5,
+    0.1,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.15,
+   "base_path_m": 6.55,
+   "steps": 242,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "opus5/dynamicshelf3d/seed424": {
+   "end_cube1": [
+    1.55,
+    -0.06,
+    0.57
+   ],
+   "end_cube2": [
+    1.55,
+    0.06,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.12,
+   "base_path_m": 6.72,
+   "steps": 468,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.shelf3",
+    "gripper.pad~cube",
+    "gripper.pad~floor",
+    "gripper.palm~cupboard.shelf3"
+   ]
+  },
+  "opus5-source/dynamicshelf3d/seed24": {
+   "end_cube1": [
+    1.47,
+    -0.22,
+    0.57
+   ],
+   "end_cube2": [
+    1.39,
+    0.24,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.46,
+   "base_path_m": 7.25,
+   "steps": 338,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "opus5-source/dynamicshelf3d/seed222": {
+   "end_cube1": [
+    1.55,
+    0.06,
+    0.57
+   ],
+   "end_cube2": [
+    1.56,
+    -0.07,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.13,
+   "base_path_m": 6.66,
+   "steps": 784,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.shelf3",
+    "arm.half_arm_2~cupboard.right_panel",
+    "arm.half_arm_2~cupboard.shelf3",
+    "gripper.finger~cupboard.shelf3",
+    "gripper.pad~cube",
+    "gripper.pad~floor",
+    "gripper.palm~cupboard.shelf3"
+   ]
+  },
+  "opus5-source/dynamicshelf3d/seed424": {
+   "end_cube1": [
+    1.43,
+    -0.07,
+    0.57
+   ],
+   "end_cube2": [
+    1.44,
+    0.07,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.15,
+   "base_path_m": 3.05,
+   "steps": 488,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "astra/dynamicshelf3d/seed24": {
+   "end_cube1": [
+    1.47,
+    -0.19,
+    0.57
+   ],
+   "end_cube2": [
+    1.49,
+    0.19,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.38,
+   "base_path_m": 5.55,
+   "steps": 224,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "astra/dynamicshelf3d/seed42": {
+   "end_cube1": [
+    1.56,
+    -0.05,
+    0.57
+   ],
+   "end_cube2": [
+    1.56,
+    0.05,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.1,
+   "base_path_m": 5.21,
+   "steps": 224,
+   "robot_contacts": [
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "astra/dynamicshelf3d/seed222": {
+   "end_cube1": [
+    1.5,
+    -0.05,
+    0.57
+   ],
+   "end_cube2": [
+    1.48,
+    0.09,
+    0.56
+   ],
+   "gap_on_shelf_m": 0.15,
+   "base_path_m": 7.39,
+   "steps": 262,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "astra/dynamicshelf3d/seed424": {
+   "end_cube1": [
+    1.5,
+    -0.04,
+    0.57
+   ],
+   "end_cube2": [
+    1.5,
+    0.04,
+    0.56
+   ],
+   "gap_on_shelf_m": 0.08,
+   "base_path_m": 6.0,
+   "steps": 421,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "astra/dynamicshelf3d/seed444": {
+   "end_cube1": [
+    1.46,
+    -0.18,
+    0.57
+   ],
+   "end_cube2": [
+    1.46,
+    0.18,
+    0.56
+   ],
+   "gap_on_shelf_m": 0.36,
+   "base_path_m": 5.96,
+   "steps": 307,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "astra-source/dynamicshelf3d/seed24": {
+   "end_cube1": [
+    1.47,
+    -0.22,
+    0.57
+   ],
+   "end_cube2": [
+    1.45,
+    0.22,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.44,
+   "base_path_m": 5.58,
+   "steps": 281,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.pad~cube"
+   ]
+  },
+  "astra-source/dynamicshelf3d/seed42": {
+   "end_cube1": [
+    1.45,
+    -0.22,
+    0.57
+   ],
+   "end_cube2": [
+    1.46,
+    0.22,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.45,
+   "base_path_m": 5.17,
+   "steps": 231,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cube",
+    "gripper.pad~floor",
+    "gripper.palm~cupboard.shelf3"
+   ]
+  },
+  "astra-source/dynamicshelf3d/seed222": {
+   "end_cube1": [
+    1.41,
+    -0.12,
+    0.57
+   ],
+   "end_cube2": [
+    1.43,
+    0.12,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.24,
+   "base_path_m": 5.42,
+   "steps": 283,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "astra-source/dynamicshelf3d/seed424": {
+   "end_cube1": [
+    1.51,
+    -0.22,
+    0.57
+   ],
+   "end_cube2": [
+    1.51,
+    0.22,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.44,
+   "base_path_m": 5.87,
+   "steps": 342,
+   "robot_contacts": [
+    "gripper.finger~cupboard.left_panel",
+    "gripper.finger~cupboard.right_panel",
+    "gripper.pad~cube",
+    "gripper.pad~floor"
+   ]
+  },
+  "astra-source/dynamicshelf3d/seed444": {
+   "end_cube1": [
+    1.46,
+    -0.03,
+    0.57
+   ],
+   "end_cube2": [
+    1.46,
+    0.03,
+    0.58
+   ],
+   "gap_on_shelf_m": 0.07,
+   "base_path_m": 5.2,
+   "steps": 261,
+   "robot_contacts": [
+    "gripper.pad~cube"
+   ]
+  },
+  "sol/dynamicshelf3d/seed42": {
+   "end_cube1": [
+    1.46,
+    0.01,
+    0.57
+   ],
+   "end_cube2": [
+    1.44,
+    -0.07,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.08,
+   "base_path_m": 5.89,
+   "steps": 941,
+   "robot_contacts": [
+    "gripper.finger~cube",
+    "gripper.finger~floor",
+    "gripper.pad~cube",
+    "gripper.pad~floor",
+    "gripper.palm~cube"
+   ]
+  },
+  "sol/dynamicshelf3d/seed444": {
+   "end_cube1": [
+    1.41,
+    0.0,
+    0.57
+   ],
+   "end_cube2": [
+    1.42,
+    -0.2,
+    0.57
+   ],
+   "gap_on_shelf_m": 0.2,
+   "base_path_m": 5.9,
+   "steps": 275,
+   "robot_contacts": [
+    "arm.bracelet~cupboard.shelf4",
+    "gripper.finger~cupboard.left_panel",
+    "gripper.pad~cube"
+   ]
+  }
+ }
+}

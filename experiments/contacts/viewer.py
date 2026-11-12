@@ -38,8 +38,10 @@ from experiments.contacts import (
     histories,
     metrics,
     repeat,
+    semantic,
     strategy,
 )
+from experiments.contacts import views as view_set
 from experiments.contacts.commits import load_versions
 from experiments.contacts.trace import load_meta, summarise, trace_dirs, trace_id
 from experiments.render_run import DEFAULT_DATA, REPO, RUN_ID
@@ -562,6 +564,57 @@ def _repeat(name: str, level: str, defn: strategy.Definition) -> dict[str, Any]:
     return out
 
 
+@functools.lru_cache(maxsize=32)
+def _views(
+    name: str,
+    instance: str,
+    level: str,
+    defn: strategy.Definition,
+    tau: float,
+    bodies: str,
+) -> dict[str, Any]:
+    out = view_set.scenario_views(
+        name,
+        CONFIG.traces,
+        _scenario_runs(name),
+        instance,
+        _check(level, instance),
+        _versions,
+        defn,
+        tau,
+        bodies,
+    )
+    out["preset"] = _preset(name)
+    out["method_order"] = [
+        m for m in METHOD_ORDER if any(r["method"] == m for r in out["runs"])
+    ]
+    return out
+
+
+def views(name: str, instance: str = "inst0", bodies: str = "all") -> dict[str, Any]:
+    """The three views of a scenario with the tuned definition of its simulator."""
+    preset = strategy.PRESETS[_preset(name)]
+    defn = strategy.Definition(
+        preset.get("scope", "all"),
+        preset.get("identity", "keep"),
+        preset.get("order", "sequence"),
+        preset.get("fingers", "all"),
+        preset.get("metric", "edit"),
+    )
+    return _views(name, instance, "class", defn, preset.get("tau", 0.35), bodies)
+
+
+def views_overview(instance: str = "inst0") -> dict[str, Any]:
+    """``views.summary`` of every scenario, with the tuned definition of each."""
+    names = sorted(
+        {p.parents[1].name for p in CONFIG.traces.glob("*/*/*/commits.json")}
+    )
+    return {
+        "instance": instance,
+        "scenarios": [view_set.summary(views(name, instance)) for name in names],
+    }
+
+
 def diversity_overview(instance: str, level: str, grouping: Grouping) -> dict[str, Any]:
     """``diversity.summary`` of every scenario with recorded commit histories."""
     names = sorted(
@@ -652,6 +705,28 @@ class Handler(_BaseHandler):
                         query.get("instance", "inst0"),
                         query.get("level", "class"),
                         _definition(query)[0],
+                    )
+                )
+            elif path == "/api/insights":
+                tags = semantic.load(query["name"]) or {}
+                self._json(
+                    {
+                        "insights": tags.get("insights", []),
+                        "provenance": tags.get("provenance"),
+                    }
+                )
+            elif path == "/api/views_overview":
+                self._json(views_overview(query.get("instance", "inst0")))
+            elif path == "/api/views":
+                defn, _, tau = _definition(query)
+                self._json(
+                    _views(
+                        query["name"],
+                        query.get("instance", "inst0"),
+                        query.get("level", "class"),
+                        defn,
+                        tau,
+                        query.get("bodies", "all"),
                     )
                 )
             elif path == "/api/repeatability":

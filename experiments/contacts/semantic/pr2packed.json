@@ -1,0 +1,1055 @@
+{
+ "scenario": "pr2packed",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 35 runs (order, end position and lift of the three blocks, base path). No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/pr2packed.py"
+ },
+ "insights": [
+  "The blocks end in a triangle or an L shape in 26 runs, and in a straight row in 9 runs. No distance sees the layout (0.49 and 0.53).",
+  "31 of 35 runs start with block1. Then block0 goes before block2 in 16 runs, and block2 before block0 in 15 runs.",
+  "5 runs move the blocks at table height, with no lift."
+ ],
+ "codebook": [
+  {
+   "key": "layout",
+   "question": "How do the blocks lie on the plate?",
+   "source": "motion",
+   "values": {
+    "row": "The three blocks end in one straight row.",
+    "cluster": "The three blocks end in a triangle or an L shape."
+   },
+   "rule": "the end positions of the blocks: row if the spread across the main direction is less than 20 % of the spread along it"
+  },
+  {
+   "key": "order",
+   "question": "In which order do the blocks go to the plate?",
+   "source": "motion",
+   "values": {
+    "1_0_2": "block1, then block0, then block2.",
+    "1_2_0": "block1, then block2, then block0.",
+    "other": "Another order."
+   },
+   "rule": "order of the first motion of each block"
+  },
+  {
+   "key": "carry",
+   "question": "How high does the robot lift a block?",
+   "source": "motion",
+   "values": {
+    "level": "No block goes 3 cm or more above the table: the block moves at table height.",
+    "low": "A block goes 3 cm to 15 cm above the table.",
+    "high": "A block goes 15 cm or more above the table."
+   },
+   "rule": "largest height of a block above its start"
+  },
+  {
+   "key": "drive",
+   "question": "How far does the base drive?",
+   "source": "motion",
+   "values": {
+    "short": "The base path is below 3 m.",
+    "long": "The base path is 3 m or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 45 env steps.",
+    "slow": "More than 45 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/pr2packed/seed24": {
+   "layout": "row",
+   "order": "1_2_0",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55/pr2packed/seed42": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "level",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55/pr2packed/seed222": {
+   "layout": "cluster",
+   "order": "other",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55/pr2packed/seed424": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "level",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55/pr2packed/seed444": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55-source/pr2packed/seed24": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "level",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55-source/pr2packed/seed42": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "level",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55-source/pr2packed/seed222": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55-source/pr2packed/seed424": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "level",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus55-source/pr2packed/seed444": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus5/pr2packed/seed24": {
+   "layout": "row",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "opus5/pr2packed/seed42": {
+   "layout": "row",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus5/pr2packed/seed222": {
+   "layout": "row",
+   "order": "1_2_0",
+   "carry": "high",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus5/pr2packed/seed424": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus5/pr2packed/seed444": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "opus5-source/pr2packed/seed24": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "high",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus5-source/pr2packed/seed42": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus5-source/pr2packed/seed222": {
+   "layout": "row",
+   "order": "other",
+   "carry": "high",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "opus5-source/pr2packed/seed424": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "opus5-source/pr2packed/seed444": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "astra/pr2packed/seed24": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "astra/pr2packed/seed42": {
+   "layout": "row",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "short",
+   "pace": "slow"
+  },
+  "astra/pr2packed/seed222": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "low",
+   "drive": "short",
+   "pace": "quick"
+  },
+  "astra/pr2packed/seed424": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "low",
+   "drive": "short",
+   "pace": "slow"
+  },
+  "astra/pr2packed/seed444": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "astra-source/pr2packed/seed24": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "low",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "astra-source/pr2packed/seed42": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "astra-source/pr2packed/seed222": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "astra-source/pr2packed/seed424": {
+   "layout": "cluster",
+   "order": "1_2_0",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "astra-source/pr2packed/seed444": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "sol/pr2packed/seed24": {
+   "layout": "row",
+   "order": "1_2_0",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "sol/pr2packed/seed42": {
+   "layout": "row",
+   "order": "1_2_0",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "sol/pr2packed/seed222": {
+   "layout": "cluster",
+   "order": "other",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "sol/pr2packed/seed424": {
+   "layout": "row",
+   "order": "other",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  },
+  "sol/pr2packed/seed444": {
+   "layout": "cluster",
+   "order": "1_0_2",
+   "carry": "high",
+   "drive": "long",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/pr2packed/seed24": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     -0.1,
+     0.1
+    ],
+    "block1": [
+     -0.1,
+     -0.1
+    ],
+    "block2": [
+     -0.1,
+     0.0
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.07,
+   "base_path_m": 1.59,
+   "steps": 20
+  },
+  "opus55/pr2packed/seed42": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     -0.08
+    ],
+    "block1": [
+     -0.04,
+     0.08
+    ],
+    "block2": [
+     0.07,
+     0.09
+    ]
+   },
+   "spread_across_over_along": 0.5,
+   "largest_lift_m": 0.01,
+   "base_path_m": 1.56,
+   "steps": 14
+  },
+  "opus55/pr2packed/seed222": {
+   "order": "0_1_2",
+   "end_of_each_block": {
+    "block0": [
+     0.06,
+     -0.06
+    ],
+    "block1": [
+     -0.06,
+     0.06
+    ],
+    "block2": [
+     0.06,
+     0.06
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.06,
+   "base_path_m": 1.72,
+   "steps": 10
+  },
+  "opus55/pr2packed/seed424": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     -0.08
+    ],
+    "block1": [
+     0.08,
+     0.08
+    ],
+    "block2": [
+     -0.09,
+     0.09
+    ]
+   },
+   "spread_across_over_along": 0.54,
+   "largest_lift_m": 0.01,
+   "base_path_m": 1.58,
+   "steps": 10
+  },
+  "opus55/pr2packed/seed444": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     -0.01
+    ],
+    "block1": [
+     -0.05,
+     0.08
+    ],
+    "block2": [
+     -0.05,
+     -0.08
+    ]
+   },
+   "spread_across_over_along": 0.91,
+   "largest_lift_m": 0.1,
+   "base_path_m": 1.83,
+   "steps": 13
+  },
+  "opus55-source/pr2packed/seed24": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     -0.06,
+     -0.07
+    ],
+    "block1": [
+     0.06,
+     -0.06
+    ],
+    "block2": [
+     0.07,
+     0.07
+    ]
+   },
+   "spread_across_over_along": 0.49,
+   "largest_lift_m": 0.0,
+   "base_path_m": 1.27,
+   "steps": 7
+  },
+  "opus55-source/pr2packed/seed42": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.07,
+     0.05
+    ],
+    "block1": [
+     -0.05,
+     -0.05
+    ],
+    "block2": [
+     -0.05,
+     0.08
+    ]
+   },
+   "spread_across_over_along": 0.74,
+   "largest_lift_m": 0.0,
+   "base_path_m": 1.5,
+   "steps": 11
+  },
+  "opus55-source/pr2packed/seed222": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.09,
+     -0.09
+    ],
+    "block1": [
+     -0.05,
+     0.1
+    ],
+    "block2": [
+     0.05,
+     0.09
+    ]
+   },
+   "spread_across_over_along": 0.34,
+   "largest_lift_m": 0.08,
+   "base_path_m": 1.68,
+   "steps": 15
+  },
+  "opus55-source/pr2packed/seed424": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.09,
+     -0.0
+    ],
+    "block1": [
+     0.0,
+     0.08
+    ],
+    "block2": [
+     0.09,
+     0.08
+    ]
+   },
+   "spread_across_over_along": 0.57,
+   "largest_lift_m": 0.02,
+   "base_path_m": 1.81,
+   "steps": 11
+  },
+  "opus55-source/pr2packed/seed444": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.0,
+     -0.08
+    ],
+    "block1": [
+     -0.08,
+     0.08
+    ],
+    "block2": [
+     -0.08,
+     0.0
+    ]
+   },
+   "spread_across_over_along": 0.23,
+   "largest_lift_m": 0.05,
+   "base_path_m": 1.82,
+   "steps": 17
+  },
+  "opus5/pr2packed/seed24": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     0.0
+    ],
+    "block1": [
+     -0.0,
+     0.0
+    ],
+    "block2": [
+     -0.08,
+     0.0
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.16,
+   "base_path_m": 4.58,
+   "steps": 64
+  },
+  "opus5/pr2packed/seed42": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.0,
+     -0.09
+    ],
+    "block1": [
+     -0.0,
+     0.09
+    ],
+    "block2": [
+     0.0,
+     -0.0
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.25,
+   "base_path_m": 0.84,
+   "steps": 41
+  },
+  "opus5/pr2packed/seed222": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     0.0
+    ],
+    "block1": [
+     0.08,
+     0.08
+    ],
+    "block2": [
+     0.08,
+     -0.08
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.21,
+   "base_path_m": 0.46,
+   "steps": 42
+  },
+  "opus5/pr2packed/seed424": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.09,
+     0.09
+    ],
+    "block1": [
+     -0.09,
+     -0.09
+    ],
+    "block2": [
+     0.09,
+     -0.09
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.16,
+   "base_path_m": 0.61,
+   "steps": 45
+  },
+  "opus5/pr2packed/seed444": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     -0.09,
+     -0.0
+    ],
+    "block1": [
+     0.0,
+     0.0
+    ],
+    "block2": [
+     0.0,
+     -0.09
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.33,
+   "base_path_m": 7.47,
+   "steps": 107
+  },
+  "opus5-source/pr2packed/seed24": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     -0.04,
+     -0.04
+    ],
+    "block1": [
+     -0.05,
+     0.04
+    ],
+    "block2": [
+     0.05,
+     0.04
+    ]
+   },
+   "spread_across_over_along": 0.62,
+   "largest_lift_m": 0.2,
+   "base_path_m": 1.0,
+   "steps": 20
+  },
+  "opus5-source/pr2packed/seed42": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.05,
+     -0.05
+    ],
+    "block1": [
+     -0.05,
+     0.05
+    ],
+    "block2": [
+     -0.05,
+     -0.05
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.14,
+   "base_path_m": 1.91,
+   "steps": 16
+  },
+  "opus5-source/pr2packed/seed222": {
+   "order": "0_1_2",
+   "end_of_each_block": {
+    "block0": [
+     0.0,
+     0.0
+    ],
+    "block1": [
+     -0.08,
+     0.0
+    ],
+    "block2": [
+     0.09,
+     0.0
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.16,
+   "base_path_m": 0.94,
+   "steps": 36
+  },
+  "opus5-source/pr2packed/seed424": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.09,
+     -0.09
+    ],
+    "block1": [
+     -0.09,
+     -0.09
+    ],
+    "block2": [
+     -0.09,
+     0.09
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.25,
+   "base_path_m": 3.18,
+   "steps": 66
+  },
+  "opus5-source/pr2packed/seed444": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     -0.05,
+     0.05
+    ],
+    "block1": [
+     0.05,
+     -0.05
+    ],
+    "block2": [
+     -0.05,
+     -0.06
+    ]
+   },
+   "spread_across_over_along": 0.63,
+   "largest_lift_m": 0.11,
+   "base_path_m": 2.36,
+   "steps": 18
+  },
+  "astra/pr2packed/seed24": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     -0.08
+    ],
+    "block1": [
+     -0.08,
+     -0.08
+    ],
+    "block2": [
+     0.08,
+     0.0
+    ]
+   },
+   "spread_across_over_along": 0.4,
+   "largest_lift_m": 0.2,
+   "base_path_m": 6.89,
+   "steps": 90
+  },
+  "astra/pr2packed/seed42": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     -0.08,
+     -0.08
+    ],
+    "block1": [
+     -0.08,
+     0.08
+    ],
+    "block2": [
+     -0.08,
+     0.0
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.23,
+   "base_path_m": 2.11,
+   "steps": 51
+  },
+  "astra/pr2packed/seed222": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.09,
+     -0.09
+    ],
+    "block1": [
+     -0.08,
+     0.09
+    ],
+    "block2": [
+     0.08,
+     0.08
+    ]
+   },
+   "spread_across_over_along": 0.51,
+   "largest_lift_m": 0.12,
+   "base_path_m": 2.26,
+   "steps": 23
+  },
+  "astra/pr2packed/seed424": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.07,
+     -0.07
+    ],
+    "block1": [
+     -0.07,
+     0.07
+    ],
+    "block2": [
+     0.07,
+     0.07
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.12,
+   "base_path_m": 2.32,
+   "steps": 47
+  },
+  "astra/pr2packed/seed444": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     0.0
+    ],
+    "block1": [
+     -0.08,
+     0.08
+    ],
+    "block2": [
+     0.08,
+     0.08
+    ]
+   },
+   "spread_across_over_along": 0.4,
+   "largest_lift_m": 0.2,
+   "base_path_m": 6.07,
+   "steps": 80
+  },
+  "astra-source/pr2packed/seed24": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.09,
+     -0.08
+    ],
+    "block1": [
+     -0.09,
+     0.08
+    ],
+    "block2": [
+     0.09,
+     0.09
+    ]
+   },
+   "spread_across_over_along": 0.61,
+   "largest_lift_m": 0.09,
+   "base_path_m": 5.42,
+   "steps": 46
+  },
+  "astra-source/pr2packed/seed42": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     -0.08
+    ],
+    "block1": [
+     -0.08,
+     0.08
+    ],
+    "block2": [
+     0.08,
+     0.08
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.16,
+   "base_path_m": 3.76,
+   "steps": 67
+  },
+  "astra-source/pr2packed/seed222": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     0.09,
+     -0.09
+    ],
+    "block1": [
+     -0.09,
+     0.09
+    ],
+    "block2": [
+     0.09,
+     0.09
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.22,
+   "base_path_m": 6.12,
+   "steps": 65
+  },
+  "astra-source/pr2packed/seed424": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     -0.08
+    ],
+    "block1": [
+     -0.08,
+     0.08
+    ],
+    "block2": [
+     0.08,
+     0.08
+    ]
+   },
+   "spread_across_over_along": 0.58,
+   "largest_lift_m": 0.23,
+   "base_path_m": 3.86,
+   "steps": 66
+  },
+  "astra-source/pr2packed/seed444": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     -0.09,
+     -0.09
+    ],
+    "block1": [
+     0.08,
+     -0.08
+    ],
+    "block2": [
+     -0.08,
+     0.08
+    ]
+   },
+   "spread_across_over_along": 0.65,
+   "largest_lift_m": 0.24,
+   "base_path_m": 5.35,
+   "steps": 69
+  },
+  "sol/pr2packed/seed24": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.07,
+     -0.07
+    ],
+    "block1": [
+     -0.07,
+     0.07
+    ],
+    "block2": [
+     0.0,
+     -0.0
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.2,
+   "base_path_m": 22.59,
+   "steps": 189
+  },
+  "sol/pr2packed/seed42": {
+   "order": "1_2_0",
+   "end_of_each_block": {
+    "block0": [
+     0.08,
+     0.0
+    ],
+    "block1": [
+     -0.08,
+     -0.0
+    ],
+    "block2": [
+     -0.0,
+     0.0
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.16,
+   "base_path_m": 6.53,
+   "steps": 120
+  },
+  "sol/pr2packed/seed222": {
+   "order": "2_1_0",
+   "end_of_each_block": {
+    "block0": [
+     0.0,
+     0.06
+    ],
+    "block1": [
+     0.07,
+     -0.07
+    ],
+    "block2": [
+     -0.07,
+     -0.07
+    ]
+   },
+   "spread_across_over_along": 0.93,
+   "largest_lift_m": 0.23,
+   "base_path_m": 19.25,
+   "steps": 192
+  },
+  "sol/pr2packed/seed424": {
+   "order": "2_1_0",
+   "end_of_each_block": {
+    "block0": [
+     -0.09,
+     0.09
+    ],
+    "block1": [
+     -0.09,
+     -0.0
+    ],
+    "block2": [
+     -0.09,
+     -0.1
+    ]
+   },
+   "spread_across_over_along": 0.0,
+   "largest_lift_m": 0.26,
+   "base_path_m": 15.51,
+   "steps": 263
+  },
+  "sol/pr2packed/seed444": {
+   "order": "1_0_2",
+   "end_of_each_block": {
+    "block0": [
+     -0.06,
+     0.06
+    ],
+    "block1": [
+     -0.05,
+     -0.06
+    ],
+    "block2": [
+     0.05,
+     -0.05
+    ]
+   },
+   "spread_across_over_along": 0.57,
+   "largest_lift_m": 0.27,
+   "base_path_m": 23.24,
+   "steps": 285
+  }
+ }
+}

@@ -246,3 +246,25 @@ details.brief > summary small { color: var(--fg3); font-weight: 400; }
 .md th, .md td { border-bottom: 1px solid var(--grid); padding: 3px 10px 3px 0; text-align: left;
   vertical-align: top; }
 .md th { color: var(--fg3); font-weight: 400; }
+
+/* three views: contact, motion, semantic */
+.v3cols { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.v3 path.run { fill: none; stroke-width: 1.4; opacity: .7; cursor: pointer; }
+.v3.hashot path.run { opacity: .1; }
+.v3.hashot path.run.hot, .v3 path.run.sel { opacity: 1; stroke-width: 2.6; }
+.v3 circle.run { stroke: var(--surface); stroke-width: 1.5; cursor: pointer; }
+.v3.hashot circle.run { opacity: .25; }
+.v3.hashot circle.run.hot { opacity: 1; }
+.v3 circle.run.sel { stroke: var(--fg); stroke-width: 2.2; }
+.v3 tr.run { cursor: pointer; }
+.v3 tr.run.hot td { background: var(--grid); }
+.v3 tr.run.sel td:first-child { box-shadow: inset 3px 0 var(--fg); padding-left: 8px; }
+.v3 .vchip { white-space: nowrap; }
+.v3 .vchip .dot { margin-right: 4px; }
+.v3 .vbar { display: flex; gap: 2px; width: 260px; }
+.v3 .vbar span { color: #fff; font-size: 11.5px; text-align: center; border-radius: 3px; padding: 1px 0; min-width: 14px; }
+.v3 table.v3agree th.on { color: var(--fg); box-shadow: inset 0 -2px var(--accent); }
+.v3 table.v3runs th label { display: inline-flex; gap: 4px; align-items: center; }
+.insights { max-width: 1000px; margin-top: 12px; }
+.insights ul { margin: 6px 0 8px; padding-left: 20px; }
+.insights li { margin: 3px 0; line-height: 1.45; }

@@ -1,0 +1,898 @@
+{
+ "scenario": "dynpushpullhook2d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 33 runs (shift of the target block and of the three obstructions, path of the hook, contact pairs). All runs take the hook. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/dynpushpullhook2d.py"
+ },
+ "insights": [
+  "All 33 runs take the hook. 24 runs sweep the target block sideways across the room, and 9 runs pull it straight to the wall.",
+  "22 runs rake the full group of obstructions together with the target block. In 8 runs the hook does not touch the target block: an obstruction pushes it.",
+  "The contact view finds 2 strategies, and no distance sees these tag groups (all at 0.61 or less)."
+ ],
+ "codebook": [
+  {
+   "key": "direction",
+   "question": "Which way does the target block go to the wall?",
+   "source": "motion",
+   "values": {
+    "straight_down": "The target block ends less than 50 cm to the side of its start: a pull straight to the wall.",
+    "sideways": "The target block ends 50 cm or more to the side: the hook sweeps it across the room."
+   },
+   "rule": "x shift of the target block"
+  },
+  {
+   "key": "obstructions",
+   "question": "What happens to the obstructions?",
+   "source": "motion",
+   "values": {
+    "rakes_all": "Each of the three obstructions ends 30 cm or more from its start: the hook rakes the full group.",
+    "leaves_some": "One obstruction or more ends less than 30 cm from its start."
+   },
+   "rule": "number of obstructions with a shift below 30 cm"
+  },
+  {
+   "key": "hook_contact",
+   "question": "Does the hook touch the target block?",
+   "source": "contacts",
+   "values": {
+    "direct": "The hook touches the target block.",
+    "through_obstruction": "The hook touches obstructions only, and an obstruction pushes the target block."
+   },
+   "rule": "contact pair of the hook with the target block"
+  },
+  {
+   "key": "strokes",
+   "question": "Does the target block move in one stroke?",
+   "source": "motion",
+   "values": {
+    "one": "The target block moves in one motion.",
+    "several": "The target block moves two times or more (pauses of more than 5 env steps between)."
+   },
+   "rule": "number of separate motions of the target block"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 189 env steps.",
+    "slow": "More than 189 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/dynpushpullhook2d/seed24": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus55/dynpushpullhook2d/seed42": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus55/dynpushpullhook2d/seed222": {
+   "direction": "straight_down",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus55/dynpushpullhook2d/seed424": {
+   "direction": "sideways",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus55/dynpushpullhook2d/seed444": {
+   "direction": "straight_down",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus55-source/dynpushpullhook2d/seed24": {
+   "direction": "straight_down",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus55-source/dynpushpullhook2d/seed42": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "through_obstruction",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus55-source/dynpushpullhook2d/seed222": {
+   "direction": "straight_down",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus55-source/dynpushpullhook2d/seed424": {
+   "direction": "straight_down",
+   "obstructions": "rakes_all",
+   "hook_contact": "through_obstruction",
+   "strokes": "one",
+   "pace": "quick"
+  },
+  "opus55-source/dynpushpullhook2d/seed444": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus5/dynpushpullhook2d/seed24": {
+   "direction": "straight_down",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "one",
+   "pace": "quick"
+  },
+  "opus5/dynpushpullhook2d/seed42": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus5/dynpushpullhook2d/seed222": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus5/dynpushpullhook2d/seed424": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus5/dynpushpullhook2d/seed444": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus5-source/dynpushpullhook2d/seed24": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus5-source/dynpushpullhook2d/seed42": {
+   "direction": "sideways",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "opus5-source/dynpushpullhook2d/seed222": {
+   "direction": "sideways",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus5-source/dynpushpullhook2d/seed424": {
+   "direction": "straight_down",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "opus5-source/dynpushpullhook2d/seed444": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "through_obstruction",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "astra/dynpushpullhook2d/seed24": {
+   "direction": "straight_down",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "astra/dynpushpullhook2d/seed42": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "through_obstruction",
+   "strokes": "one",
+   "pace": "quick"
+  },
+  "astra/dynpushpullhook2d/seed222": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "astra/dynpushpullhook2d/seed424": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "one",
+   "pace": "slow"
+  },
+  "astra/dynpushpullhook2d/seed444": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "through_obstruction",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "astra-source/dynpushpullhook2d/seed24": {
+   "direction": "sideways",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "one",
+   "pace": "quick"
+  },
+  "astra-source/dynpushpullhook2d/seed42": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "astra-source/dynpushpullhook2d/seed222": {
+   "direction": "sideways",
+   "obstructions": "leaves_some",
+   "hook_contact": "through_obstruction",
+   "strokes": "several",
+   "pace": "quick"
+  },
+  "astra-source/dynpushpullhook2d/seed424": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "through_obstruction",
+   "strokes": "one",
+   "pace": "quick"
+  },
+  "astra-source/dynpushpullhook2d/seed444": {
+   "direction": "sideways",
+   "obstructions": "rakes_all",
+   "hook_contact": "through_obstruction",
+   "strokes": "one",
+   "pace": "slow"
+  },
+  "sol/dynpushpullhook2d/seed222": {
+   "direction": "sideways",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "sol/dynpushpullhook2d/seed424": {
+   "direction": "straight_down",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  },
+  "sol/dynpushpullhook2d/seed444": {
+   "direction": "sideways",
+   "obstructions": "leaves_some",
+   "hook_contact": "direct",
+   "strokes": "several",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/dynpushpullhook2d/seed24": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.9,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    1.79,
+    2.86,
+    1.43
+   ],
+   "target_motions": 3,
+   "hook_path_m": 25.81,
+   "steps": 320
+  },
+  "opus55/dynpushpullhook2d/seed42": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    2.76,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    2.47,
+    1.54,
+    1.13
+   ],
+   "target_motions": 4,
+   "hook_path_m": 10.59,
+   "steps": 177
+  },
+  "opus55/dynpushpullhook2d/seed222": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    0.99,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.22,
+    1.31,
+    0.82
+   ],
+   "target_motions": 4,
+   "hook_path_m": 10.77,
+   "steps": 184
+  },
+  "opus55/dynpushpullhook2d/seed424": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.32,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.09,
+    0.92,
+    0.96
+   ],
+   "target_motions": 2,
+   "hook_path_m": 6.73,
+   "steps": 96
+  },
+  "opus55/dynpushpullhook2d/seed444": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.08,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.18,
+    1.78,
+    0.23
+   ],
+   "target_motions": 3,
+   "hook_path_m": 16.32,
+   "steps": 285
+  },
+  "opus55-source/dynpushpullhook2d/seed24": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    0.67,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.18,
+    1.2,
+    0.69
+   ],
+   "target_motions": 4,
+   "hook_path_m": 8.34,
+   "steps": 183
+  },
+  "opus55-source/dynpushpullhook2d/seed42": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    2.54,
+    2.03
+   ],
+   "obstruction_shifts_m": [
+    2.07,
+    1.36,
+    0.45
+   ],
+   "target_motions": 3,
+   "hook_path_m": 8.98,
+   "steps": 159
+  },
+  "opus55-source/dynpushpullhook2d/seed222": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    0.79,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.42,
+    1.19,
+    0.46
+   ],
+   "target_motions": 3,
+   "hook_path_m": 9.03,
+   "steps": 131
+  },
+  "opus55-source/dynpushpullhook2d/seed424": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.09,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    1.15,
+    0.64,
+    0.84
+   ],
+   "target_motions": 1,
+   "hook_path_m": 6.65,
+   "steps": 105
+  },
+  "opus55-source/dynpushpullhook2d/seed444": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.66,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    2.3,
+    2.47,
+    1.78
+   ],
+   "target_motions": 4,
+   "hook_path_m": 28.9,
+   "steps": 399
+  },
+  "opus5/dynpushpullhook2d/seed24": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    0.44,
+    1.98
+   ],
+   "obstruction_shifts_m": [
+    0.57,
+    0.54,
+    0.9
+   ],
+   "target_motions": 1,
+   "hook_path_m": 11.69,
+   "steps": 189
+  },
+  "opus5/dynpushpullhook2d/seed42": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    3.33,
+    2.19
+   ],
+   "obstruction_shifts_m": [
+    0.31,
+    2.59,
+    0.61
+   ],
+   "target_motions": 3,
+   "hook_path_m": 15.71,
+   "steps": 228
+  },
+  "opus5/dynpushpullhook2d/seed222": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.88,
+    2.02
+   ],
+   "obstruction_shifts_m": [
+    0.33,
+    2.16,
+    0.51
+   ],
+   "target_motions": 2,
+   "hook_path_m": 10.17,
+   "steps": 240
+  },
+  "opus5/dynpushpullhook2d/seed424": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    3.32,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    2.88,
+    2.93,
+    2.47
+   ],
+   "target_motions": 3,
+   "hook_path_m": 11.73,
+   "steps": 263
+  },
+  "opus5/dynpushpullhook2d/seed444": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.6,
+    1.97
+   ],
+   "obstruction_shifts_m": [
+    1.4,
+    0.82,
+    1.19
+   ],
+   "target_motions": 3,
+   "hook_path_m": 17.78,
+   "steps": 260
+  },
+  "opus5-source/dynpushpullhook2d/seed24": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.62,
+    1.94
+   ],
+   "obstruction_shifts_m": [
+    1.05,
+    1.81,
+    0.84
+   ],
+   "target_motions": 2,
+   "hook_path_m": 9.69,
+   "steps": 172
+  },
+  "opus5-source/dynpushpullhook2d/seed42": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    2.03,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.23,
+    1.95,
+    1.98
+   ],
+   "target_motions": 2,
+   "hook_path_m": 7.66,
+   "steps": 156
+  },
+  "opus5-source/dynpushpullhook2d/seed222": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    3.25,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.18,
+    2.93,
+    2.46
+   ],
+   "target_motions": 20,
+   "hook_path_m": 20.46,
+   "steps": 413
+  },
+  "opus5-source/dynpushpullhook2d/seed424": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    0.73,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    1.01,
+    1.12,
+    0.31
+   ],
+   "target_motions": 2,
+   "hook_path_m": 8.5,
+   "steps": 228
+  },
+  "opus5-source/dynpushpullhook2d/seed444": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.69,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    1.75,
+    1.18,
+    0.5
+   ],
+   "target_motions": 2,
+   "hook_path_m": 7.3,
+   "steps": 140
+  },
+  "astra/dynpushpullhook2d/seed24": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    0.78,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.65,
+    0.51,
+    0.46
+   ],
+   "target_motions": 2,
+   "hook_path_m": 7.31,
+   "steps": 235
+  },
+  "astra/dynpushpullhook2d/seed42": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.65,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    1.61,
+    1.13,
+    1.38
+   ],
+   "target_motions": 1,
+   "hook_path_m": 7.72,
+   "steps": 146
+  },
+  "astra/dynpushpullhook2d/seed222": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.32,
+    1.93
+   ],
+   "obstruction_shifts_m": [
+    1.23,
+    1.48,
+    1.02
+   ],
+   "target_motions": 3,
+   "hook_path_m": 9.86,
+   "steps": 260
+  },
+  "astra/dynpushpullhook2d/seed424": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    2.89,
+    2.02
+   ],
+   "obstruction_shifts_m": [
+    2.52,
+    3.0,
+    2.51
+   ],
+   "target_motions": 1,
+   "hook_path_m": 11.64,
+   "steps": 202
+  },
+  "astra/dynpushpullhook2d/seed444": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.15,
+    1.99
+   ],
+   "obstruction_shifts_m": [
+    1.13,
+    0.5,
+    0.46
+   ],
+   "target_motions": 2,
+   "hook_path_m": 6.38,
+   "steps": 107
+  },
+  "astra-source/dynpushpullhook2d/seed24": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.71,
+    1.94
+   ],
+   "obstruction_shifts_m": [
+    0.23,
+    0.23,
+    1.67
+   ],
+   "target_motions": 1,
+   "hook_path_m": 6.64,
+   "steps": 93
+  },
+  "astra-source/dynpushpullhook2d/seed42": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.47,
+    2.02
+   ],
+   "obstruction_shifts_m": [
+    0.92,
+    0.93,
+    0.63
+   ],
+   "target_motions": 2,
+   "hook_path_m": 7.74,
+   "steps": 142
+  },
+  "astra-source/dynpushpullhook2d/seed222": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    3.33,
+    1.94
+   ],
+   "obstruction_shifts_m": [
+    0.23,
+    2.85,
+    2.67
+   ],
+   "target_motions": 2,
+   "hook_path_m": 8.5,
+   "steps": 136
+  },
+  "astra-source/dynpushpullhook2d/seed424": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.82,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    1.75,
+    1.27,
+    1.12
+   ],
+   "target_motions": 1,
+   "hook_path_m": 8.85,
+   "steps": 148
+  },
+  "astra-source/dynpushpullhook2d/seed444": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    3.29,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    2.79,
+    2.67,
+    2.57
+   ],
+   "target_motions": 1,
+   "hook_path_m": 14.59,
+   "steps": 265
+  },
+  "sol/dynpushpullhook2d/seed222": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    0.04,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.22,
+    0.51,
+    1.13
+   ],
+   "target_motions": 5,
+   "hook_path_m": 14.19,
+   "steps": 310
+  },
+  "sol/dynpushpullhook2d/seed424": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.07,
+    1.95
+   ],
+   "obstruction_shifts_m": [
+    0.18,
+    1.16,
+    0.63
+   ],
+   "target_motions": 5,
+   "hook_path_m": 8.47,
+   "steps": 335
+  },
+  "sol/dynpushpullhook2d/seed444": {
+   "target_start": [
+    0.62,
+    2.81
+   ],
+   "target_end": [
+    1.82,
+    1.97
+   ],
+   "obstruction_shifts_m": [
+    0.23,
+    0.33,
+    0.75
+   ],
+   "target_motions": 4,
+   "hook_path_m": 9.41,
+   "steps": 372
+  }
+ }
+}

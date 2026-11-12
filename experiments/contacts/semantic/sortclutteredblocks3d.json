@@ -1,0 +1,788 @@
+{
+ "scenario": "sortclutteredblocks3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 27 runs (order, lift and path of each cube, base path, contact pairs). The bin of each cube is given by the task. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/sortclutteredblocks3d.py"
+ },
+ "insights": [
+  "The task gives the bin of each cube, so the differences are small: which cube goes first (cube1 in 15 runs, cube4 in 8 runs) and the style of the grasp.",
+  "In 21 of 27 runs a grasp disturbs another cube of the pile.",
+  "The contact view finds 12 strategies, but no distance sees a tag group well (all below 0.75)."
+ ],
+ "codebook": [
+  {
+   "key": "first",
+   "question": "Which cube does the robot take first?",
+   "source": "motion",
+   "values": {
+    "cube1": "cube1 (on the far side of the pile).",
+    "cube4": "cube4 (on the far side of the pile).",
+    "cube2": "cube2 (on the near side of the pile).",
+    "cube3": "cube3 (on the near side of the pile)."
+   },
+   "rule": "the cube with the first motion"
+  },
+  {
+   "key": "pile",
+   "question": "Does a grasp disturb the other cubes of the pile?",
+   "source": "contacts and motion",
+   "values": {
+    "clean": "No contact between two cubes, and each cube moves one time.",
+    "disturbs": "Two cubes touch, or a cube moves two times or more: a grasp pushes a neighbour."
+   },
+   "rule": "contact pair cube with cube, and the number of separate motions of each cube"
+  },
+  {
+   "key": "carry",
+   "question": "How high does the robot carry a cube?",
+   "source": "motion",
+   "values": {
+    "low": "No cube goes 20 cm or more above its start.",
+    "high": "A cube goes 20 cm or more above its start."
+   },
+   "rule": "largest height of a cube above its start"
+  },
+  {
+   "key": "pick",
+   "question": "Does the gripper touch the table at a grasp?",
+   "source": "contacts",
+   "values": {
+    "table_touch": "A finger pad touches the table top.",
+    "above_table": "No pad contact with the table top."
+   },
+   "rule": "contact pair of a finger pad with the table top"
+  },
+  {
+   "key": "base",
+   "question": "Does the base move between the cubes?",
+   "source": "motion",
+   "values": {
+    "stays": "The base path is below 1 m.",
+    "moves": "The base path is 1 m or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 300 env steps (30 s).",
+    "slow": "More than 300 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/sortclutteredblocks3d/seed24": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus55/sortclutteredblocks3d/seed42": {
+   "first": "cube2",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus55/sortclutteredblocks3d/seed222": {
+   "first": "cube1",
+   "pile": "clean",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus55/sortclutteredblocks3d/seed424": {
+   "first": "cube2",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus55/sortclutteredblocks3d/seed444": {
+   "first": "cube3",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "opus55-source/sortclutteredblocks3d/seed24": {
+   "first": "cube4",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "opus55-source/sortclutteredblocks3d/seed42": {
+   "first": "cube1",
+   "pile": "clean",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "stays",
+   "pace": "quick"
+  },
+  "opus55-source/sortclutteredblocks3d/seed222": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "opus55-source/sortclutteredblocks3d/seed424": {
+   "first": "cube4",
+   "pile": "clean",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus55-source/sortclutteredblocks3d/seed444": {
+   "first": "cube4",
+   "pile": "clean",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "opus5/sortclutteredblocks3d/seed42": {
+   "first": "cube2",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus5/sortclutteredblocks3d/seed222": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "opus5/sortclutteredblocks3d/seed424": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus5-source/sortclutteredblocks3d/seed24": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "opus5-source/sortclutteredblocks3d/seed424": {
+   "first": "cube4",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "opus5-source/sortclutteredblocks3d/seed444": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "stays",
+   "pace": "slow"
+  },
+  "astra/sortclutteredblocks3d/seed24": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "astra/sortclutteredblocks3d/seed42": {
+   "first": "cube4",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "astra/sortclutteredblocks3d/seed222": {
+   "first": "cube4",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "astra/sortclutteredblocks3d/seed424": {
+   "first": "cube4",
+   "pile": "disturbs",
+   "carry": "high",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "astra/sortclutteredblocks3d/seed444": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "high",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "astra-source/sortclutteredblocks3d/seed24": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "astra-source/sortclutteredblocks3d/seed42": {
+   "first": "cube4",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "astra-source/sortclutteredblocks3d/seed222": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "low",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "astra-source/sortclutteredblocks3d/seed424": {
+   "first": "cube1",
+   "pile": "clean",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "quick"
+  },
+  "astra-source/sortclutteredblocks3d/seed444": {
+   "first": "cube1",
+   "pile": "clean",
+   "carry": "low",
+   "pick": "above_table",
+   "base": "moves",
+   "pace": "slow"
+  },
+  "sol/sortclutteredblocks3d/seed24": {
+   "first": "cube1",
+   "pile": "disturbs",
+   "carry": "high",
+   "pick": "table_touch",
+   "base": "moves",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/sortclutteredblocks3d/seed24": {
+   "order": [
+    "cube1",
+    "cube2",
+    "cube3",
+    "cube4"
+   ],
+   "largest_lift_m": 0.13,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.77,
+   "steps": 295
+  },
+  "opus55/sortclutteredblocks3d/seed42": {
+   "order": [
+    "cube2",
+    "cube3",
+    "cube4",
+    "cube1"
+   ],
+   "largest_lift_m": 0.13,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 3,
+    "cube3": 2,
+    "cube4": 1
+   },
+   "cubes_touch": true,
+   "base_path_m": 2.1,
+   "steps": 261
+  },
+  "opus55/sortclutteredblocks3d/seed222": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube3",
+    "cube2"
+   ],
+   "largest_lift_m": 0.12,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.64,
+   "steps": 191
+  },
+  "opus55/sortclutteredblocks3d/seed424": {
+   "order": [
+    "cube2",
+    "cube1",
+    "cube3",
+    "cube4"
+   ],
+   "largest_lift_m": 0.16,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 3,
+    "cube3": 3,
+    "cube4": 4
+   },
+   "cubes_touch": true,
+   "base_path_m": 2.66,
+   "steps": 284
+  },
+  "opus55/sortclutteredblocks3d/seed444": {
+   "order": [
+    "cube3",
+    "cube4",
+    "cube2",
+    "cube1"
+   ],
+   "largest_lift_m": 0.17,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 2,
+    "cube3": 3,
+    "cube4": 2
+   },
+   "cubes_touch": true,
+   "base_path_m": 1.6,
+   "steps": 321
+  },
+  "opus55-source/sortclutteredblocks3d/seed24": {
+   "order": [
+    "cube4",
+    "cube1",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.19,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 2,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": true,
+   "base_path_m": 1.69,
+   "steps": 314
+  },
+  "opus55-source/sortclutteredblocks3d/seed42": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.14,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 0.41,
+   "steps": 66
+  },
+  "opus55-source/sortclutteredblocks3d/seed222": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube3",
+    "cube2"
+   ],
+   "largest_lift_m": 0.19,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 2,
+    "cube3": 2,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.84,
+   "steps": 326
+  },
+  "opus55-source/sortclutteredblocks3d/seed424": {
+   "order": [
+    "cube4",
+    "cube1",
+    "cube3",
+    "cube2"
+   ],
+   "largest_lift_m": 0.13,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.62,
+   "steps": 245
+  },
+  "opus55-source/sortclutteredblocks3d/seed444": {
+   "order": [
+    "cube4",
+    "cube1",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.17,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.44,
+   "steps": 384
+  },
+  "opus5/sortclutteredblocks3d/seed42": {
+   "order": [
+    "cube2",
+    "cube1",
+    "cube4",
+    "cube3"
+   ],
+   "largest_lift_m": 0.15,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 5,
+    "cube3": 4,
+    "cube4": 3
+   },
+   "cubes_touch": true,
+   "base_path_m": 2.15,
+   "steps": 284
+  },
+  "opus5/sortclutteredblocks3d/seed222": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.12,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 1,
+    "cube3": 3,
+    "cube4": 1
+   },
+   "cubes_touch": true,
+   "base_path_m": 2.0,
+   "steps": 314
+  },
+  "opus5/sortclutteredblocks3d/seed424": {
+   "order": [
+    "cube1",
+    "cube2",
+    "cube3",
+    "cube4"
+   ],
+   "largest_lift_m": 0.15,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 2,
+    "cube3": 2,
+    "cube4": 2
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.9,
+   "steps": 239
+  },
+  "opus5-source/sortclutteredblocks3d/seed24": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.11,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 2,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.38,
+   "steps": 470
+  },
+  "opus5-source/sortclutteredblocks3d/seed424": {
+   "order": [
+    "cube4",
+    "cube2",
+    "cube3",
+    "cube1"
+   ],
+   "largest_lift_m": 0.15,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 2,
+    "cube3": 3,
+    "cube4": 1
+   },
+   "cubes_touch": true,
+   "base_path_m": 1.6,
+   "steps": 300
+  },
+  "opus5-source/sortclutteredblocks3d/seed444": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.15,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 2,
+    "cube4": 2
+   },
+   "cubes_touch": true,
+   "base_path_m": 0.48,
+   "steps": 400
+  },
+  "astra/sortclutteredblocks3d/seed24": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube3",
+    "cube2"
+   ],
+   "largest_lift_m": 0.2,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 2,
+    "cube3": 4,
+    "cube4": 2
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.42,
+   "steps": 465
+  },
+  "astra/sortclutteredblocks3d/seed42": {
+   "order": [
+    "cube4",
+    "cube3",
+    "cube1",
+    "cube2"
+   ],
+   "largest_lift_m": 0.13,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 2
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.61,
+   "steps": 201
+  },
+  "astra/sortclutteredblocks3d/seed222": {
+   "order": [
+    "cube4",
+    "cube3",
+    "cube1",
+    "cube2"
+   ],
+   "largest_lift_m": 0.14,
+   "motions_of_each_cube": {
+    "cube1": 4,
+    "cube2": 2,
+    "cube3": 2,
+    "cube4": 2
+   },
+   "cubes_touch": true,
+   "base_path_m": 1.76,
+   "steps": 339
+  },
+  "astra/sortclutteredblocks3d/seed424": {
+   "order": [
+    "cube4",
+    "cube1",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.21,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 3,
+    "cube3": 4,
+    "cube4": 2
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.77,
+   "steps": 783
+  },
+  "astra/sortclutteredblocks3d/seed444": {
+   "order": [
+    "cube1",
+    "cube2",
+    "cube4",
+    "cube3"
+   ],
+   "largest_lift_m": 0.23,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 3,
+    "cube3": 5,
+    "cube4": 6
+   },
+   "cubes_touch": true,
+   "base_path_m": 1.81,
+   "steps": 552
+  },
+  "astra-source/sortclutteredblocks3d/seed24": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube3",
+    "cube2"
+   ],
+   "largest_lift_m": 0.13,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": true,
+   "base_path_m": 1.59,
+   "steps": 252
+  },
+  "astra-source/sortclutteredblocks3d/seed42": {
+   "order": [
+    "cube4",
+    "cube2",
+    "cube1",
+    "cube3"
+   ],
+   "largest_lift_m": 0.12,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 3,
+    "cube3": 3,
+    "cube4": 1
+   },
+   "cubes_touch": true,
+   "base_path_m": 1.55,
+   "steps": 245
+  },
+  "astra-source/sortclutteredblocks3d/seed222": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.15,
+   "motions_of_each_cube": {
+    "cube1": 2,
+    "cube2": 1,
+    "cube3": 2,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.59,
+   "steps": 343
+  },
+  "astra-source/sortclutteredblocks3d/seed424": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.13,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.8,
+   "steps": 277
+  },
+  "astra-source/sortclutteredblocks3d/seed444": {
+   "order": [
+    "cube1",
+    "cube4",
+    "cube2",
+    "cube3"
+   ],
+   "largest_lift_m": 0.12,
+   "motions_of_each_cube": {
+    "cube1": 1,
+    "cube2": 1,
+    "cube3": 1,
+    "cube4": 1
+   },
+   "cubes_touch": false,
+   "base_path_m": 1.55,
+   "steps": 332
+  },
+  "sol/sortclutteredblocks3d/seed24": {
+   "order": [
+    "cube1",
+    "cube2",
+    "cube3",
+    "bin_yellow",
+    "cube4"
+   ],
+   "largest_lift_m": 0.78,
+   "motions_of_each_cube": {
+    "cube1": 4,
+    "cube2": 1,
+    "cube3": 4,
+    "cube4": 2
+   },
+   "cubes_touch": true,
+   "base_path_m": 2.69,
+   "steps": 841
+  }
+ }
+}

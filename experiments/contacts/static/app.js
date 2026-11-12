@@ -19,6 +19,8 @@ function s(tag, attrs, ...kids) {
   for (const kid of kids.flat()) if (kid != null) el.append(kid);
   return el;
 }
+// replaceChildren that takes arrays and skips null (replaceChildren itself prints them as text)
+const fill = (el, ...kids) => el.replaceChildren(...kids.flat().filter((kid) => kid != null && kid !== false));
 const j = async (url) => {
   const r = await fetch(url);
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.statusText);
@@ -449,7 +451,7 @@ async function pageIndex() {
     h("div", { class: "body" }, h("b", {}, sc.name),
       h("span", { class: "muted" }, `${sc.num_runs} runs · ${sc.num_traces} traces`), h("br"),
       ...["simulator", "robot", "dynamics"].filter((k) => sc[k]).map((k) => h("span", { class: "tag" }, sc[k]))))));
-    app.replaceChildren(h("p", {}, h("a", { href: "#/d" }, "Diversity and optimality of the final policies, all scenarios →")), bar, cards);
+    app.replaceChildren(h("p", {}, h("a", { href: "#/d" }, "Diversity and optimality of the final policies, all scenarios →"), h("a", { href: "#/v", style: "margin-left:16px" }, "Three views (contact, motion, semantic), all scenarios →")), bar, cards);
   };
   draw();
 }
@@ -555,6 +557,19 @@ function briefingPanel(name) {
   return box;
 }
 
+// The main observations of a scenario (written by the reader of the semantic tags).
+function insightsPanel(name) {
+  const box = h("div", {});
+  j("/api/insights?name=" + name).then((d) => {
+    if (!d.insights.length) return;
+    box.replaceChildren(h("div", { class: "panel insights" }, h("b", {}, "Main observations"),
+      h("ul", {}, d.insights.map((text) => h("li", {}, text))),
+      h("div", { class: "muted" }, `From the semantic tags of the final policies on the first start scene. Written by ${d.provenance.reader}; ${d.provenance.status}. A number in brackets is the separation of a tag group by the contact view or by the motion view (0.5 = not seen, 1 = full). `,
+        h("a", { href: "#/v/" + name }, "three views of this scenario →"))));
+  }).catch(() => {});
+  return box;
+}
+
 async function pageScenario(name) {
   $("#crumbs").replaceChildren(name);
   const app = $("#app");
@@ -654,7 +669,9 @@ async function pageScenario(name) {
   app.replaceChildren(
     h("div", {}, Object.values(sc.tags).map((t) => h("span", { class: "tag" }, t)),
       h("a", { href: "#/h/" + name, style: "margin-left:12px" }, "strategy histories of all runs →"),
-      h("a", { href: "#/d/" + name, style: "margin-left:12px" }, "diversity and optimality →")),
+      h("a", { href: "#/d/" + name, style: "margin-left:12px" }, "diversity and optimality →"),
+      h("a", { href: "#/v/" + name, style: "margin-left:12px" }, "three views: contact, motion, semantic →")),
+    insightsPanel(name),
     briefingPanel(name),
     h("h2", {}, "Runs ", h("small", {}, "— tick recorded runs to compare them; numbers are the reported solve rates")), matrixBox,
     h("h2", {}, "Contact timelines"), h("div", { class: "panel" }, overlay),
@@ -1313,7 +1330,7 @@ async function pageDiversity(name) {
       h("p", { class: "muted" }, `One episode per run, on ${d.instance}: this is not the reported score. The reward is −1 per step on these scenarios, so the total reward is minus the episode length. ` +
         "“At the first solve” is the episode length of the first policy version of the run that solves this instance. “Policy compute” is the time that the policy code used during the episode."));
   };
-  app.replaceChildren(await defControls(load), h("div", { class: "bar" }, h("a", { href: "#/h/" + name }, "strategy histories of this scenario →"), h("a", { href: "#/m/" + name }, "what the distance means: explore the metrics →"), h("a", { href: "#/d" }, "all scenarios →")), body);
+  app.replaceChildren(await defControls(load), h("div", { class: "bar" }, h("a", { href: "#/h/" + name }, "strategy histories of this scenario →"), h("a", { href: "#/m/" + name }, "what the distance means: explore the metrics →"), h("a", { href: "#/v/" + name }, "three views: contact, motion, semantic →"), h("a", { href: "#/d" }, "all scenarios →")), body);
   await load();
 }
 
@@ -1658,6 +1675,424 @@ ${pct(cb[b])} of the pairs of two runs`));
   await load();
 }
 
+// ------------------------------------------------------------- three views
+// The final policies of a scenario in three views: contact (what touches what),
+// motion (where the bodies go) and semantic (the tags of a reader).
+const VIEW_NAMES = { contact: "contact", motion: "motion", semantic: "semantic" };
+const VALUE_VARS = ["--s1", "--s2", "--s3", "--s4", "--s7", "--s5", "--s6", "--s8"];
+const valueColour = (index) => index < 0 || index >= VALUE_VARS.length ? "var(--fg3)" : `var(${VALUE_VARS[index]})`;
+const hexOf = (colour) => { const m = /^var\((--[\w-]+)\)$/.exec(colour); return m ? cssVar(m[1]) : colour; };
+const effectiveNumber = (labels) => { const c = new Map(); labels.forEach((v) => c.set(v, (c.get(v) || 0) + 1)); let e = 0; for (const k of c.values()) e -= (k / labels.length) * Math.log2(k / labels.length); return [c.size, 2 ** e]; };
+
+async function pageViews(name) {
+  const app = $("#app");
+  $("#crumbs").replaceChildren(h("a", { href: "#/d/" + name }, "diversity"), " / ", h("a", { href: "#/s/" + name }, name), " / three views");
+  const state = { bodies: "all", dist: null, colour: "method", group: null, channel: null, sel: new Set(), strategy: null, sort: null };
+  const body = h("div", { class: "v3" });
+  let d = null, marks = [];  // marks[i] = the elements of run i (dot, paths, row, lines)
+  const load = async () => {
+    body.replaceChildren(h("p", { class: "muted" }, "loading… (the first request of a scenario computes the motion of each run)"));
+    d = await j(`/api/views?name=${name}&bodies=${state.bodies}&${defQuery()}`);
+    PRESET_HINT(d.preset);
+    METHODS = d.method_order;
+    state.sel = new Set();
+    draw();
+  };
+  const setHot = (hot) => {
+    body.classList.toggle("hashot", hot != null);
+    marks.forEach((els, i) => els.forEach((el) => { el.classList.toggle("hot", i === hot); if (i === hot && el.tagName === "path") el.parentNode.append(el); }));
+  };
+  const toggle = (i) => { state.sel.has(i) ? state.sel.delete(i) : state.sel.add(i); draw(); };
+
+  const draw = () => {
+    const runs = d.runs, n = runs.length;
+    if (n < 3) { body.replaceChildren(h("p", { class: "muted" }, `Fewer than 3 final policies solve ${d.instance} in ${name}.`)); return; }
+    const book = d.semantic ? d.semantic.codebook : [];
+    const dists = d.distances, measured = dists.filter((x) => x.view !== "semantic");
+    if (!dists.some((x) => x.key === state.dist)) state.dist = (dists.find((x) => x.key === "motion:warp") || dists[0]).key;
+    if (!book.some((g) => g.key === state.group)) state.group = book.length ? book[0].key : null;
+    if (state.strategy == null) state.strategy = new Set(book.slice(0, 2).map((g) => g.key));
+    if (state.colour.startsWith("tag:") && !book.some((g) => "tag:" + g.key === state.colour)) state.colour = "method";
+    const cur = dists.find((x) => x.key === state.dist);
+    const group = book.find((g) => g.key === state.group);
+    const sids = [...new Set(runs.map((r) => r.sid))].sort((p, q) => Number(p.slice(1)) - Number(q.slice(1)));
+    marks = runs.map(() => []);
+
+    // colour of a run: by method, by contact strategy, or by the value of a tag group
+    const colourGroup = state.colour.startsWith("tag:") ? book.find((g) => "tag:" + g.key === state.colour) : null;
+    const valueOf = (r) => state.colour === "method" ? r.method : state.colour === "sid" ? r.sid : (r.tags || {})[colourGroup.key] || "no tag";
+    const values = state.colour === "method" ? d.method_order : state.colour === "sid" ? sids : Object.keys(colourGroup.values);
+    const colourOfValue = (v) => state.colour === "method" ? methodColor(v) : valueColour(values.indexOf(v));
+    const colourOf = (r) => colourOfValue(valueOf(r));
+    const runName = (r) => `${r.method} · ${r.seed}`;
+    const runTip = (r) => `${runName(r)}\ncontact strategy ${r.sid} · ${r.modes} modes · ${r.steps} steps` +
+      (r.tags ? "\n" + book.map((g) => `${g.key}: ${r.tags[g.key]}`).join("\n") : "") +
+      (r.evidence ? "\n\n" + Object.entries(r.evidence).map(([k, v]) => `${k}: ${v}`).join("\n") : "") + "\n\nclick to select";
+    const bind = (el, i) => {
+      marks[i].push(el); el.classList.add("run"); if (state.sel.has(i)) el.classList.add("sel");
+      el.addEventListener("mousemove", (e) => { setHot(i); tip(e, runTip(runs[i])); });
+      el.addEventListener("mouseleave", (e) => { setHot(null); tip(e, ""); });
+      el.addEventListener("click", () => toggle(i));
+      return el;
+    };
+    const key = () => h("div", { class: "swatches" }, values.map((v) => h("span", { title: colourGroup ? colourGroup.values[v] : "" }, h("span", { class: "dot", style: `background:${colourOfValue(v)}` }), `${v} (${runs.filter((r) => valueOf(r) === v).length})`)));
+    const choose = (label, value, options, on) => h("label", {}, label, h("select", { onchange: (e) => on(e.target.value) }, options.map(([v, text]) => h("option", { value: v, selected: v === value }, text))));
+    const colourOptions = [["method", "method"], ["sid", "contact strategy"], ...book.map((g) => ["tag:" + g.key, "tag: " + g.key])];
+    const distOptions = dists.map((x) => [x.key, `${x.view}: ${x.name}`]);
+    const setColour = (v) => { state.colour = v; if (v.startsWith("tag:")) state.group = v.slice(4); draw(); };
+
+    // tiles
+    const [semCount, semEff] = d.semantic ? effectiveNumber(runs.map((r) => [...state.strategy].map((k) => (r.tags || {})[k]).join(" / "))) : [null, null];
+    const warp = dists.find((x) => x.key === "motion:warp");
+    const tiles = h("div", { class: "tiles" },
+      tile(String(n), `final policies solve ${d.instance}`),
+      tile(`${d.contact.strategies} · ${fmt(d.contact.effective, 1)}`, "contact strategies · effective number", `Complete linkage on “${d.contact.metric}” at ${d.contact.tau}.`),
+      d.semantic ? tile(`${semCount} · ${fmt(semEff, 1)}`, `semantic strategies · effective number (${[...state.strategy].join(" × ") || "no tag group"})`, "A semantic strategy is a combination of the values of the tag groups that are ticked in the table of the runs.") : tile("–", "no semantic tags for this scenario"),
+      warp ? tile(`${fmt(warp.mean * 100, 1)} cm`, `mean motion distance (warp) = ${pct(warp.mean / d.scale)} of the workspace (${fmt(d.scale, 2)} m)`, "The workspace size is the diagonal of the box around all end effector positions.") : tile("–", d.motion_note || "no motion data"));
+
+    // agreement of each distance with each tag group
+    let agree = h("p", { class: "muted" }, "This scenario has no semantic tags yet (experiments/contacts/semantic/).");
+    if (d.semantic) {
+      const count = (g, v) => runs.filter((r) => (r.tags || {})[g.key] === v).length;
+      const head = h("tr", {}, h("th", {}, "tag group"), h("th", {}, "values"), measured.map((x) => h("th", { class: x.key === state.dist ? "on" : "", title: x.text, style: "cursor:pointer;text-align:right", onclick: () => { state.dist = x.key; draw(); } }, h("div", { class: "muted" }, x.view), x.key.split(":")[1])));
+      const rows = book.map((g) => h("tr", {},
+        h("th", { title: `${g.question}\nrule: ${g.rule}\nsource: ${g.source}`, style: "cursor:pointer", onclick: () => setColour("tag:" + g.key) }, h("b", {}, g.key), h("div", { class: "muted", style: "white-space:normal;max-width:230px" }, g.question)),
+        h("th", { style: "white-space:normal;max-width:210px" }, Object.keys(g.values).map((v) => `${v} ${count(g, v)}`).join(", ")),
+        measured.map((x) => { const sep = d.separation[g.key][x.key], v = sep.auc;
+          const cell = h("td", { style: v == null ? "" : `background:${tint((v - 0.5) * 2)};cursor:pointer`, class: x.key === state.dist && g.key === state.group ? "diag" : "" }, v == null ? "–" : fmt(v));
+          cell.addEventListener("click", () => { state.dist = x.key; setColour("tag:" + g.key); });
+          cell.addEventListener("mousemove", (e) => tip(e, v == null ? "All runs have one value: no pair with different values." : `${g.key} against “${x.name}”\n${sep.different} pairs with different values: mean distance ${fmt(sep.mean_different, 3)}${x.unit ? " " + x.unit : ""}\n${sep.same} pairs with the same value: mean distance ${fmt(sep.mean_same, 3)}${x.unit ? " " + x.unit : ""}\nclick: show this distance, colour by this tag group`));
+          cell.addEventListener("mouseleave", (e) => tip(e, ""));
+          return cell; })));
+      const foot = d.spearman["semantic:tags"] ? h("tr", { class: "foot" }, h("th", { colspan: 2 }, "rank correlation with the tag distance (all groups)"), measured.map((x) => h("td", {}, fmt(d.spearman[x.key]["semantic:tags"])))) : null;
+      agree = h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, h("table", { class: "heat v3agree" }, head, rows, foot),
+        h("div", { class: "muted", style: "margin-top:6px;max-width:1000px" }, "A cell is the probability that two runs with different values of the tag group are farther apart than two runs with the same value. 0.5 = the distance does not see the tag group; 1 = it separates the values fully. ",
+          `Tags: ${d.semantic.provenance.reader}; status: ${d.semantic.provenance.status}.`));
+    }
+
+    // 2-D map of the selected distance
+    const mw = 440, mh = 380, pad = 26;
+    const map = s("svg", { width: mw, height: mh, class: "evo" });
+    map.append(s("rect", { x: 0.5, y: 0.5, width: mw - 1, height: mh - 1, fill: "none", stroke: "var(--grid)" }));
+    {
+      const xs = cur.xy.map((p) => p[0]), ys = cur.xy.map((p) => p[1]);
+      const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1e-9);
+      const k = Math.min(mw, mh) - 2 * pad, cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
+      const spots = new Map();
+      runs.forEach((r, i) => { const id = cur.xy[i].map((v) => Math.round((v / span) * 60)).join(","); if (!spots.has(id)) spots.set(id, []); spots.get(id).push(i); });
+      for (const members of spots.values()) members.forEach((i, m) => {
+        const ring = members.length > 1 ? 7 + members.length * 0.9 : 0, a = (m / members.length) * 2 * Math.PI;
+        map.append(bind(s("circle", { cx: mw / 2 + ((cur.xy[i][0] - cx) / span) * k + ring * Math.cos(a), cy: mh / 2 + ((cur.xy[i][1] - cy) / span) * k + ring * Math.sin(a), r: 5.5, fill: colourOf(runs[i]) }), i));
+      });
+    }
+
+    // paths of one body, top view and side view
+    let pathBox = h("p", { class: "muted" }, d.motion_note || "No motion data.");
+    let profiles = null;
+    if (d.paths) {
+      const P = d.paths;
+      if (!P.channels.includes(state.channel)) state.channel = P.channels[0];
+      const pts = P.runs.map((r) => r.ch[state.channel]);
+      const lo = [0, 1, 2].map((a) => Math.min(...pts.map((p) => Math.min(...p.map((q) => q[a] ?? 0))))), hi = [0, 1, 2].map((a) => Math.max(...pts.map((p) => Math.max(...p.map((q) => q[a] ?? 0)))));
+      const view = (ax, ay, title, width) => {
+        const sx = Math.max(hi[ax] - lo[ax], 0.05), sy = Math.max(hi[ay] - lo[ay], 0.05), m = 16;
+        const scale = Math.min((width - 2 * m) / sx, 300 / sy), w = sx * scale + 2 * m, hgt = sy * scale + 2 * m + 16;
+        const svg = s("svg", { width: w, height: hgt, class: "evo" });
+        const X = (v) => m + (v - lo[ax]) * scale, Y = (v) => hgt - 16 - m - (v - lo[ay]) * scale;
+        svg.append(s("rect", { x: 0.5, y: 0.5, width: w - 1, height: hgt - 17, fill: "none", stroke: "var(--grid)" }));
+        const bar = [2, 1, 0.5, 0.2, 0.1, 0.05].find((v) => v * scale <= w * 0.4) || 0.05;
+        svg.append(s("line", { x1: m, x2: m + bar * scale, y1: hgt - 7, y2: hgt - 7, stroke: "var(--fg3)", "stroke-width": 2 }), s("text", { x: m + bar * scale + 6, y: hgt - 3 }, `${bar} m`), s("text", { x: w - 4, y: hgt - 3, "text-anchor": "end" }, title));
+        pts.forEach((p, i) => {
+          const colour = colourOf(runs[i]);
+          svg.append(bind(s("path", { d: p.map((q, k) => `${k ? "L" : "M"}${X(q[ax]).toFixed(1)},${Y(q[ay]).toFixed(1)}`).join(""), stroke: colour }), i));
+          const end = p[p.length - 1];
+          svg.append(s("circle", { cx: X(end[ax]), cy: Y(end[ay]), r: 2.4, fill: colour, "pointer-events": "none" }));
+        });
+        const first = pts[0][0];
+        svg.append(s("circle", { cx: X(first[ax]), cy: Y(first[ay]), r: 5, fill: "none", stroke: "var(--fg)", "stroke-width": 1.5, "pointer-events": "none" }));
+        return svg;
+      };
+      const wide = hi[0] - lo[0] >= hi[1] - lo[1] ? 0 : 1, axis = "xyz";
+      pathBox = h("div", {}, h("div", { class: "v3cols", style: "align-items:flex-end;gap:12px" }, view(0, 1, "top view (x, y)", 460), P.dim === 3 ? view(wide, 2, `side view (${axis[wide]}, z)`, 460) : null),
+        h("div", { class: "muted" }, `Path of “${state.channel}” in each run. The ring is the start, a dot is the end. Each view has its own scale; the bar gives it.`));
+
+      // height and speed of the same body against time
+      const tmax = Math.max(...P.runs.map((r) => r.t[r.t.length - 1]), 1e-6);
+      const series = (fn) => P.runs.map((r, i) => fn(r, pts[i]));
+      const height = P.dim === 3 ? series((r, p) => p.map((q, k) => [r.t[k], q[2]])) : null;
+      const speed = series((r, p) => p.slice(1).map((q, k) => [(r.t[k] + r.t[k + 1]) / 2, Math.hypot(...q.map((v, a) => v - p[k][a])) / Math.max(r.t[k + 1] - r.t[k], 1e-6)]));
+      const plot = (data, title, unit) => {
+        const w = 460, hgt = 170, left = 40, ph = hgt - 34, pw = w - left - 8;
+        const all = data.flat().map((q) => q[1]), top = Math.max(...all, 1e-6), low = Math.min(0, ...all);
+        const svg = s("svg", { width: w, height: hgt, class: "evo" });
+        const X = (t) => left + (t / tmax) * pw, Y = (v) => 10 + (1 - (v - low) / (top - low)) * ph;
+        svg.append(s("line", { class: "grid", x1: left, x2: left + pw, y1: Y(low), y2: Y(low) }), s("text", { x: left - 5, y: 14, "text-anchor": "end" }, fmt(top, top < 10 ? 2 : 0)), s("text", { x: left - 5, y: Y(low) + 4, "text-anchor": "end" }, fmt(low, 1)),
+          s("text", { x: left, y: hgt - 6 }, "0 s"), s("text", { x: left + pw, y: hgt - 6, "text-anchor": "end" }, `${fmt(tmax, 1)} s`), s("text", { x: left + pw / 2, y: hgt - 6, "text-anchor": "middle", style: "fill:var(--fg)" }, `${title} (${unit})`));
+        data.forEach((line, i) => svg.append(bind(s("path", { d: line.map((q, k) => `${k ? "L" : "M"}${X(q[0]).toFixed(1)},${Y(q[1]).toFixed(1)}`).join(""), stroke: colourOf(runs[i]) }), i)));
+        return svg;
+      };
+      profiles = h("div", { class: "panel", style: "max-width:none" }, h("div", { class: "v3cols" }, height ? plot(height, `height of “${state.channel}”`, "m") : null, plot(speed, `speed of “${state.channel}”`, "m/s")),
+        h("div", { class: "muted" }, "One line for each run, against the episode time. The speed is a mean over the steps between two drawn states."));
+    }
+
+    // table of the runs and their tags
+    const order = runs.map((_, i) => i);
+    if (state.sort) order.sort((a, b) => String(state.sort === "sid" ? runs[a].sid : (runs[a].tags || {})[state.sort]).localeCompare(String(state.sort === "sid" ? runs[b].sid : (runs[b].tags || {})[state.sort]), undefined, { numeric: true }));
+    const chip = (g, v) => v == null ? "–" : h("span", { class: "vchip", title: g.values[v] || "" }, h("span", { class: "dot", style: `background:${valueColour(Object.keys(g.values).indexOf(v))}` }), v);
+    const table = h("table", { class: "vocab v3runs" },
+      h("tr", {}, h("th", {}, "run"), h("th", { style: "cursor:pointer", title: "click to sort", onclick: () => { state.sort = state.sort === "sid" ? null : "sid"; draw(); } }, "contact strategy"), h("th", {}, "modes"), h("th", {}, "steps"),
+        book.map((g) => h("th", { title: `${g.question}\nrule: ${g.rule}` }, h("label", { title: "tick: this tag group is a part of the semantic strategy" }, h("input", { type: "checkbox", checked: state.strategy.has(g.key), onchange: (e) => { e.target.checked ? state.strategy.add(g.key) : state.strategy.delete(g.key); draw(); } }),
+          h("span", { style: "cursor:pointer", onclick: (e) => { e.preventDefault(); state.sort = state.sort === g.key ? null : g.key; draw(); } }, g.key + (state.sort === g.key ? " ▾" : ""))))), h("th", {})),
+      order.map((i) => { const r = runs[i]; return bind(h("tr", {}, h("td", {}, h("span", { class: "dot", style: `background:${methodColor(r.method)}` }), runName(r)), h("td", {}, r.sid), h("td", {}, String(r.modes)), h("td", {}, String(r.steps)),
+        book.map((g) => h("td", {}, chip(g, (r.tags || {})[g.key]))), h("td", {}, h("a", { href: "#/t/" + r.trace, onclick: (e) => e.stopPropagation() }, "open"))), i); }));
+
+    // tag values by method, and contact strategies against tag values
+    let cross = null;
+    if (group) {
+      const vals = Object.keys(group.values);
+      const bars = h("table", { class: "vocab" }, d.method_order.map((m) => { const own = runs.filter((r) => r.method === m);
+        return h("tr", {}, h("td", {}, h("span", { class: "dot", style: `background:${methodColor(m)}` }), m), h("td", {}, h("div", { class: "vbar" }, vals.map((v, k) => { const c = own.filter((r) => (r.tags || {})[group.key] === v).length; return c ? h("span", { style: `flex:${c};background:${valueColour(k)}`, title: `${m}: ${v} in ${c} of ${own.length} runs` }, String(c)) : null; })))); }));
+      const table2 = h("table", { class: "heat" }, h("tr", {}, h("th", {}, "contact strategy"), vals.map((v, k) => h("th", {}, h("span", { class: "dot", style: `background:${valueColour(k)}` }), v))),
+        sids.map((sid) => { const own = runs.filter((r) => r.sid === sid); return h("tr", {}, h("th", {}, `${sid} · ${own.length} run${own.length > 1 ? "s" : ""}`), vals.map((v) => { const c = own.filter((r) => (r.tags || {})[group.key] === v).length; return h("td", { style: c ? `background:${tint(c / own.length)}` : "" }, c ? String(c) : ""); })); }));
+      cross = h("div", { class: "v3cols" },
+        h("div", {}, h("h2", {}, `“${group.key}” by method`), h("div", { class: "panel" }, h("div", { class: "swatches", style: "margin-bottom:6px" }, vals.map((v, k) => h("span", { title: group.values[v] }, h("span", { class: "dot", style: `background:${valueColour(k)}` }), v))), bars, h("div", { class: "muted", style: "max-width:420px" }, group.question))),
+        h("div", {}, h("h2", {}, `Contact strategies against “${group.key}”`), h("div", { class: "panel" }, table2, h("div", { class: "muted", style: "max-width:420px" }, "A row with counts in more than one column is a contact strategy that mixes the values of this tag group."))));
+    }
+
+    // rank correlation between the distances
+    const heat = h("table", { class: "heat" }, h("tr", {}, h("th", {}), dists.map((x) => h("th", { title: x.name }, x.key.split(":")[1]))),
+      dists.map((a) => h("tr", {}, h("th", { title: a.text }, `${a.view}: ${a.key.split(":")[1]}`), dists.map((b) => { const v = d.spearman[a.key][b.key]; return h("td", { style: v == null || a.key === b.key ? "" : `background:${tint(v)}`, class: a.key === b.key ? "diag" : "" }, a.key === b.key ? "1" : fmt(v)); }))));
+    const defs = h("table", { class: "vocab" }, h("tr", {}, ["view", "distance", "what it is", "sees", "ignores", "mean"].map((t) => h("th", {}, t))),
+      dists.map((x) => h("tr", { style: "cursor:pointer", onclick: () => { state.dist = x.key; draw(); } }, h("td", {}, x.view), h("td", {}, h("b", {}, x.name), h("div", { class: "muted mono" }, x.key.split(":")[1])), h("td", { style: "max-width:420px" }, x.text), h("td", { style: "max-width:200px" }, x.sees), h("td", { style: "max-width:200px" }, x.ignores), h("td", {}, x.mean == null ? "–" : `${fmt(x.mean, 3)}${x.unit ? " " + x.unit : ""}`))));
+
+    // selected runs: ghost video
+    const chosen = [...state.sel].sort((a, b) => a - b), video = h("div", {});
+    const picked = h("div", { class: "panel", style: "max-width:none" }, chosen.length ? [
+      h("div", { class: "swatches" }, chosen.map((i) => h("span", {}, h("span", { class: "dot", style: `background:${colourOf(runs[i])}` }), h("a", { href: "#/t/" + runs[i].trace }, runName(runs[i])), ` (${valueOf(runs[i])})`))),
+      h("div", { class: "bar" }, h("button", { class: "primary", onclick: (ev) => { ev.target.disabled = true;
+        runJob({ kind: "ghost", traces: chosen.map((i) => runs[i].trace), colours: chosen.map((i) => hexOf(colourOf(runs[i]))), all_bodies: true, equal: true }, (job) => { ev.target.disabled = false;
+          video.replaceChildren(job.state === "done" ? h("video", { src: job.output + "?t=" + Date.now(), controls: true, loop: true, autoplay: true, muted: true, style: "max-width:960px;width:100%" }) : h("pre", { class: "log" }, job.log)); }); } }, `Render ghost video of ${chosen.length} run(s)`),
+        h("button", { onclick: () => { state.sel.clear(); draw(); } }, "clear"), h("span", { class: "muted" }, "Each run is a translucent robot with the colour of the selection above; the objects are ghosted too.")), video]
+      : h("span", { class: "muted" }, "Click a dot, a path or a table row to select runs. A ghost video shows the selected runs in one scene."));
+    const byValue = h("div", { class: "bar" }, h("span", { class: "muted" }, "select all runs with:"), values.map((v) => h("button", { onclick: () => { state.sel = new Set(runs.map((r, i) => valueOf(r) === v ? i : -1).filter((i) => i >= 0)); draw(); } }, h("span", { class: "dot", style: `background:${colourOfValue(v)};margin-right:5px` }), v)));
+
+    fill(body, tiles, insightsPanel(name),
+      h("h2", {}, "Does a distance see a tag group? ", h("small", {}, "— rows: tag groups of the semantic view; columns: distances of the contact view and of the motion view")), agree,
+      h("div", { class: "bar defbar" }, choose("distance of the map", state.dist, distOptions, (v) => { state.dist = v; draw(); }), choose("colour", state.colour, colourOptions, setColour),
+        d.paths ? choose("body of the paths", state.channel, d.paths.channels.map((c) => [c, c]), (v) => { state.channel = v; draw(); }) : null,
+        d.bodies_available ? choose("bodies in the motion distances", state.bodies, d.bodies_available.map((b) => [b, `${b}: ${d.bodies_text[b]}`]), (v) => { state.bodies = v; load(); }) : null),
+      key(),
+      h("div", { class: "v3cols" },
+        h("div", {}, h("h2", {}, "Map of the runs ", h("small", {}, `— ${cur.view}: ${cur.name}`)), h("div", { class: "panel" }, map, h("div", { class: "muted", style: "max-width:440px" }, "Two runs that are near on the map have a small distance (multidimensional scaling). The axes have no meaning of their own."))),
+        h("div", {}, h("h2", {}, "Paths ", h("small", {}, "— where the body goes")), h("div", { class: "panel", style: "max-width:none" }, pathBox))),
+      profiles ? h("h2", {}, "Height and speed against time") : null, profiles,
+      h("h2", {}, "Selected runs"), byValue, picked,
+      h("h2", {}, "Runs and tags ", h("small", {}, "— hover a row for the numbers behind its tags; tick the tag groups that define a semantic strategy; click a tag group to sort")), h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
+      cross,
+      h("h2", {}, "The distances ", h("small", {}, "— definitions, and how the distances order the pairs of runs")),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, defs),
+      h("div", { class: "panel", style: "overflow-x:auto" }, h("div", { class: "muted", style: "margin-bottom:6px" }, "Rank correlation (Spearman) between the distances, over all pairs of runs. 1 = the two distances order the pairs in the same way."), heat));
+  };
+  app.replaceChildren(await defControls(load),
+    h("div", { class: "bar" }, h("a", { href: "#/d/" + name }, "diversity of this scenario →"), h("a", { href: "#/m/" + name }, "contact distance metrics →"), h("a", { href: "#/vm/" + name }, "motion distance metrics →"), h("a", { href: "#/v" }, "three views of all scenarios →"),
+      h("span", { class: "muted" }, "The definition bar sets the contact view. The motion view and the semantic view do not use it.")),
+    body);
+  await load();
+}
+
+// -------------------------------------------------------- motion distances
+// The distances of the motion view: what each one is, where it comes from, what a
+// value looks like. The same layout as the page of the contact distances.
+function pathPair(P, a, b, channel) {
+  const pa = P.runs[a].ch[channel], pb = P.runs[b].ch[channel], all = [...pa, ...pb];
+  const lo = [0, 1, 2].map((k) => Math.min(...all.map((q) => q[k] ?? 0))), hi = [0, 1, 2].map((k) => Math.max(...all.map((q) => q[k] ?? 0)));
+  const view = (ax, ay, title) => {
+    const sx = Math.max(hi[ax] - lo[ax], 0.05), sy = Math.max(hi[ay] - lo[ay], 0.05), m = 12;
+    const scale = Math.min(300 / sx, 200 / sy), w = sx * scale + 2 * m, hgt = sy * scale + 2 * m + 16;
+    const svg = s("svg", { width: w, height: hgt, class: "evo" });
+    const X = (v) => m + (v - lo[ax]) * scale, Y = (v) => hgt - 16 - m - (v - lo[ay]) * scale;
+    svg.append(s("rect", { x: 0.5, y: 0.5, width: w - 1, height: hgt - 17, fill: "none", stroke: "var(--grid)" }));
+    const bar = [2, 1, 0.5, 0.2, 0.1, 0.05, 0.02].find((v) => v * scale <= w * 0.4) || 0.02;
+    svg.append(s("line", { x1: m, x2: m + bar * scale, y1: hgt - 7, y2: hgt - 7, stroke: "var(--fg3)", "stroke-width": 2 }), s("text", { x: m + bar * scale + 6, y: hgt - 3 }, `${bar} m`), s("text", { x: w - 4, y: hgt - 3, "text-anchor": "end" }, title));
+    [pa, pb].forEach((p, k) => {
+      svg.append(s("path", { d: p.map((q, i) => `${i ? "L" : "M"}${X(q[ax]).toFixed(1)},${Y(q[ay]).toFixed(1)}`).join(""), fill: "none", stroke: SIDE[k], "stroke-width": 1.8, opacity: 0.9 }));
+      const end = p[p.length - 1];
+      svg.append(s("circle", { cx: X(end[ax]), cy: Y(end[ay]), r: 3, fill: SIDE[k] }));
+    });
+    svg.append(s("circle", { cx: X(pa[0][ax]), cy: Y(pa[0][ay]), r: 5, fill: "none", stroke: "var(--fg)", "stroke-width": 1.5 }));
+    return svg;
+  };
+  const wide = hi[0] - lo[0] >= hi[1] - lo[1] ? 0 : 1;
+  return h("div", { class: "v3cols", style: "align-items:flex-end;gap:10px" }, view(0, 1, "top (x, y)"), P.dim === 3 ? view(wide, 2, `side (${"xyz"[wide]}, z)`) : null);
+}
+
+async function pageMotionDistances(name) {
+  const app = $("#app");
+  $("#crumbs").replaceChildren(h("a", { href: "#/v" }, "three views"), " / ", h("a", { href: "#/v/" + name }, name), " / motion distances");
+  const state = { bodies: "all", metric: "motion:warp", other: "motion:locked", index: 25, channel: null, picked: null };
+  const body = h("div", { class: "v3" });
+  let d = null, pairs = [];
+  const load = async () => {
+    body.replaceChildren(h("p", { class: "muted" }, "loading…"));
+    d = await j(`/api/views?name=${name}&bodies=${state.bodies}&${defQuery()}`);
+    METHODS = d.method_order;
+    pairs = [];
+    d.runs.forEach((r, i) => d.runs.forEach((q, k) => { if (k > i) pairs.push([i, k]); }));
+    state.picked = null;
+    draw();
+  };
+  const draw = () => {
+    const runs = d.runs, motions = d.distances.filter((x) => x.view === "motion");
+    if (!motions.length) { body.replaceChildren(h("p", { class: "muted" }, d.motion_note || `Fewer than 3 final policies solve ${d.instance} in ${name}.`)); return; }
+    if (!motions.some((x) => x.key === state.metric)) state.metric = motions[0].key;
+    if (state.other === state.metric || !motions.some((x) => x.key === state.other)) state.other = motions.find((x) => x.key !== state.metric).key;
+    const cur = motions.find((x) => x.key === state.metric), other = motions.find((x) => x.key === state.other);
+    const P = d.paths;
+    if (!P.channels.includes(state.channel)) state.channel = P.channels[0];
+    const tau = cur.taus[state.index], top = cur.taus[100] || 1e-9;
+    const dist = (x, p) => x.matrix[p[0]][p[1]];
+    const cm = (v) => `${fmt(v * 100, 1)} cm`;
+    const book = d.semantic ? d.semantic.codebook : [];
+    const bestGroup = (x) => { let best = null; for (const g of book) { const v = d.separation[g.key][x.key].auc; if (v != null && (!best || v > best[1])) best = [g.key, v]; } return best; };
+    const runName = (r) => `${r.method} · ${r.seed}`;
+
+    // the distances: definition, source, numbers at the slider
+    const table = h("table", { class: "vocab metrics" },
+      h("tr", {}, ["distance", "source", "what it is", "sees", "ignores", "mean", `rank correlation with “${cur.key.split(":")[1]}”`, "strategies at the slider", book.length ? "tag group that it sees best" : null].filter(Boolean).map((t) => h("th", {}, t))),
+      motions.map((x) => { const i = Math.min(100, Math.round((tau / (x.taus[100] || 1e-9)) * 100)), best = bestGroup(x);
+        return h("tr", { class: x.key === state.metric ? "on" : "", onclick: () => { state.metric = x.key; state.index = 25; draw(); } },
+          h("td", {}, h("input", { type: "radio", name: "mmetric", checked: x.key === state.metric }), " ", h("b", {}, x.name), h("div", { class: "muted mono" }, x.key.split(":")[1])),
+          h("td", { style: "max-width:190px" }, x.source), h("td", { style: "max-width:330px" }, x.text), h("td", { style: "max-width:150px" }, x.sees), h("td", { style: "max-width:150px" }, x.ignores),
+          h("td", {}, `${cm(x.mean)} · ${pct(x.mean / d.scale)}`), h("td", {}, x.key === state.metric ? "–" : fmt(d.spearman[state.metric][x.key])),
+          h("td", { title: "at the same value in metres as the slider" }, tau > x.taus[100] ? "1" : String(x.classes[i][0])), book.length ? h("td", {}, best ? `${best[0]} ${fmt(best[1])}` : "–") : null); }));
+
+    // slider and readout
+    const slider = h("input", { type: "range", min: 0, max: 100, step: 1, value: state.index, style: "width:420px" });
+    slider.addEventListener("input", () => { state.index = Number(slider.value); draw(); });
+    const near = pairs.filter((p) => dist(cur, p) <= tau + 1e-9).length;
+    const readout = h("p", { class: "defn" }, `With “${cur.name}”, ${near} of ${pairs.length} pairs of runs (${pct(near / pairs.length)}) have a distance of ${cm(tau)} or less. `,
+      `${cm(tau)} is ${pct(tau / d.scale)} of the workspace (${fmt(d.scale, 2)} m). As the threshold, it gives ${cur.classes[state.index][0]} strategies for ${runs.length} runs; the largest strategy has ${cur.classes[state.index][1]} runs.`);
+
+    // histogram of the pair distances
+    const hw = 470, hh = 210, left = 34, bottom = 28, bins = 40, pw = hw - left - 10, ph = hh - bottom - 12;
+    const counts = Array.from({ length: bins }, () => [0, 0]);
+    for (const p of pairs) counts[Math.min(bins - 1, Math.floor((dist(cur, p) / top) * bins))][runs[p[0]].method === runs[p[1]].method ? 0 : 1]++;
+    const peak = Math.max(1, ...counts.map((c) => c[0] + c[1]));
+    const hist = s("svg", { width: hw, height: hh, class: "evo" });
+    const axis = (svg, w, hgt, lft, plotH, label) => { for (const v of [0, 0.25, 0.5, 0.75, 1]) svg.append(s("text", { x: lft + v * w, y: hgt - 10, "text-anchor": "middle" }, label(v))); svg.append(s("line", { class: "grid", x1: lft, x2: lft + w, y1: 12 + plotH, y2: 12 + plotH })); };
+    axis(hist, pw, hh, left, ph, (v) => cm(v * top));
+    hist.append(s("text", { x: left - 6, y: 16, "text-anchor": "end" }, String(peak)), s("text", { x: left - 6, y: 12 + ph, "text-anchor": "end" }, "0"));
+    counts.forEach(([same, diff], b) => {
+      const x = left + (b / bins) * pw + 1, w = pw / bins - 2, h0 = (same / peak) * ph, h1 = (diff / peak) * ph;
+      if (diff) hist.append(s("rect", { x, y: 12 + ph - h1, width: w, height: h1, fill: "var(--fg3)", opacity: 0.55 }));
+      if (same) hist.append(s("rect", { x, y: 12 + ph - h1 - h0 - (diff ? 1 : 0), width: w, height: h0, fill: "var(--accent)" }));
+      const hit = s("rect", { class: "band", x: x - 1, y: 12, width: w + 2, height: ph });
+      hit.addEventListener("mousemove", (e) => tip(e, `distance ${cm((b / bins) * top)} to ${cm(((b + 1) / bins) * top)}\n${same} pairs of one method\n${diff} pairs of two methods`));
+      hit.addEventListener("mouseleave", (e) => tip(e, ""));
+      hit.addEventListener("click", () => { state.index = Math.round(((b + 0.5) / bins) * 100); draw(); });
+      hist.append(hit);
+    });
+    hist.append(s("line", { x1: left + (tau / top) * pw, x2: left + (tau / top) * pw, y1: 6, y2: 12 + ph, stroke: "var(--fg)", "stroke-width": 1.5 }));
+
+    // number of strategies against the threshold; each distance on its own scale
+    const n = runs.length, curve = s("svg", { width: hw, height: hh, class: "evo" });
+    axis(curve, pw, hh, left, ph, (v) => pct(v));
+    curve.append(s("text", { x: left - 6, y: 16, "text-anchor": "end" }, String(n)), s("text", { x: left - 6, y: 12 + ph, "text-anchor": "end" }, "1"));
+    const cy = (count) => 12 + ph - ((count - 1) / Math.max(1, n - 1)) * ph;
+    const colourOf = (x) => valueColour(motions.indexOf(x));
+    for (const x of [...motions].sort((p, q) => (p.key === state.metric) - (q.key === state.metric))) {
+      let path = "";
+      x.classes.forEach(([count], i) => { const px = left + (i / 100) * pw; path += i ? `H${px.toFixed(1)}V${cy(count).toFixed(1)}` : `M${px.toFixed(1)},${cy(count).toFixed(1)}`; });
+      curve.append(s("path", { d: path, fill: "none", stroke: colourOf(x), "stroke-width": x.key === state.metric ? 2.6 : 1.5, opacity: x.key === state.metric ? 1 : 0.75 }));
+    }
+    curve.append(s("line", { x1: left + (state.index / 100) * pw, x2: left + (state.index / 100) * pw, y1: 6, y2: 12 + ph, stroke: "var(--fg)", "stroke-width": 1.5 }));
+    const key = (items) => h("div", { class: "swatches" }, items.map(([colour, text]) => h("span", {}, h("span", { class: "dot", style: `background:${colour}` }), text)));
+    const charts = h("div", { class: "v3cols" },
+      h("div", {}, h("h2", {}, "Distances between all pairs of runs ", h("small", {}, `— “${cur.key.split(":")[1]}”; the line is the slider`)), h("div", { class: "panel" }, key([["var(--accent)", "two runs of one method"], ["color-mix(in srgb, var(--fg3) 55%, transparent)", "two runs of two methods"]]), hist, h("div", { class: "muted" }, "Number of pairs for each distance. Click a bar to move the slider there."))),
+      h("div", {}, h("h2", {}, "Number of strategies against the threshold ", h("small", {}, "— complete linkage")), h("div", { class: "panel" }, key(motions.map((x) => [colourOf(x), x.key.split(":")[1]])), curve, h("div", { class: "muted", style: "max-width:470px" }, "The horizontal axis is the threshold as a share of the largest distance of each metric, because the metrics have different scales. A flat part is a range of thresholds with the same strategies."))));
+
+    // pairs near the slider
+    const pairPanel = (p) => { const a = runs[p[0]], b = runs[p[1]], video = h("div", {});
+      const differ = book.filter((g) => a.tags && b.tags && a.tags[g.key] !== b.tags[g.key]).map((g) => `${g.key}: ${a.tags[g.key]} / ${b.tags[g.key]}`);
+      return h("div", { class: "panel pairview", style: "max-width:none" },
+        h("div", { class: "swatches" }, h("span", {}, h("span", { class: "dot", style: `background:${SIDE[0]}` }), h("a", { href: "#/t/" + a.trace }, runName(a))), h("span", {}, h("span", { class: "dot", style: `background:${SIDE[1]}` }), h("a", { href: "#/t/" + b.trace }, runName(b))),
+          h("span", {}, motions.map((x) => `${x.key.split(":")[1]} ${cm(dist(x, p))}`).join(" · "))),
+        pathPair(P, p[0], p[1], state.channel),
+        book.length ? h("div", { class: "muted" }, differ.length ? "Tags that differ: " + differ.join("; ") : "All tags are the same.") : null,
+        h("div", { class: "bar" }, h("button", { onclick: (ev) => { ev.target.disabled = true; runJob({ kind: "ghost", traces: [a.trace, b.trace], colours: SIDE, all_bodies: true, equal: true }, (job) => { ev.target.disabled = false;
+          video.replaceChildren(job.state === "done" ? h("video", { src: job.output + "?t=" + Date.now(), controls: true, loop: true, autoplay: true, muted: true, style: "max-width:720px;width:100%" }) : h("pre", { class: "log" }, job.log)); }); } }, "Render ghost video of this pair")), video); };
+    const ranked = [...pairs].sort((p, q) => Math.abs(dist(cur, p) - tau) - Math.abs(dist(cur, q) - tau));
+    const chosen = [], used = new Set();
+    for (const p of ranked.slice(0, 40)) if (chosen.length < 3 && !used.has(p[0]) && !used.has(p[1])) { chosen.push(p); used.add(p[0]); used.add(p[1]); }
+    for (const p of ranked) if (chosen.length < 3 && !chosen.includes(p)) chosen.push(p);
+
+    // two distances against each other
+    const sw = 400, sl = 52, sp = sw - sl - 12, otop = other.taus[100] || 1e-9;
+    const scatter = s("svg", { width: sw, height: sw, class: "evo" });
+    const sx = (v) => sl + (v / top) * sp, sy = (v) => 12 + (1 - v / otop) * sp;
+    for (const v of [0, 0.25, 0.5, 0.75, 1]) scatter.append(s("line", { class: "grid", x1: sx(v * top), x2: sx(v * top), y1: sy(0), y2: sy(otop) }), s("line", { class: "grid", x1: sx(0), x2: sx(top), y1: sy(v * otop), y2: sy(v * otop) }),
+      s("text", { x: sx(v * top), y: sy(0) + 14, "text-anchor": "middle" }, fmt(v * top * 100, 0)), s("text", { x: sl - 6, y: sy(v * otop) + 4, "text-anchor": "end" }, fmt(v * otop * 100, 0)));
+    scatter.append(s("text", { x: sx(top / 2), y: sw - 4, "text-anchor": "middle", style: "fill:var(--fg)" }, `${cur.name} (cm)`), s("text", { x: 12, y: sy(otop / 2), "text-anchor": "middle", transform: `rotate(-90 12 ${sy(otop / 2)})`, style: "fill:var(--fg)" }, `${other.name} (cm)`));
+    for (const p of [...pairs].sort((u, v) => (runs[u[0]].method === runs[u[1]].method) - (runs[v[0]].method === runs[v[1]].method))) {
+      const same = runs[p[0]].method === runs[p[1]].method, sel = state.picked && state.picked[0] === p[0] && state.picked[1] === p[1];
+      const dot = s("circle", { cx: sx(dist(cur, p)), cy: sy(dist(other, p)), r: sel ? 6 : 3.5, fill: same ? "var(--accent)" : "var(--fg3)", "fill-opacity": sel ? 1 : same ? 0.8 : 0.4, stroke: sel ? "var(--fg)" : "none", "stroke-width": 2, style: "cursor:pointer" });
+      dot.addEventListener("mousemove", (e) => tip(e, `${runName(runs[p[0]])}  and  ${runName(runs[p[1]])}\n${cur.key.split(":")[1]} ${cm(dist(cur, p))} · ${other.key.split(":")[1]} ${cm(dist(other, p))}\nclick to see this pair`));
+      dot.addEventListener("mouseleave", (e) => tip(e, ""));
+      dot.addEventListener("click", () => { state.picked = p; draw(); });
+      scatter.append(dot);
+    }
+    const heat = h("table", { class: "heat" }, h("tr", {}, h("th", {}), motions.map((x) => h("th", {}, x.key.split(":")[1]))),
+      motions.map((a) => h("tr", {}, h("th", {}, a.key.split(":")[1]), motions.map((b) => { const v = d.spearman[a.key][b.key]; return h("td", { style: v == null || a.key === b.key ? "" : `background:${tint(v)}`, class: a.key === b.key ? "diag" : "" }, a.key === b.key ? "1" : fmt(v)); }))));
+    const options = h("table", { class: "vocab" }, h("tr", {}, ["measure", "source", "idea", "note"].map((t) => h("th", {}, t))),
+      (d.options || []).map((o) => h("tr", {}, h("td", { style: "white-space:normal;max-width:220px" }, h("b", {}, o.name)), h("td", { style: "max-width:220px" }, o.source), h("td", { style: "max-width:400px" }, o.idea), h("td", { style: "max-width:330px" }, o.note))));
+    const choose = (label, value, opts, on) => h("label", {}, label, h("select", { onchange: (e) => on(e.target.value) }, opts.map(([v, text]) => h("option", { value: v, selected: v === value }, text))));
+
+    fill(body,
+      h("div", { class: "bar defbar" }, choose("bodies in the distances", state.bodies, d.bodies_available.map((b) => [b, `${b}: ${d.bodies_text[b]}`]), (v) => { state.bodies = v; load(); }),
+        choose("body of the path pictures", state.channel, P.channels.map((c) => [c, c]), (v) => { state.channel = v; draw(); }),
+        h("span", { class: "muted" }, `${runs.length} final policies solve ${d.instance}. A distance is in metres: the mean distance between the same body in the two runs.`)),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
+      h("div", { class: "bar defbar" }, h("b", {}, "Distance"), slider, h("b", { style: "min-width:70px" }, cm(tau)), h("span", { class: "muted" }, `0 to the largest “${cur.key.split(":")[1]}” distance of this scenario (${cm(top)})`)),
+      readout, charts,
+      h("h2", {}, `What a distance of ${cm(tau)} looks like `, h("small", {}, `— the ${chosen.length} pairs of runs with the “${cur.key.split(":")[1]}” distance nearest to the slider; path of “${state.channel}”`)), chosen.map(pairPanel),
+      h("h2", {}, "Two distances against each other ", h("small", {}, "— one dot per pair of runs"), choose("", state.other, motions.filter((x) => x.key !== state.metric).map((x) => [x.key, "vertical: " + x.name]), (v) => { state.other = v; draw(); })),
+      h("div", { class: "v3cols" }, h("div", { class: "panel", style: "max-width:none" }, key([["var(--accent)", "two runs of one method"], ["color-mix(in srgb, var(--fg3) 55%, transparent)", "two runs of two methods"]]), scatter),
+        h("div", { class: "panel" }, h("div", { class: "muted", style: "margin-bottom:6px" }, "Rank correlation (Spearman) between the distances, over all pairs of runs."), heat)),
+      state.picked ? h("h2", {}, "Selected pair") : null, state.picked ? pairPanel(state.picked) : null,
+      h("h2", {}, "Other measures in the literature ", h("small", {}, "— not in this viewer")), h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, options));
+  };
+  app.replaceChildren(h("div", { class: "bar" }, h("a", { href: "#/v/" + name }, "three views of this scenario →"), h("a", { href: "#/m/" + name }, "contact distance metrics →")), body);
+  await load();
+}
+
+async function pageViewsAll() {
+  const app = $("#app");
+  $("#crumbs").replaceChildren("three views of all scenarios");
+  app.replaceChildren(h("p", { class: "muted" }, "loading… (the first request computes the motion distances of each scenario; this takes some minutes)"));
+  const d = await j("/api/views_overview");
+  const rows = d.scenarios.filter((sc) => sc.sees);
+  const cell = (v) => h("td", { style: v == null ? "" : `background:${tint((v - 0.5) * 2)}` }, v == null ? "–" : fmt(v));
+  const mean = (xs) => { const v = xs.filter((x) => x != null); return v.length ? v.reduce((p, q) => p + q, 0) / v.length : null; };
+  const groups = rows.flatMap((sc) => Object.keys(sc.sees.contact.groups).map((g) => [sc.sees.contact.groups[g], (sc.sees.motion || { groups: {} }).groups[g]])).filter(([c, m]) => c != null && m != null);
+  const count = (fn) => groups.filter(([c, m]) => fn(c, m)).length;
+  const table = h("table", { class: "heat" },
+    h("tr", {}, h("th", {}, "scenario"), h("th", {}, "runs"), h("th", { title: "Contact strategies and their effective number, with the tuned definition of the simulator." }, "contact strategies"), h("th", { title: "Combinations of the values of the first two tag groups, and their effective number." }, "semantic strategies"),
+      h("th", {}, "first tag group"), h("th", { title: "Separation of the first tag group by the elastic mode distance." }, "contact sees it"), h("th", { title: "Separation of the first tag group by dynamic time warping of the motion." }, "motion sees it"),
+      h("th", { title: "Mean separation over all tag groups of the scenario." }, "contact, all groups"), h("th", {}, "motion, all groups")),
+    rows.map((sc) => h("tr", {}, h("th", {}, h("a", { href: "#/v/" + sc.name }, sc.name)), h("td", {}, String(sc.runs)),
+      h("td", {}, `${sc.contact.strategies} · ${fmt(sc.contact.effective, 1)}`), h("td", {}, `${sc.semantic.strategies} · ${fmt(sc.semantic.effective, 1)}`),
+      h("th", { style: "white-space:normal;max-width:330px", title: sc.main.question }, h("b", {}, sc.main.key), ": " + Object.entries(sc.main.values).filter(([, n]) => n).map(([v, n]) => `${v} ${n}`).join(", ")),
+      cell(sc.sees.contact.main), cell(sc.sees.motion ? sc.sees.motion.main : null), cell(sc.sees.contact.mean), cell(sc.sees.motion ? sc.sees.motion.mean : null))),
+    h("tr", { class: "foot" }, h("th", { colspan: 5 }, `mean of the ${rows.length} scenarios`), cell(mean(rows.map((sc) => sc.sees.contact.main))), cell(mean(rows.map((sc) => sc.sees.motion && sc.sees.motion.main))), cell(mean(rows.map((sc) => sc.sees.contact.mean))), cell(mean(rows.map((sc) => sc.sees.motion && sc.sees.motion.mean)))));
+  app.replaceChildren(
+    h("p", { class: "defn" }, "One row for each scenario: the final policies that solve the first start scene, in three views. A semantic strategy is a combination of the values of the first two tag groups. ",
+      "“Sees it” is the probability that two runs with different tag values are farther apart than two runs with the same value (0.5 = the distance does not see the tag group, 1 = full separation). The tags are not yet checked by a person. ",
+      h("b", {}, "The two views are not on equal terms here: "), "most tag rules use the motion of the bodies (87 of 142 tag groups) and fewer use the contacts (24). A view agrees more with the tag groups that come from its own data."),
+    h("div", { class: "tiles" }, tile(String(groups.length), "tag groups in all scenarios"), tile(String(count((c, m) => Math.max(c, m) >= 0.8)), "a view separates the values well (0.8 or more)"),
+      tile(String(count((c, m) => m > c + 0.1)), "the motion view is better by 0.1 or more"), tile(String(count((c, m) => c > m + 0.1)), "the contact view is better by 0.1 or more"), tile(String(count((c, m) => Math.max(c, m) < 0.65)), "no view sees the tag group (both below 0.65)")),
+    h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table));
+}
+
 async function route() {
   tip({}, "");
   const [, page, ...rest] = decodeURIComponent(location.hash || "#/").split("/");
@@ -1668,6 +2103,8 @@ async function route() {
     else if (page === "h") await pageHistories(rest[0]);
     else if (page === "d") await (rest[0] ? pageDiversity(rest[0]) : pageDiversityAll());
     else if (page === "m") await pageMetrics(rest[0]);
+    else if (page === "v") await (rest[0] ? pageViews(rest[0]) : pageViewsAll());
+    else if (page === "vm") await pageMotionDistances(rest[0]);
     else await pageIndex();
   } catch (err) {
     $("#app").replaceChildren(h("p", {}, "Error: " + err.message));

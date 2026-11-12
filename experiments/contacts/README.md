@@ -54,6 +54,11 @@ simulator; their contacts are built from the geometry (see "Simulator backends")
 | `experiments/contacts/repeat.py` | Repeatability of a strategy definition: the final policy of each run on several start scenes; within-policy and between-run distances, the thresholds they give, and the probability that two runs are farther apart than one policy is from itself |
 | `experiments/contacts/catalog.py` | Scenario tags (simulator, robot, dimension, dynamics) and thumbnails |
 | `experiments/contacts/viewer.py`, `static/` | The contact viewer (stdlib HTTP server, vanilla JS) |
+| `experiments/contacts/motion.py` | The motion view: the task-space motion of a trace (end effector, base, each movable object; `motion.npz` next to the trace) and six distances between two motions, each a standard measure of trajectory similarity: `locked` (lock-step), `warp` (dynamic time warping), `frechet` (discrete Frechet), `arc` (arc-length sampling), `places` (average Hausdorff), `phase` (warping on position and velocity). `BODIES` selects the bodies that a distance uses |
+| `experiments/contacts/semantic.py`, `semantic/<scenario>.json` | The semantic view: tag groups (a codebook) and the tags of each final policy, with the evidence of each run; `separation` measures how well a distance agrees with a tag group; `build` runs the rules of a scenario and writes its file (`python -m experiments.contacts.semantic <scenario>`). Files for all 28 scenarios; the tags are not yet checked by a person |
+| `experiments/contacts/features.py` | The measured numbers of a final policy (`Run`: motion, contact pairs, program text) and helpers for the rules (`summary`, `moved_order`, `bouts`, `path_length`). `python -m experiments.contacts.features <scenario>` prints the spread of the numbers over the runs: read it before you write rules |
+| `experiments/contacts/tag_rules/<scenario>.py` | The rules of the semantic tags as code: `CODEBOOK` (the tag groups), `METHOD` (what the reader looked at), `INSIGHTS` (the main observations of the scenario, shown on its pages) and `label(run)` (tags and evidence of one run) |
+| `experiments/contacts/views.py` | The three views on the same runs (`scenario_views`): the distances of each view, a 2-D map of each distance, the agreement of each distance with each tag group, the paths of the bodies. `summary` is the row of a scenario in the table of all scenarios. The motion distances are kept in `outputs/contact_traces/_scenarios/<scenario>/motion_<bodies>.npz`. Viewer pages `#/v` (all scenarios), `#/v/<scenario>` and `#/vm/<scenario>` (the motion distances: definitions, sources, a threshold slider, example pairs, other measures of the literature), routes `/api/views_overview` and `/api/views`; `python -m experiments.contacts.views <scenario>` prints the agreement table |
 | `experiments/contacts/briefing.py` | What the agent was told: `env_description.md` and the system prompt and prompt from the start of `run_experiment.log`, grouped into variants with equal text (`/api/briefing`, the panel "Information given to the agent" on a scenario page) |
 
 Design points worth knowing:
@@ -510,6 +515,73 @@ the preset of its family (`strategy.TUNED_PRESET`, `TUNED_PRESET_OF_ROBOT`).
   `pylint` (`./run_ci_checks.sh`, needs the `develop` extra) were not.
 - `things_to_fix.md` (repo root, untracked on purpose) lists dataset/viewer issues to
   report upstream.
+
+## Three views: contact, motion, semantic
+
+The contact view says what touches what. Two more views describe the same final
+policies (the final policy of each run that solves start scene 0):
+
+- **Motion view** (`motion.py`): the positions of the end effector, the base and each
+  movable object in each env step. Orientations are not used. Six distances, each a
+  standard measure of trajectory similarity (see the docstring of `motion.py`). MuJoCo
+  and PyBullet positions come from a replay of the recorded states; the 2D positions
+  come from the trace.
+- **Semantic view** (`semantic.py`, `tag_rules/`): for each scenario, a few questions
+  about the solution (tag groups), each with a closed set of values and a rule on
+  measured numbers. A semantic strategy is a combination of tag values.
+
+The semantic tags are the reference: they show what each distance sees. The measure is
+`semantic.separation`: the probability that two runs with different tag values are
+farther apart than two runs with the same value (0.5 = no relation, 1 = full separation).
+
+### Results (28 scenarios, 142 tag groups)
+
+- The mean separation of the first tag group of a scenario is 0.64 for the contact view
+  (elastic mode distance) and 0.75 for the motion view (dynamic time warping).
+- A view separates the values well (0.8 or more) for 37 tag groups. The motion view is
+  better by 0.1 or more for 46 tag groups, the contact view for 28. No view sees 68 tag
+  groups (both below 0.65).
+- The contact view sees what the robot touches and with which part: the tool
+  (sweepintodrawer3d 1.00), the hold (rearrange3d 0.92), side effects, the number of
+  pushes (dynpusht2d 0.89).
+- The motion view sees where the bodies go: the order of the objects
+  (constrainedcupboard3d 1.00), the route (stickbutton2d 0.91), the swing of a throw
+  (tossing3d 0.83), which rover takes the samples (rovers 0.98).
+- No view sees a short event (the release direction of a throw), small differences of a
+  place (the layout on a shelf) or the pace. A mean over the full episode hides them.
+- The time-free motion distances (warping, Frechet, arc length, average Hausdorff) give
+  almost the same ranks. The choice of the bodies changes more than the choice of the
+  distance. A velocity term (`phase`) gives no gain.
+- Some scenarios have one solution only in the semantic view (motion2d: one route;
+  basemotion3d: one straight drive), where the contact view reports several strategies.
+- Solutions that the task text does not expect are visible in the tags: in scooppour3d
+  no run uses the scoop and two runs move the target bin, not the cubes; in
+  sweepintodrawer3d and sweepsimple3d one run of 22 and one of 15 use the wiper.
+
+### Limits
+
+- A reader that is a language model (the file names it) proposed the tag groups and the
+  thresholds of the rules from the numbers of the runs. No person checked them. For
+  most scenarios no pictures and no program text were read (`METHOD` in each rule file).
+- **The comparison of the two views is not on equal terms.** The rule of a tag group
+  uses the motion of the bodies in 87 of 142 groups, the contacts in 24, the number of
+  env steps in 25. A view agrees more with the groups that come from its own data: for
+  the motion groups the mean separation is 0.60 (contact) and 0.69 (motion); for the
+  contact groups it is 0.65 (contact) and 0.57 (motion). The `source` of a group says
+  where its rule comes from. Tags from pictures or from the program text have no such
+  bias; only tossing3d has them.
+- The tags describe the final policy on start scene 0. Commit histories are not tagged.
+- The motion view has positions only. An angle (the pose of the T block in dynpusht2d)
+  is not seen.
+
+### Add or correct tags
+
+```bash
+uv run python -m experiments.contacts.features <scenario>   # the numbers of the runs
+# edit experiments/contacts/tag_rules/<scenario>.py
+uv run python -m experiments.contacts.semantic <scenario>   # write semantic/<scenario>.json
+uv run python -m experiments.contacts.views <scenario>      # agreement of each distance
+```
 
 ## Setup on a new machine
 

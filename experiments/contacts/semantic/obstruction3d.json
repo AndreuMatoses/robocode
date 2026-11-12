@@ -1,0 +1,649 @@
+{
+ "scenario": "obstruction3d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 32 runs (order, shift and lift of the two obstructions and of the target block, base path, contact pairs). No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/obstruction3d.py"
+ },
+ "insights": [
+  "All runs do the same three steps: an obstruction, the other obstruction, the target block. The contact view finds 2 strategies.",
+  "The differences are in the places: 21 runs put the obstructions just beside the region, and 11 runs put them 25 cm or more away. All opus55 and opus55-source runs put them beside.",
+  "The base does not move in 17 of 32 runs: the arm does all the work."
+ ],
+ "codebook": [
+  {
+   "key": "order",
+   "question": "Which obstruction moves first?",
+   "source": "motion",
+   "values": {
+    "obstruction1_first": "obstruction1 moves first.",
+    "obstruction0_first": "obstruction0 moves first."
+   },
+   "rule": "first motion of each obstruction"
+  },
+  {
+   "key": "drop_zone",
+   "question": "How far from the region does the robot put the obstructions?",
+   "source": "motion",
+   "values": {
+    "beside": "No obstruction ends 25 cm or more from its start: just off the region.",
+    "far": "An obstruction ends 25 cm or more from its start."
+   },
+   "rule": "largest shift of an obstruction"
+  },
+  {
+   "key": "base",
+   "question": "Does the base move?",
+   "source": "motion",
+   "values": {
+    "fixed": "The base path is below 20 cm: the arm does all the work.",
+    "moves": "The base path is 20 cm or more."
+   },
+   "rule": "length of the base path"
+  },
+  {
+   "key": "carry",
+   "question": "How high does the robot carry a block?",
+   "source": "motion",
+   "values": {
+    "low": "No block goes 10 cm or more above its start.",
+    "high": "A block goes 10 cm or more above its start."
+   },
+   "rule": "largest height of a block above its start"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 70 env steps.",
+    "slow": "More than 70 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/obstruction3d/seed24": {
+   "order": "obstruction0_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/obstruction3d/seed42": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/obstruction3d/seed222": {
+   "order": "obstruction0_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55/obstruction3d/seed424": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "opus55/obstruction3d/seed444": {
+   "order": "obstruction0_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/obstruction3d/seed24": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/obstruction3d/seed42": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus55-source/obstruction3d/seed222": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus55-source/obstruction3d/seed424": {
+   "order": "obstruction0_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "opus55-source/obstruction3d/seed444": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5/obstruction3d/seed24": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "opus5/obstruction3d/seed42": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "opus5/obstruction3d/seed222": {
+   "order": "obstruction0_first",
+   "drop_zone": "far",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "opus5/obstruction3d/seed424": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5/obstruction3d/seed444": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5-source/obstruction3d/seed24": {
+   "order": "obstruction0_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "opus5-source/obstruction3d/seed42": {
+   "order": "obstruction0_first",
+   "drop_zone": "far",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "opus5-source/obstruction3d/seed222": {
+   "order": "obstruction0_first",
+   "drop_zone": "beside",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "opus5-source/obstruction3d/seed424": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "opus5-source/obstruction3d/seed444": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "fixed",
+   "carry": "low",
+   "pace": "quick"
+  },
+  "astra/obstruction3d/seed24": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "astra/obstruction3d/seed42": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/obstruction3d/seed222": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "fixed",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/obstruction3d/seed424": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra/obstruction3d/seed444": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "moves",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "astra-source/obstruction3d/seed24": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "high",
+   "pace": "quick"
+  },
+  "astra-source/obstruction3d/seed42": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra-source/obstruction3d/seed222": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra-source/obstruction3d/seed424": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "astra-source/obstruction3d/seed444": {
+   "order": "obstruction1_first",
+   "drop_zone": "beside",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  },
+  "sol/obstruction3d/seed24": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "moves",
+   "carry": "low",
+   "pace": "slow"
+  },
+  "sol/obstruction3d/seed444": {
+   "order": "obstruction1_first",
+   "drop_zone": "far",
+   "base": "moves",
+   "carry": "high",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/obstruction3d/seed24": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.12,
+   "largest_lift_m": 0.06,
+   "base_path_m": 1.32,
+   "steps": 25
+  },
+  "opus55/obstruction3d/seed42": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.2,
+   "largest_lift_m": 0.04,
+   "base_path_m": 0.0,
+   "steps": 38
+  },
+  "opus55/obstruction3d/seed222": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.24,
+   "largest_lift_m": 0.04,
+   "base_path_m": 0.67,
+   "steps": 51
+  },
+  "opus55/obstruction3d/seed424": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.22,
+   "largest_lift_m": 0.14,
+   "base_path_m": 0.0,
+   "steps": 68
+  },
+  "opus55/obstruction3d/seed444": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.2,
+   "largest_lift_m": 0.06,
+   "base_path_m": 0.0,
+   "steps": 45
+  },
+  "opus55-source/obstruction3d/seed24": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.09,
+   "largest_lift_m": 0.06,
+   "base_path_m": 0.93,
+   "steps": 15
+  },
+  "opus55-source/obstruction3d/seed42": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.13,
+   "largest_lift_m": 0.11,
+   "base_path_m": 0.08,
+   "steps": 84
+  },
+  "opus55-source/obstruction3d/seed222": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.22,
+   "largest_lift_m": 0.05,
+   "base_path_m": 0.05,
+   "steps": 38
+  },
+  "opus55-source/obstruction3d/seed424": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.1,
+   "largest_lift_m": 0.12,
+   "base_path_m": 0.0,
+   "steps": 58
+  },
+  "opus55-source/obstruction3d/seed444": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.13,
+   "largest_lift_m": 0.02,
+   "base_path_m": 0.0,
+   "steps": 19
+  },
+  "opus5/obstruction3d/seed24": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.14,
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.0,
+   "steps": 62
+  },
+  "opus5/obstruction3d/seed42": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.2,
+   "largest_lift_m": 0.08,
+   "base_path_m": 0.0,
+   "steps": 102
+  },
+  "opus5/obstruction3d/seed222": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.55,
+   "largest_lift_m": 0.1,
+   "base_path_m": 0.0,
+   "steps": 154
+  },
+  "opus5/obstruction3d/seed424": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.13,
+   "largest_lift_m": 0.14,
+   "base_path_m": 0.0,
+   "steps": 143
+  },
+  "opus5/obstruction3d/seed444": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.2,
+   "largest_lift_m": 0.19,
+   "base_path_m": 1.0,
+   "steps": 200
+  },
+  "opus5-source/obstruction3d/seed24": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.12,
+   "largest_lift_m": 0.12,
+   "base_path_m": 0.0,
+   "steps": 53
+  },
+  "opus5-source/obstruction3d/seed42": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.32,
+   "largest_lift_m": 0.18,
+   "base_path_m": 0.0,
+   "steps": 98
+  },
+  "opus5-source/obstruction3d/seed222": {
+   "order": [
+    "obstruction0",
+    "obstruction1",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.09,
+   "largest_lift_m": 0.13,
+   "base_path_m": 0.0,
+   "steps": 36
+  },
+  "opus5-source/obstruction3d/seed424": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.49,
+   "largest_lift_m": 0.09,
+   "base_path_m": 0.0,
+   "steps": 71
+  },
+  "opus5-source/obstruction3d/seed444": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.45,
+   "largest_lift_m": 0.05,
+   "base_path_m": 0.0,
+   "steps": 51
+  },
+  "astra/obstruction3d/seed24": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.17,
+   "largest_lift_m": 0.14,
+   "base_path_m": 1.33,
+   "steps": 70
+  },
+  "astra/obstruction3d/seed42": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.63,
+   "largest_lift_m": 0.1,
+   "base_path_m": 2.67,
+   "steps": 149
+  },
+  "astra/obstruction3d/seed222": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.52,
+   "largest_lift_m": 0.21,
+   "base_path_m": 0.0,
+   "steps": 123
+  },
+  "astra/obstruction3d/seed424": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.59,
+   "largest_lift_m": 0.21,
+   "base_path_m": 2.86,
+   "steps": 131
+  },
+  "astra/obstruction3d/seed444": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.63,
+   "largest_lift_m": 0.14,
+   "base_path_m": 3.79,
+   "steps": 58
+  },
+  "astra-source/obstruction3d/seed24": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.15,
+   "largest_lift_m": 0.21,
+   "base_path_m": 1.53,
+   "steps": 69
+  },
+  "astra-source/obstruction3d/seed42": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.09,
+   "largest_lift_m": 0.18,
+   "base_path_m": 1.52,
+   "steps": 157
+  },
+  "astra-source/obstruction3d/seed222": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.69,
+   "largest_lift_m": 0.18,
+   "base_path_m": 3.03,
+   "steps": 114
+  },
+  "astra-source/obstruction3d/seed424": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.11,
+   "largest_lift_m": 0.18,
+   "base_path_m": 1.62,
+   "steps": 106
+  },
+  "astra-source/obstruction3d/seed444": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.08,
+   "largest_lift_m": 0.2,
+   "base_path_m": 1.39,
+   "steps": 122
+  },
+  "sol/obstruction3d/seed24": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.6,
+   "largest_lift_m": 0.08,
+   "base_path_m": 3.11,
+   "steps": 162
+  },
+  "sol/obstruction3d/seed444": {
+   "order": [
+    "obstruction1",
+    "obstruction0",
+    "target_block"
+   ],
+   "largest_obstruction_shift_m": 0.61,
+   "largest_lift_m": 0.19,
+   "base_path_m": 2.0,
+   "steps": 641
+  }
+ }
+}

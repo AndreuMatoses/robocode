@@ -107,7 +107,7 @@ def within_between(dist: np.ndarray, methods: list[str]) -> dict[str, Any]:
     return out
 
 
-def _mds(dist: np.ndarray) -> np.ndarray:
+def mds(dist: np.ndarray) -> np.ndarray:
     """Classical multidimensional scaling to two dimensions."""
     n = len(dist)
     if n < 3:
@@ -185,7 +185,7 @@ def scenario_diversity(
         raise ValueError(f"unknown grouping {group!r}")
     ranked = [label for label, _ in Counter(labels).most_common()]
     ids = {label: f"S{i}" for i, label in enumerate(ranked, 1)}
-    coords = _mds(dist)
+    coords = mds(dist)
     for i, run in enumerate(solved_runs):
         run["sid"] = ids[labels[i]]
         run["modes"] = len(keys[i])

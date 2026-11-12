@@ -1,0 +1,524 @@
+{
+ "scenario": "dynscooppour2d",
+ "instance": "inst0",
+ "population": "final policy of each run that solves the instance",
+ "provenance": {
+  "reader": "Claude (claude-fable-5-2)",
+  "date": "2026-11-12",
+  "status": "not checked by a person",
+  "method": "Tag groups proposed after a look at the numbers of all 30 runs (when each small object passes the wall, how high it goes, motion of the hook, contact pairs). The scene is a side view: y is up; the wall is at x = 1.75 m and is 1.5 m high. No pictures and no program text were read.",
+  "rules": "experiments/contacts/tag_rules/dynscooppour2d.py"
+ },
+ "insights": [
+  "29 of 30 runs use the hook as a scoop. One run (astra seed42) moves the objects with the arm and the gripper.",
+  "The objects pass the wall in one trip in 9 runs, in two trips in 16 runs, and in three trips or more in 5 runs.",
+  "11 runs stop near the necessary 50 % (60 % of the objects or less on the right). 19 runs move more."
+ ],
+ "codebook": [
+  {
+   "key": "tool",
+   "question": "Does the robot use the hook as a scoop?",
+   "source": "motion and contacts",
+   "values": {
+    "hook": "The gripper holds the hook, and the hook moves the objects.",
+    "no_hook": "The hook stays in its place: the arm and the gripper move the objects."
+   },
+   "rule": "hook if the hook moves 10 cm or more"
+  },
+  {
+   "key": "trips",
+   "question": "In how many trips do the objects pass the wall?",
+   "source": "motion",
+   "values": {
+    "one": "All objects that pass the wall do so in one group.",
+    "two": "In two groups.",
+    "three_or_more": "In three groups or more."
+   },
+   "rule": "number of groups of the env steps at which an object passes x = 1.75 m (a gap of more than 20 env steps splits two groups)"
+  },
+  {
+   "key": "share",
+   "question": "How many objects are on the right at the end?",
+   "source": "motion",
+   "values": {
+    "just_enough": "60 % of the objects or less (the task needs 50 %).",
+    "more": "More than 60 % of the objects."
+   },
+   "rule": "share of the small objects with x above 1.75 m in the last state"
+  },
+  {
+   "key": "height",
+   "question": "How high do the objects go?",
+   "source": "motion",
+   "values": {
+    "low": "No object goes above y = 2.4 m: just over the wall.",
+    "high": "An object goes above y = 2.4 m."
+   },
+   "rule": "largest height of a small object"
+  },
+  {
+   "key": "pace",
+   "question": "How long is the episode?",
+   "source": "motion",
+   "values": {
+    "quick": "At most 639 env steps.",
+    "slow": "More than 639 env steps."
+   },
+   "rule": "number of env steps"
+  }
+ ],
+ "labels": {
+  "opus55/dynscooppour2d/seed24": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "more",
+   "height": "high",
+   "pace": "quick"
+  },
+  "opus55/dynscooppour2d/seed42": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "just_enough",
+   "height": "high",
+   "pace": "quick"
+  },
+  "opus55/dynscooppour2d/seed222": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "just_enough",
+   "height": "high",
+   "pace": "quick"
+  },
+  "opus55/dynscooppour2d/seed424": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "more",
+   "height": "low",
+   "pace": "quick"
+  },
+  "opus55/dynscooppour2d/seed444": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "quick"
+  },
+  "opus55-source/dynscooppour2d/seed24": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "just_enough",
+   "height": "high",
+   "pace": "slow"
+  },
+  "opus55-source/dynscooppour2d/seed42": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "just_enough",
+   "height": "low",
+   "pace": "quick"
+  },
+  "opus55-source/dynscooppour2d/seed222": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "opus55-source/dynscooppour2d/seed444": {
+   "tool": "hook",
+   "trips": "three_or_more",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "opus5/dynscooppour2d/seed24": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "quick"
+  },
+  "opus5/dynscooppour2d/seed42": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "high",
+   "pace": "quick"
+  },
+  "opus5/dynscooppour2d/seed222": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "quick"
+  },
+  "opus5/dynscooppour2d/seed424": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "high",
+   "pace": "quick"
+  },
+  "opus5/dynscooppour2d/seed444": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "opus5-source/dynscooppour2d/seed42": {
+   "tool": "hook",
+   "trips": "three_or_more",
+   "share": "just_enough",
+   "height": "low",
+   "pace": "slow"
+  },
+  "opus5-source/dynscooppour2d/seed222": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "just_enough",
+   "height": "low",
+   "pace": "quick"
+  },
+  "astra/dynscooppour2d/seed24": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "just_enough",
+   "height": "high",
+   "pace": "quick"
+  },
+  "astra/dynscooppour2d/seed42": {
+   "tool": "no_hook",
+   "trips": "two",
+   "share": "just_enough",
+   "height": "low",
+   "pace": "slow"
+  },
+  "astra/dynscooppour2d/seed222": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "just_enough",
+   "height": "high",
+   "pace": "quick"
+  },
+  "astra/dynscooppour2d/seed424": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "astra/dynscooppour2d/seed444": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "just_enough",
+   "height": "high",
+   "pace": "quick"
+  },
+  "astra-source/dynscooppour2d/seed24": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "astra-source/dynscooppour2d/seed42": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "high",
+   "pace": "slow"
+  },
+  "astra-source/dynscooppour2d/seed424": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "astra-source/dynscooppour2d/seed444": {
+   "tool": "hook",
+   "trips": "one",
+   "share": "more",
+   "height": "high",
+   "pace": "quick"
+  },
+  "sol/dynscooppour2d/seed24": {
+   "tool": "hook",
+   "trips": "three_or_more",
+   "share": "more",
+   "height": "high",
+   "pace": "quick"
+  },
+  "sol/dynscooppour2d/seed42": {
+   "tool": "hook",
+   "trips": "three_or_more",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "sol/dynscooppour2d/seed222": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "more",
+   "height": "high",
+   "pace": "slow"
+  },
+  "sol/dynscooppour2d/seed424": {
+   "tool": "hook",
+   "trips": "three_or_more",
+   "share": "more",
+   "height": "low",
+   "pace": "slow"
+  },
+  "sol/dynscooppour2d/seed444": {
+   "tool": "hook",
+   "trips": "two",
+   "share": "just_enough",
+   "height": "high",
+   "pace": "slow"
+  }
+ },
+ "evidence": {
+  "opus55/dynscooppour2d/seed24": {
+   "objects_on_the_right": "20 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.57,
+   "hook_path_m": 9.33,
+   "base_path_m": 8.86,
+   "steps": 280
+  },
+  "opus55/dynscooppour2d/seed42": {
+   "objects_on_the_right": "18 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.53,
+   "hook_path_m": 11.23,
+   "base_path_m": 8.55,
+   "steps": 288
+  },
+  "opus55/dynscooppour2d/seed222": {
+   "objects_on_the_right": "17 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.49,
+   "hook_path_m": 8.91,
+   "base_path_m": 13.17,
+   "steps": 437
+  },
+  "opus55/dynscooppour2d/seed424": {
+   "objects_on_the_right": "19 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.19,
+   "hook_path_m": 7.35,
+   "base_path_m": 10.02,
+   "steps": 306
+  },
+  "opus55/dynscooppour2d/seed444": {
+   "objects_on_the_right": "20 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.08,
+   "hook_path_m": 24.12,
+   "base_path_m": 17.1,
+   "steps": 571
+  },
+  "opus55-source/dynscooppour2d/seed24": {
+   "objects_on_the_right": "16 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.69,
+   "hook_path_m": 24.04,
+   "base_path_m": 21.58,
+   "steps": 672
+  },
+  "opus55-source/dynscooppour2d/seed42": {
+   "objects_on_the_right": "16 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.3,
+   "hook_path_m": 18.51,
+   "base_path_m": 19.89,
+   "steps": 634
+  },
+  "opus55-source/dynscooppour2d/seed222": {
+   "objects_on_the_right": "19 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.24,
+   "hook_path_m": 29.6,
+   "base_path_m": 22.13,
+   "steps": 832
+  },
+  "opus55-source/dynscooppour2d/seed444": {
+   "objects_on_the_right": "23 of 30",
+   "groups_that_pass_the_wall": 4,
+   "largest_height_m": 1.85,
+   "hook_path_m": 28.84,
+   "base_path_m": 21.4,
+   "steps": 706
+  },
+  "opus5/dynscooppour2d/seed24": {
+   "objects_on_the_right": "20 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.14,
+   "hook_path_m": 18.48,
+   "base_path_m": 17.66,
+   "steps": 639
+  },
+  "opus5/dynscooppour2d/seed42": {
+   "objects_on_the_right": "23 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.96,
+   "hook_path_m": 21.14,
+   "base_path_m": 14.26,
+   "steps": 596
+  },
+  "opus5/dynscooppour2d/seed222": {
+   "objects_on_the_right": "20 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.28,
+   "hook_path_m": 20.04,
+   "base_path_m": 15.55,
+   "steps": 582
+  },
+  "opus5/dynscooppour2d/seed424": {
+   "objects_on_the_right": "21 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.62,
+   "hook_path_m": 18.43,
+   "base_path_m": 17.19,
+   "steps": 548
+  },
+  "opus5/dynscooppour2d/seed444": {
+   "objects_on_the_right": "20 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.17,
+   "hook_path_m": 17.63,
+   "base_path_m": 17.75,
+   "steps": 645
+  },
+  "opus5-source/dynscooppour2d/seed42": {
+   "objects_on_the_right": "18 of 30",
+   "groups_that_pass_the_wall": 3,
+   "largest_height_m": 2.0,
+   "hook_path_m": 26.22,
+   "base_path_m": 22.69,
+   "steps": 884
+  },
+  "opus5-source/dynscooppour2d/seed222": {
+   "objects_on_the_right": "18 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.13,
+   "hook_path_m": 17.68,
+   "base_path_m": 15.53,
+   "steps": 502
+  },
+  "astra/dynscooppour2d/seed24": {
+   "objects_on_the_right": "17 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.48,
+   "hook_path_m": 9.92,
+   "base_path_m": 9.89,
+   "steps": 333
+  },
+  "astra/dynscooppour2d/seed42": {
+   "objects_on_the_right": "18 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.21,
+   "hook_path_m": 0.0,
+   "base_path_m": 17.09,
+   "steps": 688
+  },
+  "astra/dynscooppour2d/seed222": {
+   "objects_on_the_right": "18 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.58,
+   "hook_path_m": 11.46,
+   "base_path_m": 13.25,
+   "steps": 431
+  },
+  "astra/dynscooppour2d/seed424": {
+   "objects_on_the_right": "27 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.34,
+   "hook_path_m": 17.16,
+   "base_path_m": 22.1,
+   "steps": 864
+  },
+  "astra/dynscooppour2d/seed444": {
+   "objects_on_the_right": "15 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.49,
+   "hook_path_m": 9.42,
+   "base_path_m": 14.64,
+   "steps": 498
+  },
+  "astra-source/dynscooppour2d/seed24": {
+   "objects_on_the_right": "23 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.3,
+   "hook_path_m": 15.44,
+   "base_path_m": 21.76,
+   "steps": 734
+  },
+  "astra-source/dynscooppour2d/seed42": {
+   "objects_on_the_right": "22 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.45,
+   "hook_path_m": 15.46,
+   "base_path_m": 21.46,
+   "steps": 695
+  },
+  "astra-source/dynscooppour2d/seed424": {
+   "objects_on_the_right": "21 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.22,
+   "hook_path_m": 19.24,
+   "base_path_m": 21.62,
+   "steps": 701
+  },
+  "astra-source/dynscooppour2d/seed444": {
+   "objects_on_the_right": "22 of 30",
+   "groups_that_pass_the_wall": 1,
+   "largest_height_m": 2.47,
+   "hook_path_m": 10.71,
+   "base_path_m": 14.26,
+   "steps": 503
+  },
+  "sol/dynscooppour2d/seed24": {
+   "objects_on_the_right": "20 of 30",
+   "groups_that_pass_the_wall": 3,
+   "largest_height_m": 2.51,
+   "hook_path_m": 17.77,
+   "base_path_m": 17.84,
+   "steps": 639
+  },
+  "sol/dynscooppour2d/seed42": {
+   "objects_on_the_right": "22 of 30",
+   "groups_that_pass_the_wall": 3,
+   "largest_height_m": 1.87,
+   "hook_path_m": 19.54,
+   "base_path_m": 17.84,
+   "steps": 679
+  },
+  "sol/dynscooppour2d/seed222": {
+   "objects_on_the_right": "21 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.8,
+   "hook_path_m": 26.61,
+   "base_path_m": 19.97,
+   "steps": 874
+  },
+  "sol/dynscooppour2d/seed424": {
+   "objects_on_the_right": "19 of 30",
+   "groups_that_pass_the_wall": 3,
+   "largest_height_m": 2.28,
+   "hook_path_m": 26.06,
+   "base_path_m": 24.75,
+   "steps": 837
+  },
+  "sol/dynscooppour2d/seed444": {
+   "objects_on_the_right": "16 of 30",
+   "groups_that_pass_the_wall": 2,
+   "largest_height_m": 2.63,
+   "hook_path_m": 24.22,
+   "base_path_m": 21.2,
+   "steps": 789
+  }
+ }
+}
