@@ -146,10 +146,29 @@ def start_job(body: dict[str, Any]) -> Job:
         args += ["--data", str(CONFIG.data), "--out", str(traces)]
         label = f"record {len(body['runs'])} run(s)"
         return _enqueue("record", label, _python("record", *args), None)
+    scene = body.get("scene")
+    if scene not in (None, *catalog.SCENES):
+        raise ValueError(f"unknown scene {scene!r}")
+    if scene and kind in ("video", "ghost"):  # only the MuJoCo scenes have a choice
+        first = _trace_dir(body["trace"] if kind == "video" else body["traces"][0])
+        if load_meta(first).get("backend", "mujoco") != "mujoco":
+            scene = None
     if kind == "video":
         directory = _trace_dir(body["trace"])
-        out = directory / "video.mp4"
+        out = directory / (
+            "video.mp4" if scene in (None, "plain") else f"video_{scene}.mp4"
+        )
         cmd = _python("replay", "video", str(directory), "-o", str(out))
+        cmd += ["--scene", scene] if scene else []
+        trace = directory / "trace.npz"
+        if scene and out.exists() and trace.stat().st_mtime < out.stat().st_mtime:
+            with _LOCK:
+                job = Job(
+                    f"job{len(JOBS) + 1}", "video", "episode video", cmd, _file_url(out)
+                )
+                job.state, job.log = "done", "reused the video of an earlier render"
+                JOBS[job.job_id] = job
+            return job
         return _enqueue("video", "episode video", cmd, _file_url(out))
     if kind == "contact":
         directory = _trace_dir(body["trace"])
@@ -161,6 +180,7 @@ def start_job(body: dict[str, Any]) -> Job:
         colours = [str(c) for c in body.get("colours", [])]
         all_bodies, equal = bool(body.get("all_bodies")), bool(body.get("equal"))
         key = json.dumps([body["traces"], colours, all_bodies, equal])
+        key += f"|{scene}" if scene not in (None, "plain") else ""
         digest = hashlib.sha1(key.encode()).hexdigest()[:12]
         meta = load_meta(dirs[0])
         out = (
@@ -173,6 +193,7 @@ def start_job(body: dict[str, Any]) -> Job:
         cmd = _python("replay", "ghost", *map(str, dirs), "-o", str(out))
         cmd += ["--colours", *colours] + (["--all-bodies"] if all_bodies else [])
         cmd += ["--equal"] if equal else []
+        cmd += ["--scene", scene] if scene else []
         label = f"ghost video of {len(dirs)}"
         # A video that is newer than its traces and than the renderer is reused.
         sources = [d / "trace.npz" for d in dirs] + [
@@ -707,6 +728,17 @@ class Handler(_BaseHandler):
                         _definition(query)[0],
                     )
                 )
+            elif path == "/api/tag_history":
+                data = semantic.load_history(query["name"])
+                if data is None:
+                    raise FileNotFoundError(f"no tag history of {query['name']}")
+                data["summary"] = semantic.history_summary(data)
+                data["method_order"] = [
+                    m
+                    for m in METHOD_ORDER
+                    if any(run.split("/")[0] == m for run in data["runs"])
+                ]
+                self._json(data)
             elif path == "/api/strips":
                 folder = CONFIG.traces / catalog.SCENARIO_DIR / query["name"] / "strips"
                 index = folder / "strips.json"

@@ -536,8 +536,9 @@ The top bar has the pages for all scenarios. A scenario has one row of tabs:
 | Contact: Distances | `#/m/<scenario>` | What a distance between two contact strategies means |
 | Contact: Histories | `#/h/<scenario>` | The contact strategy over the commits of each run |
 | Motion: Paths | `#/vp/<scenario>` | Paths of a body, height and speed, a map of a motion distance |
-| Motion: Distances | `#/vm/<scenario>` | The six motion distances: sources, a threshold slider, example pairs, other measures |
-| Semantic | `#/vs/<scenario>` | Observations, tag groups and rules, the tags of each run, tags by method, film strips |
+| Motion: Distances | `#/vm/<scenario>` | The seven motion distances: sources, a threshold slider, example pairs, other measures |
+| Semantic: Tags | `#/vs/<scenario>` | Observations, tag groups and rules, the tags of each run, tags by method, film strips |
+| Semantic: History | `#/vh/<scenario>` | The tags of each commit of each run: does an agent keep its first solution? |
 | Compare | `#/v/<scenario>` | Which distance sees which tag group, maps and paths side by side |
 
 The pages of one trace (`#/t/<trace>`) and of one run (`#/e/<run>`) open from the
@@ -545,14 +546,26 @@ Overview tab. The definition of a contact strategy is a closed box on the Contac
 tabs; the other tabs use it and say which one is in use. The runs that you select on
 the Motion, Semantic and Compare tabs stay selected when you change between them.
 
+**Video background.** The experiment configs of the MuJoCo scenarios ask Kinder for a
+plain scene (`scene_bg: false`; only constrainedcupboard3d has the lab room). Kinder
+also has a textured lab room (`scene_bg="mimiclabs-lab2"`, the MimicLabs assets in
+`third-party/kindergarden`). It changes the visual geoms and not the joints, so a
+recorded state replays in it. The lab room is the default for the episode videos, the
+ghost videos and the film strips. The select "video background" in the top bar changes
+it to the plain scene; `replay.py --scene plain` and `strips.py --scene plain` do the
+same on the command line. The videos that `record.py` writes, the contact videos and
+the diagrams stay in the recorded scene (the colours of the last two go by geom id).
+The viewer renders the episode video with the lab room when you open a trace page.
+
 ## Three views: contact, motion, semantic
 
 The contact view says what touches what. Two more views describe the same final
 policies (the final policy of each run that solves start scene 0):
 
 - **Motion view** (`motion.py`): the positions of the end effector, the base and each
-  movable object in each env step. Orientations are not used. Six distances, each a
-  standard measure of trajectory similarity (see the docstring of `motion.py`). MuJoCo
+  movable object in each env step. Orientations are not used. Six distances that are
+  standard measures of trajectory similarity (see the docstring of `motion.py`), and
+  an event-aligned distance that compares the segments between contact events. MuJoCo
   and PyBullet positions come from a replay of the recorded states; the 2D positions
   come from the trace.
 - **Semantic view** (`semantic.py`, `tag_rules/`): for each scenario, a few questions
@@ -581,6 +594,17 @@ farther apart than two runs with the same value (0.5 = no relation, 1 = full sep
 - The time-free motion distances (warping, Frechet, arc length, average Hausdorff) give
   almost the same ranks. The choice of the bodies changes more than the choice of the
   distance. A velocity term (`phase`) gives no gain.
+- The event-aligned distance (`events`: the episode is cut at the contact modes, the
+  elastic alignment of the contact view links the modes of two runs, each link has the
+  same weight) is equal to dynamic time warping on average (0.64 against 0.65). It is
+  better by 0.1 or more for 12 tag groups, mostly groups that come from the contacts,
+  and worse for 14. It sees no tag group that the two other views both miss. So it is
+  a mix of the two views, not a solution for short events.
+- The release direction of a throw (tossing3d, `arc`) is a real difference: the cube
+  rises 0.5 m or more above the release point in the "lob" runs and not at all in the
+  "downward" runs. No distance sees it, because the release height differs much more
+  between the two swing types (0.4 m to 1.75 m) than the arc does. A distance on
+  positions cannot separate a shape from its place.
 - Some scenarios have one solution only in the semantic view (motion2d: one route;
   basemotion3d: one straight drive), where the contact view reports several strategies.
 - Solutions that the task text does not expect are visible in the tags:
@@ -609,10 +633,39 @@ farther apart than two runs with the same value (0.5 = no relation, 1 = full sep
 - The motion view has positions only. An angle (the pose of the T block in dynpusht2d)
   is not seen.
 
+### Tags over the commits
+
+`semantic.build_history` runs the rules of a scenario on each commit of each run that
+solves start scene 0 (`semantic/history/<scenario>.json`; the History tab shows them).
+Over the 28 scenarios (853 runs with two solved policy versions or more):
+
+- The first tag group of a scenario changes at some commit in 25 % of the runs, and
+  its first value is not its last value in 19 %.
+- The semantic strategy (the first two tag groups) of the first solved version is the
+  strategy of the final version in 64 % of the runs: an agent mostly keeps its first
+  solution and tunes it. The pace changes most (45 % of the runs).
+- Some scenarios never change (tossing3d: the swing type changes in 1 run of 30;
+  dynscooppour2d, motion2d, sweepsimple3d: 0 runs), and some change in half of the
+  runs or more (dynpusht2d: the number of pushes; sortclutteredblocks3d: the first
+  cube; dynpushpullhook2d: the direction).
+- Changes of the plan are visible: in sweepintodrawer3d two runs start with the wiper
+  and end with the gripper; in rovers five runs start with split samples and end with
+  one rover for both; in pr2blocked one run starts with a spare block and ends with
+  the tilted grasp.
+
+A tag from the program text (`aim` of tossing3d) has no history: the rule reads the
+final program.
+
+```bash
+uv run python -m experiments.contacts.semantic --history <scenario>
+```
+
 ### Film pass: a check of the tags with pictures
 
 `strips.py` makes film strips: for a few runs that cover the tag values, six pictures
-of the episode at equal steps of path length. The reader looked at the sheets of 25
+of the episode at equal steps of path length. For a MuJoCo scenario the camera has the
+view direction of the task camera, but it looks at the objects that move and stands
+near them (`--camera task` gives the task camera). The reader looked at the sheets of 25
 scenarios (not basemotion3d, motion2d and table3d) and at the program text of 3 runs.
 The Semantic tab of the viewer shows the strips.
 
@@ -629,12 +682,13 @@ details, and the rules now have them:
   the air, a new tag group), dynobstruction2d (an obstruction is carried, not thrown).
 
 The lesson for the rules: a contact pair says that two things touch, not that one moves
-the other, and the contact modes can miss a touch at the end of an episode. In several
-3D scenarios the default camera is far from the objects, so the pictures can confirm
-the plan of a run but not its contacts.
+the other, and the contact modes can miss a touch at the end of an episode. In the film pass
+the camera of the task was far from the objects in several 3D scenarios, so those
+pictures confirmed the plan of a run but not its contacts. The strips now use a camera
+near the objects; the reader looked again at balancebeam3d only.
 
 ```bash
-uv run python -m experiments.contacts.strips <scenario>   # --runs N --frames K --all
+uv run python -m experiments.contacts.strips <scenario>   # --runs N --frames K --all --scene plain --camera task
 ```
 
 ### Add or correct tags

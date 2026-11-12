@@ -110,10 +110,140 @@ def build(scenario: str, instance: str = "inst0") -> dict[str, Any]:
     return data
 
 
+HISTORY = LABELS / "history"
+
+
+def build_history(scenario: str, instance: str = "inst0") -> dict[str, Any]:
+    """Run the rules on every solved commit of every run; write the history file.
+
+    A row is one commit: ``commit``, ``elapsed`` (seconds), ``state``, ``version``
+    (present if the commit changes the policy), ``tags`` (the values in the order of
+    ``groups``; only for a commit that solves the instance) and ``trace``. A rule
+    reads the episode only, so the tag ``aim`` of tossing3d (from the program text)
+    is the value of the final program in every commit. A rule that fails on an
+    episode gives no tags and the text of the error.
+    """
+    # pylint: disable=import-outside-toplevel
+    from experiments.contacts import features
+
+    rules = importlib.import_module(f"experiments.contacts.tag_rules.{scenario}")
+    keys = [group["key"] for group in rules.CODEBOOK]
+    runs: dict[str, list[dict[str, Any]]] = {}
+    done: dict[int, dict[str, Any]] = {}
+    for run_id, rows in features.load_history(scenario, instance).items():
+        runs[run_id] = []
+        for row in rows:
+            entry: dict[str, Any] = {
+                "commit": row["commit"],
+                "elapsed": row["elapsed"],
+                "state": row["state"],
+            }
+            run = row["run"]
+            if row["version"]:
+                entry["version"] = True
+            if run is not None:
+                if id(run) not in done:
+                    try:
+                        tags = rules.label(run)[0]
+                        done[id(run)] = {"tags": [tags[k] for k in keys]}
+                    except Exception as exc:  # pylint: disable=broad-exception-caught
+                        done[id(run)] = {"error": f"{type(exc).__name__}: {exc}"}
+                entry.update(done[id(run)])
+                if row["version"]:
+                    entry["trace"] = row["trace"]
+            runs[run_id].append(entry)
+    data = {
+        "scenario": scenario,
+        "instance": instance,
+        "provenance": {
+            "reader": READER,
+            "date": datetime.date.today().isoformat(),
+            "status": "not checked by a person",
+            "rules": f"experiments/contacts/tag_rules/{scenario}.py",
+        },
+        "groups": [
+            {
+                "key": g["key"],
+                "question": g["question"],
+                "values": list(g["values"]),
+                "source": g["source"],
+            }
+            for g in rules.CODEBOOK
+        ],
+        "runs": runs,
+    }
+    HISTORY.mkdir(exist_ok=True)
+    (HISTORY / f"{scenario}.json").write_text(json.dumps(data, indent=None) + "\n")
+    return data
+
+
+def load_history(scenario: str) -> dict[str, Any] | None:
+    """The tags over the commits of a scenario, if the file exists."""
+    path = HISTORY / f"{scenario}.json"
+    return json.loads(path.read_text()) if path.exists() else None
+
+
+def history_summary(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """For each tag group: how often its value changes over the commits of a run.
+
+    Only the commits that solve the instance and have tags count. ``runs`` is the
+    number of runs with two such policy versions or more; ``changed`` the runs with
+    one change of the value or more; ``moved`` the runs whose first value differs
+    from their last value; ``paths`` counts the pairs first value -> last value.
+    """
+    out = []
+    for group in data["groups"]:
+        key = group["key"]
+        index = [g["key"] for g in data["groups"]].index(key)
+        if group.get("source") == "program":  # read in the final program only
+            out.append({"key": key, "runs": None})
+            continue
+        runs = changed = moved = switches = 0
+        paths: Counter[str] = Counter()
+        for rows in data["runs"].values():
+            seq = [r["tags"][index] for r in rows if r.get("tags") and r.get("version")]
+            if len(seq) < 2:
+                continue
+            count = sum(a != b for a, b in zip(seq, seq[1:]))
+            runs += 1
+            changed += count > 0
+            moved += seq[0] != seq[-1]
+            switches += count
+            paths[f"{seq[0]} -> {seq[-1]}"] += 1
+        out.append(
+            {
+                "key": key,
+                "runs": runs,
+                "changed": changed,
+                "moved": moved,
+                "switches": switches,
+                "paths": dict(paths.most_common()),
+            }
+        )
+    return out
+
+
 def main() -> None:
-    """Build the tag files of the given scenarios."""
+    """Build the tag files of the given scenarios (``--history``: over the commits)."""
     import sys  # pylint: disable=import-outside-toplevel
 
+    if "--history" in sys.argv:
+        for name in [a for a in sys.argv[1:] if a != "--history"]:
+            data = build_history(name)
+            rows = [r for rows in data["runs"].values() for r in rows]
+            tagged = sum("tags" in r for r in rows)
+            errors = sum("error" in r for r in rows)
+            print(
+                f"{name}: {len(data['runs'])} runs, {len(rows)} commits, {tagged} with tags, {errors} rule errors"
+            )
+            for item in history_summary(data):
+                if item["runs"] is None:
+                    continue
+                print(
+                    f"  {item['key']:14s} runs {item['runs']:2d}  changed {item['changed']:2d}  "
+                    f"first != last {item['moved']:2d}  switches {item['switches']:3d}"
+                )
+        return
     for name in sys.argv[1:]:
         data = build(name)
         print(f"{name}: {len(data['labels'])} runs")

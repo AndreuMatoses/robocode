@@ -66,7 +66,11 @@ const DEFAULT_CATS = new Set(["robot-object", "robot-fixture", "robot-world",
   "object-self", "object-fixture", "object-world"]);
 
 // ------------------------------------------------------------------- jobs
+// Background of the videos of a MuJoCo scenario: the lab room of Kinder (default), or the plain scene.
+let SCENE = "lab";
+try { SCENE = localStorage.getItem("videoScene") || "lab"; } catch (err) { /* default */ }
 async function runJob(body, onDone) {
+  if (body.kind === "ghost" || body.kind === "video") body = { ...body, scene: SCENE };
   const job = await post("/api/job", body);
   const el = $("#jobs");
   const poll = async () => {
@@ -706,9 +710,11 @@ async function pageTrace(id) {
   // 1 s of simulated time, so there the video runs 10 times faster than the timeline.
   const rate = (meta.step_seconds || 1 / meta.fps) * meta.fps;  // simulated seconds per video second
   const row0 = sc.traces.find((x) => x.id === id);
-  if (row0 && !row0.has_video) {  // history commits are recorded without a video
-    runJob({ kind: "video", trace: id }, (job) => { if (job.state === "done") video.src = `${files}/video.mp4?t=${Date.now()}`; });
-  } else video.src = files + "/video.mp4";
+  const lab = SCENE !== "plain" && (meta.backend || "mujoco") === "mujoco";  // the other simulators have one scene
+  if (row0 && row0.has_video) video.src = files + "/video.mp4";
+  if (lab || (row0 && !row0.has_video)) {  // history commits are recorded without a video
+    runJob({ kind: "video", trace: id }, (job) => { if (job.state === "done") video.src = `${job.output}?t=${Date.now()}`; });
+  }
   const mode = h("div", { class: "tabs" });
   const setMode = (name) => {
     const t = video.currentTime;
@@ -2109,6 +2115,58 @@ async function pageMotionDistances(name) {
   await load();
 }
 
+// ---------------------------------------------------------- tags over the commits
+// The semantic tags of each commit of each run: does an agent keep its first solution?
+async function pageTagHistory(name) {
+  const app = $("#app"), body = h("div", { class: "v3" });
+  app.replaceChildren(body);
+  body.replaceChildren(h("p", { class: "muted" }, "loading…"));
+  const d = await j("/api/tag_history?name=" + name);
+  METHODS = d.method_order;
+  const state = { group: d.groups[0].key };
+  const draw = () => {
+    const gi = d.groups.findIndex((g) => g.key === state.group), group = d.groups[gi];
+    const colour = (v) => valueColour(group.values.indexOf(v));
+    const runs = Object.keys(d.runs).sort((a, b) => METHODS.indexOf(a.split("/")[0]) - METHODS.indexOf(b.split("/")[0]) || seedNum(a.split("/")[2]) - seedNum(b.split("/")[2]));
+    // summary of each tag group
+    const table = h("table", { class: "vocab metrics" },
+      h("tr", {}, ["tag group", "question", "runs with two solved versions or more", "runs where the value changes", "runs where the first value is not the last", "first value → last value (runs)"].map((x) => h("th", {}, x))),
+      d.groups.map((g, k) => { const sm = d.summary[k];
+        return h("tr", { class: g.key === state.group ? "on" : "", onclick: () => { state.group = g.key; draw(); } }, h("td", {}, h("b", {}, g.key)), h("td", { style: "max-width:280px" }, g.question),
+          sm.runs == null ? h("td", { colspan: 4, class: "muted" }, "read in the final program only: no history") : [h("td", {}, String(sm.runs)), h("td", {}, `${sm.changed} (${pct(sm.runs ? sm.changed / sm.runs : 0)})`), h("td", {}, `${sm.moved} (${pct(sm.runs ? sm.moved / sm.runs : 0)})`),
+            h("td", { style: "max-width:520px" }, Object.entries(sm.paths).filter(([path]) => { const [a, b] = path.split(" -> "); return a !== b; }).slice(0, 5).map(([path, n]) => `${path.replace(" -> ", " → ")} ${n}`).join(" · ") || "no run changes")]); }));
+    // one lane for each run; one segment for each commit
+    const labelW = 150, rowH = 15, gap = 8, pw = Math.max(520, Math.min(1100, (body.clientWidth || 1200) - labelW - 60));
+    let y = 18;
+    const rows = [];
+    runs.forEach((id, i) => { if (i && runs[i - 1].split("/")[0] !== id.split("/")[0]) y += gap; rows.push([id, y]); y += rowH; });
+    const svg = s("svg", { width: labelW + pw + 20, height: y + 22, class: "evo" });
+    svg.append(s("text", { x: labelW, y: 11 }, "first commit"), s("text", { x: labelW + pw, y: 11, "text-anchor": "end" }, "last commit"));
+    for (const [id, top] of rows) {
+      const [method, , seed] = id.split("/"), commits = d.runs[id], n = commits.length;
+      svg.append(s("rect", { x: 2, y: top + 2, width: 8, height: rowH - 5, fill: methodColor(method) }), s("text", { x: 14, y: top + rowH - 4 }, `${method} · ${seed}`));
+      commits.forEach((c, k) => {
+        const x = labelW + (k / n) * pw, w = Math.max(pw / n, 1), value = c.tags ? c.tags[gi] : null;
+        const rect = s("rect", { x, y: top + 1, width: w + 0.4, height: rowH - 3, class: "seg" + (value ? "" : " " + c.state), fill: value ? colour(value) : c.state === "failed" ? "var(--failc)" : c.state === "crashed" ? "var(--crashc)" : "var(--grid)", "fill-opacity": value ? 1 : 0.9 });
+        rect.addEventListener("mousemove", (e) => tip(e, `${method} · ${seed} · commit ${c.commit} of ${n - 1}\n${c.state}${c.tags ? "\n" + d.groups.map((g, q) => `${g.key}: ${c.tags[q]}`).join("\n") : ""}${c.trace ? "\nclick to open the trace" : ""}`));
+        rect.addEventListener("mouseleave", (e) => tip(e, ""));
+        if (c.trace) rect.addEventListener("click", () => { location.hash = "#/t/" + c.trace; });
+        svg.append(rect);
+      });
+    }
+    fill(body,
+      h("p", { class: "pagehead" }, h("b", {}, "Tags over the commits: "), "the rules of the semantic view on each commit of each run that solves the first start scene. It shows if an agent keeps its first solution or changes it. ",
+        `Tags: ${d.provenance.reader}; ${d.provenance.status}.`),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
+      h("h2", {}, `“${group.key}” over the commits of each run `, h("small", {}, `— ${group.question}`)),
+      h("div", { class: "swatches" }, group.values.map((v) => h("span", {}, h("span", { class: "dot", style: `background:${colour(v)}` }), v)),
+        h("span", {}, h("span", { class: "dot", style: "background:var(--failc)" }), "not solved"), h("span", {}, h("span", { class: "dot", style: "background:var(--crashc)" }), "crashed"), h("span", {}, h("span", { class: "dot", style: "background:var(--grid)" }), "no trace")),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, svg,
+        h("div", { class: "muted" }, "One lane for each run and one segment for each commit, in order (the width is not time). Click a row of the table to see another tag group. Click a segment to open its trace.")));
+  };
+  draw();
+}
+
 async function pageViewsAll() {
   const app = $("#app");
   $("#crumbs").replaceChildren("three views of all scenarios");
@@ -2146,7 +2204,7 @@ const TABS = [
   ["Overview", [["s", "Overview", "The task, the main observations, the runs and their contact timelines"]]],
   ["Contact", [["d", "Strategies", "Contact strategies of the final policies: diversity and optimality"], ["m", "Distances", "What a distance between two contact strategies means"], ["h", "Histories", "The contact strategy over the commits of each run"]]],
   ["Motion", [["vp", "Paths", "Where the bodies go in each run"], ["vm", "Distances", "The distances between two motions"]]],
-  ["Semantic", [["vs", "Semantic", "The tags of each run and the main observations"]]],
+  ["Semantic", [["vs", "Tags", "The tags of each run, the main observations and the film strips"], ["vh", "History", "The tags over the commits of each run"]]],
   ["Compare", [["v", "Compare", "Which distance sees which tag group; the three views side by side"]]],
 ];
 let HAS_SLIDES = null;
@@ -2154,7 +2212,10 @@ async function navigation(page, name) {
   if (HAS_SLIDES == null) HAS_SLIDES = await fetch("/slides/").then((r) => r.ok).catch(() => false);
   const active = name ? "#/" : "#/" + page;
   $("#topnav").replaceChildren(...TOP.map(([href, text]) => h("a", { href, class: href === active ? "on" : "" }, text)),
-    ...(HAS_SLIDES ? [h("a", { href: "/slides/", target: "_blank" }, "Slides")] : []));
+    ...(HAS_SLIDES ? [h("a", { href: "/slides/", target: "_blank" }, "Slides")] : []),
+    h("label", { class: "scenepick", title: "Background of the videos that you render from now on (episode video and ghost video). Only the MuJoCo scenarios have the lab room of Kinder; the other scenarios ignore this choice." }, "video background ",
+      h("select", { onchange: (e) => { SCENE = e.target.value; try { localStorage.setItem("videoScene", SCENE); } catch (err) { /* not kept */ } } },
+        [["lab", "lab room"], ["plain", "plain"]].map(([v, text]) => h("option", { value: v, selected: v === SCENE }, text)))));
   const tabs = $("#tabs");
   tabs.hidden = !name;
   if (!name) return;
@@ -2166,7 +2227,7 @@ async function navigation(page, name) {
 async function route() {
   tip({}, "");
   const [, page, ...rest] = decodeURIComponent(location.hash || "#/").split("/");
-  const scenario = ["t", "e"].includes(page) ? rest[1] : ["s", "h", "d", "m", "v", "vp", "vs", "vm"].includes(page) ? rest[0] : null;
+  const scenario = ["t", "e"].includes(page) ? rest[1] : ["s", "h", "d", "m", "v", "vp", "vs", "vh", "vm"].includes(page) ? rest[0] : null;
   $("#crumbs").replaceChildren();
   await navigation(page || "", scenario || null);
   try {
@@ -2180,6 +2241,7 @@ async function route() {
     else if (page === "vp") await pageViews(rest[0], "motion");
     else if (page === "vs") await pageViews(rest[0], "semantic");
     else if (page === "vm") await pageMotionDistances(rest[0]);
+    else if (page === "vh") await pageTagHistory(rest[0]);
     else await pageIndex();
   } catch (err) {
     $("#app").replaceChildren(h("p", {}, "Error: " + err.message));

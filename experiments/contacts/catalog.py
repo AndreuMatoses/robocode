@@ -46,8 +46,21 @@ _BY_ENV_ID = {
 }
 
 
-def make_env(scenario: str) -> Any:
-    """Instantiate a scenario's environment from its Hydra config (no policy)."""
+SCENES = {
+    "plain": "the scene of the experiments (for most scenarios: no background)",
+    "lab": "the textured lab room of Kinder (MimicLabs lab2); MuJoCo scenarios only",
+}
+
+
+def make_env(scenario: str, scene: str | None = None) -> Any:
+    """Instantiate a scenario's environment from its Hydra config (no policy).
+
+    ``scene`` is for pictures only: "lab" asks Kinder for its textured lab room
+    (``scene_bg="mimiclabs-lab2"``), "plain" for no background. It changes the
+    visual geoms, not the joints, so a recorded state still fits. Only the MuJoCo
+    scenarios have this option; the other scenarios ignore it. ``None`` keeps the
+    scene of the experiment config.
+    """
     # pylint: disable-next=import-outside-toplevel
     from hydra.utils import instantiate
 
@@ -55,8 +68,18 @@ def make_env(scenario: str) -> Any:
     from robocode.environments.mujoco_gl import configure_gl_backend
 
     configure_gl_backend()
-    config = CONF_ROOT / "environment" / f"{env_config_name(scenario)}.yaml"
-    return instantiate(OmegaConf.load(config))
+    config = OmegaConf.load(
+        CONF_ROOT / "environment" / f"{env_config_name(scenario)}.yaml"
+    )
+    if scene is not None:
+        if scene not in SCENES:
+            raise ValueError(f"unknown scene {scene!r}")
+        value = "mimiclabs-lab2" if scene == "lab" else False
+        if "scene_bg" in config.get("constant_object_env_kwargs", {}):
+            config.constant_object_env_kwargs.scene_bg = value
+        elif "scene_bg" in config:
+            config.scene_bg = value
+    return instantiate(config)
 
 
 def scenario_tags(scenario: str) -> dict[str, str]:

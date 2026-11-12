@@ -292,3 +292,5 @@ details.defbox .defbar { border: 0; padding: 6px 0 0; background: none; }
 .pagehead b { color: var(--fg); }
 .strip { margin: 0 0 14px; }
 .strip img { display: block; width: 100%; max-width: 1400px; margin-top: 4px; border: 1px solid var(--grid); border-radius: 4px; }
+#topnav .scenepick { color: var(--fg3); font-size: 12px; margin-left: 10px; display: inline-flex; gap: 4px; align-items: center; }
+#topnav .scenepick select { padding: 1px 6px; font-size: 12px; }

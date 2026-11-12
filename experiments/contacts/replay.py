@@ -134,7 +134,7 @@ def replay_frames(
     qpos: Iterable[np.ndarray],
     width: int,
     height: int,
-    camera: str | None = None,
+    camera: str | dict[str, Any] | None = None,
     edit_for_step: Callable[[int], SceneEdit | None] | None = None,
 ) -> Iterable[np.ndarray]:
     """Yield one frame per recorded configuration."""
@@ -161,10 +161,15 @@ def write_video(frames: Iterable[np.ndarray], path: Path, fps: int) -> None:
 # ------------------------------------------------------------ scene of a trace
 
 
-def open_trace_env(directory: Path) -> tuple[Any, EntityMap, dict[str, Any]]:
+def open_trace_env(
+    directory: Path, scene: str | None = None
+) -> tuple[Any, EntityMap, dict[str, Any]]:
     """Rebuild the scene a trace was recorded in: (env, entity map, meta).
 
-    Raises if the reset does not reproduce the recorded scene.
+    Raises if the reset does not reproduce the recorded scene. With ``scene`` (see
+    ``catalog.SCENES``) the scene can have another background: then only the size
+    of a configuration is checked, and the entity map is that of the new scene (its
+    ids can differ from the ids in the trace).
     """
     # pylint: disable-next=import-outside-toplevel
     from experiments.contacts.catalog import make_env
@@ -173,10 +178,16 @@ def open_trace_env(directory: Path) -> tuple[Any, EntityMap, dict[str, Any]]:
     from robocode.utils.episode import reset_for_episode
 
     meta = json.loads((directory / "meta.json").read_text())
-    env = make_env(meta["environment"])
+    env = make_env(meta["environment"], scene)
     reset_for_episode(env, meta["instance_seed"], meta["pinned_count"])
     emap = build_entity_map(robot_env(env).sim.model.mj_model)
-    if emap.signature != meta["signature"]:
+    if scene is not None:
+        with np.load(directory / "trace.npz") as data:
+            size = data["qpos"].shape[1]
+        if robot_env(env).sim.model.mj_model.nq != size:
+            env.close()
+            raise RuntimeError(f"{directory}: the scene {scene!r} has other joints")
+    elif emap.signature != meta["signature"]:
         env.close()
         raise RuntimeError(f"{directory}: the reset did not rebuild the recorded scene")
     return env, emap, meta
@@ -390,9 +401,10 @@ def ghost_video(
     robot_only: bool = True,
     equal: bool = False,
     alpha: float | None = None,
+    scene: str | None = None,
 ) -> None:
     """Overlay the traces in ``directories`` (same scenario and instance)."""
-    env, emap, meta = open_trace_env(directories[0])
+    env, emap, meta = open_trace_env(directories[0], scene)
     try:
         for directory in directories[1:]:
             other = json.loads((directory / "meta.json").read_text())
@@ -514,6 +526,12 @@ def main() -> None:
     parser.add_argument("--alpha", type=float, help="ghost opacity (default: by count)")
     parser.add_argument("--width", type=int, default=960)
     parser.add_argument("--height", type=int, default=720)
+    parser.add_argument(
+        "--scene",
+        choices=["plain", "lab"],
+        default="lab",
+        help="video and ghost of a MuJoCo trace: the background (default: the lab room)",
+    )
     args = parser.parse_args()
     args.out.parent.mkdir(parents=True, exist_ok=True)
     first = json.loads((args.traces[0] / "meta.json").read_text())
@@ -522,7 +540,7 @@ def main() -> None:
     elif first.get("backend") == "bullet":
         _main_bullet(args, first)
     elif args.mode == "video":
-        env, _, meta = open_trace_env(args.traces[0])
+        env, _, meta = open_trace_env(args.traces[0], args.scene)
         try:
             frames = replay_frames(
                 env,
@@ -556,6 +574,7 @@ def main() -> None:
             robot_only=not args.all_bodies,
             equal=args.equal,
             alpha=args.alpha,
+            scene=args.scene,
         )
     print(args.out)
 

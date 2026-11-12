@@ -656,6 +656,29 @@ def warp_path(a: list[Mode], b: list[Mode]) -> tuple[float, int]:
     return total[-1][-1], steps[-1][-1]
 
 
+def warp_links(a: list[Mode], b: list[Mode]) -> list[tuple[int, int]]:
+    """The links ``(index in a, index in b)`` of the best elastic alignment.
+
+    The same alignment as ``warp_path``, with the path itself and not only its cost.
+    """
+    if not a or not b:
+        return []
+    inf = float("inf")
+    total = [[inf] * (len(b) + 1) for _ in range(len(a) + 1)]
+    total[0][0] = 0.0
+    for i, mode_a in enumerate(a, 1):
+        for j, mode_b in enumerate(b, 1):
+            best = min(total[i - 1][j - 1], total[i - 1][j], total[i][j - 1])
+            total[i][j] = best + jaccard(mode_a, mode_b)
+    i, j = len(a), len(b)
+    links = []
+    while i > 0 and j > 0:
+        links.append((i - 1, j - 1))
+        steps = ((i - 1, j - 1), (i - 1, j), (i, j - 1))  # the diagonal wins a tie
+        i, j = min(steps, key=lambda s: total[s[0]][s[1]])
+    return links[::-1]
+
+
 def warp_distance(a: list[Mode], b: list[Mode]) -> float:
     """Mean cost along ``warp_path``; 1 when only one sequence is empty."""
     if not a or not b:

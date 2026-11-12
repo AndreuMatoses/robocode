@@ -33,6 +33,10 @@ measure of the literature on trajectory similarity:
   ``|dx| + PHASE_SECONDS * |dv|``: the difference of the positions plus the
   difference of the velocities times a time constant. **The path and the speed on
   the path count, the start time of a motion does not.**
+* ``events`` (``events_distance``): the episode is cut at events, here the contact
+  modes, and the segments that an alignment of the events links are compared. Each
+  link has the same weight. **A short phase counts as much as a long one.** It
+  needs the contact view, so ``views.py`` computes it.
 
 ``scale`` of a group of traces is the diagonal of the box around all their end
 effector positions; a distance divided by it is a share of the workspace.
@@ -110,14 +114,6 @@ OPTIONS = [
         "The expected result is near to the arc-length distance.",
     },
     {
-        "name": "event-aligned distance",
-        "source": "this study: the contact modes give the events",
-        "idea": "The episode is cut at the contact events (grasp, release). The "
-        "segments between the same events are compared, each with its own weight.",
-        "note": "A short event (a throw) is not hidden by the long parts of the "
-        "episode. The alignment comes from the contact view.",
-    },
-    {
         "name": "homotopy class of the path",
         "source": "Bhattacharya, Likhachev and Kumar 2012 (H-signature); winding "
         "numbers",
@@ -150,6 +146,18 @@ OPTIONS = [
         "has one partner.",
     },
 ]
+# A distance that needs the contact view for its alignment: ``views.py`` computes it
+# with ``events_distance`` and adds it to the other motion distances.
+EVENTS = {
+    "name": "event-aligned distance",
+    "source": "this study: the contact modes give the events",
+    "text": "the episode of each run is cut at its contact modes; the elastic "
+    "alignment of the contact view links the modes of the two runs; the distance is "
+    "the mean distance between the same body over the linked segments, each link "
+    "with the same weight",
+    "sees": "the motion in each phase, short phases as much as long ones",
+    "ignores": "how long a phase is",
+}
 BODIES = {
     "all": "the end effector, the base and every movable object",
     "robot": "the end effector and the base",
@@ -159,6 +167,7 @@ BODIES = {
 }
 CACHE = "motion.npz"
 MAX_POINTS = 160  # states of a trace that a distance uses
+EVENT_POINTS = 12  # states of a segment that the event-aligned distance compares
 PHASE_SECONDS = 0.5  # weight of a velocity difference in "phase": 1 m/s counts as 0.5 m
 
 
@@ -439,6 +448,51 @@ def match_distance(cost: np.ndarray, largest: bool = False) -> float:
 def places_distance(cost: np.ndarray) -> float:
     """Symmetric mean distance to the nearest state of the other run."""
     return float((cost.min(axis=1).mean() + cost.min(axis=0).mean()) / 2.0)
+
+
+def segment(
+    item: Motion, start: float, end: float, count: int
+) -> dict[str, np.ndarray]:
+    """``count`` states of a motion between two times (seconds), evenly spaced."""
+    last = item.steps - 1
+    at = np.clip(np.linspace(start, end, count) / item.step_seconds, 0, last)
+    grid = np.arange(item.steps)
+    return {
+        name: np.stack(
+            [np.interp(at, grid, values[:, d]) for d in range(values.shape[1])], 1
+        )
+        for name, values in item.channels.items()
+    }
+
+
+def events_distance(
+    a: Motion,
+    b: Motion,
+    spans_a: list[tuple[float, float]],
+    spans_b: list[tuple[float, float]],
+    links: list[tuple[int, int]],
+    count: int = EVENT_POINTS,
+) -> float:
+    """Mean distance between the segments of two runs that an event alignment links.
+
+    ``spans_a`` and ``spans_b`` are the time spans (seconds) of the segments of each
+    run, for example its contact modes. ``links`` says which segment of A goes with
+    which segment of B. Each linked pair of segments is compared at ``count`` states
+    at equal shares of the segment time, and each link has the same weight: a short
+    event (a throw) counts as much as a long one (a drive).
+    """
+    names = sorted(set(a.channels) & set(b.channels))
+    if not links or not names:
+        return locked_distance(a, b)
+    total = 0.0
+    for i, j in links:
+        part_a = segment(a, *spans_a[i], count)
+        part_b = segment(b, *spans_b[j], count)
+        cost = sum(
+            np.linalg.norm(part_a[name] - part_b[name], axis=-1) for name in names
+        )
+        total += float(np.mean(cost)) / len(names)
+    return total / len(links)
 
 
 def workspace_scale(motions: list[Motion]) -> float:

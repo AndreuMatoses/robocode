@@ -12,7 +12,10 @@ cover the values of the first tag groups, and writes for each scenario
 * ``strips.json``: the runs, their files, the env steps of the pictures.
 
 The viewer shows the strips on the Semantic tab. Options: ``--runs N`` (default 5),
-``--frames K`` (default 6), ``--all`` (every run, not a selection).
+``--frames K`` (default 6), ``--all`` (every run, not a selection), ``--scene plain``
+(MuJoCo: no background; the default is the textured lab room of Kinder) and
+``--camera task`` (MuJoCo: the camera of the task, not the default camera that this
+module points at the action).
 """
 
 from __future__ import annotations
@@ -27,7 +30,7 @@ from PIL import Image, ImageDraw
 
 from experiments.contacts import catalog, features, semantic
 
-WIDTH, HEIGHT = 320, 240
+WIDTH, HEIGHT = 400, 300
 LABEL = 18  # [px] text line above a strip
 
 
@@ -80,7 +83,52 @@ def _fit(picture: np.ndarray) -> Image.Image:
     return canvas
 
 
-def render_runs(runs: list[features.Run], steps: list[list[int]]) -> list[list[Any]]:
+def action_camera(env: Any, runs: list[features.Run]) -> dict[str, Any]:
+    """A free MuJoCo camera on the action: the task camera, nearer and re-centred.
+
+    It keeps the view direction of the task camera of the scene, looks at the centre
+    of the box around the objects that move (around the end effector if no object
+    moves), and stands at the distance from which that box fills the picture.
+    """
+    # pylint: disable=import-outside-toplevel
+    import mujoco
+
+    from experiments.contacts import replay
+    from experiments.contacts.entities import robot_env
+
+    points = [
+        pos
+        for run in runs
+        for name, pos in run.motion.channels.items()
+        if name.startswith("obj:") and features.path_length(pos) > 0.05
+    ]
+    if not points:  # nothing moves but the robot
+        points = [run.ch("ee") for run in runs if "ee" in run.motion.channels]
+    cloud = np.vstack(points)
+    low, high = cloud.min(axis=0), cloud.max(axis=0)
+    radius = max(0.30, float(np.linalg.norm(high - low)) / 2.0)
+    renv = robot_env(env)
+    model, data = renv.sim.model.mj_model, renv.sim.data.mj_data
+    cam = mujoco.mj_name2id(
+        model, mujoco.mjtObj.mjOBJ_CAMERA, replay.render_camera_name(env)
+    )
+    forward = -np.array(data.cam_xmat[cam]).reshape(3, 3)[:, 2]
+    fovy = np.radians(float(model.cam_fovy[cam]))
+    elevation = float(np.degrees(np.arcsin(np.clip(forward[2], -1.0, 1.0))))
+    return {
+        "lookat": ((low + high) / 2.0).tolist(),
+        "distance": 1.15 * radius / np.sin(fovy / 2.0),
+        "azimuth": float(np.degrees(np.arctan2(forward[1], forward[0]))),
+        "elevation": float(np.clip(elevation, -60.0, -25.0)),
+    }
+
+
+def render_runs(
+    runs: list[features.Run],
+    steps: list[list[int]],
+    scene: str | None = None,
+    camera: str = "action",
+) -> list[list[Any]]:
     """The pictures of each run at its steps (one scene for all runs)."""
     # pylint: disable=import-outside-toplevel
     backend = runs[0].meta.get("backend", "mujoco")
@@ -106,11 +154,12 @@ def render_runs(runs: list[features.Run], steps: list[list[int]]) -> list[list[A
         return out
     from experiments.contacts import replay
 
-    env, _, _ = replay.open_trace_env(runs[0].directory)
+    env, _, _ = replay.open_trace_env(runs[0].directory, scene)
     try:
+        view = action_camera(env, runs) if camera == "action" else None
         for run, picked in zip(runs, steps):
             qpos = replay.load_qpos(run.directory)[picked]
-            frames = replay.replay_frames(env, qpos, WIDTH * 2, HEIGHT * 2)
+            frames = replay.replay_frames(env, qpos, WIDTH * 2, HEIGHT * 2, view)
             out.append([_fit(f) for f in frames])
     finally:
         env.close()
@@ -131,7 +180,15 @@ def _strip(run: features.Run, picked: list[int], frames: list[Any], text: str):
     return strip
 
 
-def build(scenario: str, traces: Path, limit: int, count: int, every: bool) -> Path:
+def build(
+    scenario: str,
+    traces: Path,
+    limit: int,
+    count: int,
+    every: bool,
+    scene: str | None = None,
+    camera: str = "action",
+) -> Path:
     """Write the film strips of a scenario; the folder of the files."""
     runs = features.load_runs(scenario)
     tags = semantic.load(scenario)
@@ -141,7 +198,7 @@ def build(scenario: str, traces: Path, limit: int, count: int, every: bool) -> P
     else:
         chosen = select(tags, list(by_id), limit)
     picked = [key_steps(by_id[r], count) for r in chosen]
-    pictures = render_runs([by_id[r] for r in chosen], picked)
+    pictures = render_runs([by_id[r] for r in chosen], picked, scene, camera)
     folder = traces / catalog.SCENARIO_DIR / scenario / "strips"
     folder.mkdir(parents=True, exist_ok=True)
     index, strips = [], []
@@ -175,9 +232,19 @@ def main() -> None:
     parser.add_argument("--runs", type=int, default=5)
     parser.add_argument("--frames", type=int, default=6)
     parser.add_argument("--all", action="store_true")
+    parser.add_argument("--scene", choices=["plain", "lab"], default="lab")
+    parser.add_argument("--camera", choices=["action", "task"], default="action")
     args = parser.parse_args()
     for name in args.scenarios:
-        folder = build(name, args.traces.resolve(), args.runs, args.frames, args.all)
+        folder = build(
+            name,
+            args.traces.resolve(),
+            args.runs,
+            args.frames,
+            args.all,
+            args.scene,
+            args.camera,
+        )
         print(f"{name}: {folder / 'sheet.png'}")
 
 

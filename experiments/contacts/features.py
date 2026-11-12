@@ -219,6 +219,55 @@ def load_runs(scenario: str, instance: str = "inst0") -> list[Run]:
     ]
 
 
+def load_history(
+    scenario: str, instance: str = "inst0"
+) -> dict[str, list[dict[str, Any]]]:
+    """Every commit of every run of a scenario, with a ``Run`` for the solved ones.
+
+    One row for each commit: ``commit``, ``elapsed`` (seconds since the first
+    commit), ``state`` (solved, failed, crashed, broken, none), ``version`` (true if
+    the commit changes the policy) and ``run`` (a ``Run`` if the episode is solved
+    and recorded, else ``None``). Commits with the same policy share one ``Run``.
+    """
+    # pylint: disable=import-outside-toplevel,protected-access
+    from experiments.contacts import histories, viewer
+    from experiments.contacts.commits import versions_path
+
+    traces = viewer.CONFIG.traces
+    opts = viewer._check("class", instance)
+    out: dict[str, list[dict[str, Any]]] = {}
+    dirs: list[Path] = []
+    for run_id in viewer._scenario_runs(scenario):
+        if not versions_path(traces, run_id).exists():
+            continue
+        rows = histories.run_history(traces, run_id, viewer._versions(run_id), instance)
+        out[run_id] = rows
+        dirs += [r["dir"] for r in rows if r["state"] == "solved" and r["dir"]]
+    dirs = list(dict.fromkeys(dirs))
+    motion.ensure(dirs)
+    made: dict[Path, Run] = {}
+    for run_id, rows in out.items():
+        method, _, seed = run_id.split("/")
+        for row in rows:
+            directory = row.pop("dir")
+            row["run"] = None
+            if row["state"] != "solved" or directory is None:
+                continue
+            if directory not in made:
+                made[directory] = Run(
+                    run_id,
+                    method,
+                    seed,
+                    int(row.get("num_steps") or 0),
+                    directory,
+                    viewer.CONFIG.data / "runs" / run_id / "sandbox",
+                    motion.load(directory),
+                    strategy.strategy_modes(directory, opts),
+                )
+            row["run"] = made[directory]
+    return out
+
+
 def describe(run: Run, index: int) -> str:
     """One text block with the generic numbers of a run."""
     lines = [f"{index:2d} {run.method[:13]:13s} {run.seed:7s} {run.steps:4d} steps"]

@@ -14,6 +14,7 @@ agreement table of each scenario.
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import json
 import math
@@ -111,6 +112,75 @@ def _classes(matrix: np.ndarray) -> dict[str, Any]:
     return {"taus": taus, "classes": classes}
 
 
+def _phases(
+    directory: Path, opts: strategy.Options, defn: strategy.Definition
+) -> tuple[list[strategy.Mode], list[tuple[float, float]]]:
+    """The contact modes of a full episode and their time spans in seconds.
+
+    The names follow the definition (scope, identity); equal neighbours are merged.
+    The modes after the last robot contact are kept (the flight of a thrown cube).
+    """
+    names = dataclasses.replace(defn, order="sequence")
+    kinds = strategy.entity_kinds(directory)
+    modes: list[strategy.Mode] = []
+    spans: list[tuple[float, float]] = []
+    for mode, start, end in strategy.mode_sequence(directory, defn.options(opts)):
+        new = strategy.abstract((mode,), names, kinds)[0]
+        if modes and modes[-1] == new:
+            spans[-1] = (spans[-1][0], end)
+        else:
+            modes.append(new)
+            spans.append((start, end))
+    return modes, spans
+
+
+def events_matrix(
+    dirs: list[Path],
+    motions: list[motion.Motion],
+    opts: strategy.Options,
+    defn: strategy.Definition,
+    cache: Path | None = None,
+) -> np.ndarray:
+    """The event-aligned motion distance between every two traces, in metres.
+
+    ``cache`` is a file for the matrix; it is used again while the traces, the code
+    and the definition do not change.
+    """
+    stamp = [(str(d), (d / "trace.npz").stat().st_mtime_ns) for d in dirs]
+    stamp += [
+        (f, Path(f).stat().st_mtime_ns) for f in (motion.__file__, strategy.__file__)
+    ]
+    stamp += [repr(defn), repr(opts), sorted(motions[0].channels) if motions else []]
+    digest = hashlib.sha1(json.dumps(stamp).encode()).hexdigest()[:16]
+    if cache is not None and cache.exists():
+        with np.load(cache) as data:
+            if str(data["digest"]) == digest:
+                return data["matrix"]
+    out = _events_matrix(dirs, motions, opts, defn)
+    if cache is not None:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(cache, digest=digest, matrix=out)
+    return out
+
+
+def _events_matrix(
+    dirs: list[Path],
+    motions: list[motion.Motion],
+    opts: strategy.Options,
+    defn: strategy.Definition,
+) -> np.ndarray:
+    phases = [_phases(d, opts, defn) for d in dirs]
+    count = len(dirs)
+    out = np.zeros((count, count))
+    for i in range(count):
+        for j in range(i + 1, count):
+            links = strategy.warp_links(phases[i][0], phases[j][0])
+            out[i, j] = out[j, i] = motion.events_distance(
+                motions[i], motions[j], phases[i][1], phases[j][1], links
+            )
+    return out
+
+
 def _entry(key: str, view: str, info: dict[str, str], matrix: np.ndarray, unit: str):
     upper = np.triu_indices(len(matrix), 1)
     return {
@@ -192,10 +262,18 @@ def scenario_views(
                 motion._in_bodies(c, b) for c in channels
             )  # pylint: disable=protected-access
         ]
-        for key, matrix in found["metres"].items():
+        part = [m.select(bodies) for m in found["motions"]]
+        mark = hashlib.sha1(repr((defn, opts)).encode()).hexdigest()[:10]
+        cache = traces / catalog.SCENARIO_DIR / name / f"events_{bodies}_{mark}.npz"
+        metres = {
+            **found["metres"],
+            "events": events_matrix(dirs, part, opts, defn, cache),
+        }
+        infos = {**motion.METRICS, "events": motion.EVENTS}
+        for key, matrix in metres.items():
             matrices["motion:" + key] = matrix
             out["distances"].append(
-                _entry("motion:" + key, "motion", motion.METRICS[key], matrix, "m")
+                _entry("motion:" + key, "motion", infos[key], matrix, "m")
             )
 
     # semantic view
@@ -279,7 +357,11 @@ def summary(detail: dict[str, Any]) -> dict[str, Any]:
         "strategies": len(set(both)),
         "effective": round(effective(both), 2),
     }
-    views = {"contact": "contact:warp", "motion": "motion:warp"}
+    views = {
+        "contact": "contact:warp",
+        "motion": "motion:warp",
+        "events": "motion:events",
+    }
     seen: dict[str, Any] = {}
     for view, key in views.items():
         if key not in means:
