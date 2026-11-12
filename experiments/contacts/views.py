@@ -292,6 +292,7 @@ def summary(detail: dict[str, Any]) -> dict[str, Any]:
             "groups": cells,
         }
     out["sees"] = seen
+    out["sources"] = {g["key"]: g["source"] for g in book}
     return out
 
 

@@ -10,8 +10,8 @@ from experiments.contacts.features import Run, path_length, summary
 
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 34 runs (base path, "
-    "motion of each chair, contact pairs). No pictures and no program text were "
-    "read."
+    "motion of each chair, contact pairs). Film strips of 4 runs were inspected; they "
+    "agree with the tags. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

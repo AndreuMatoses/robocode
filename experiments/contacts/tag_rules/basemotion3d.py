@@ -10,9 +10,9 @@ from experiments.contacts.features import Run, path_length
 
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 35 runs (base path and "
-    "end position). All runs drive to the region in 3 env steps and touch nothing, "
-    "so the scenario has almost no room for different solutions. No pictures and "
-    "no program text were read."
+    "end position). All runs drive to the region in 3 env steps and touch nothing, so "
+    "the scenario has almost no room for different solutions. No pictures and no "
+    "program text were read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

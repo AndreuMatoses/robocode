@@ -10,9 +10,11 @@ from experiments.contacts.features import MOVE, Run, moved_order, path_length, s
 
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 30 runs (order, end "
-    "position and lift of the box and of the two cubes, base path, contact pairs). "
-    "In some runs the cubes end at the place of the box, so one tag group asks if a "
-    "cube travels in the box. No pictures and no program text were read."
+    "position and lift of the box and of the two cubes, base path, contact pairs). In "
+    "some runs the cubes end at the place of the box, so one tag group asks if a cube "
+    "travels in the box. Film strips of 3 runs were inspected; they agree with the "
+    "tags (the cubes are in the box when it goes to the table in the tray run). No "
+    "program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

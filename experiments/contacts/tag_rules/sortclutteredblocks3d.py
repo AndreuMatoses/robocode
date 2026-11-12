@@ -7,9 +7,10 @@ from typing import Any
 from experiments.contacts.features import Run, bouts, moved_order, path_length, summary
 
 METHOD = (
-    "Tag groups proposed after a look at the numbers of all 27 runs (order, lift "
-    "and path of each cube, base path, contact pairs). The bin of each cube is "
-    "given by the task. No pictures and no program text were read."
+    "Tag groups proposed after a look at the numbers of all 27 runs (order, lift and "
+    "path of each cube, base path, contact pairs). The bin of each cube is given by "
+    "the task. Film strips of 5 runs were inspected; they agree with the tags. No "
+    "program text was read."
 )
 CUBES = ("cube1", "cube2", "cube3", "cube4")
 # The main observations of this scenario, for its page in the viewer. Check them

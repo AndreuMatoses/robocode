@@ -11,8 +11,8 @@ from experiments.contacts.features import Run, path_length, summary
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 35 runs (place of the "
     "base at the push, place of the grasp on the hook, path of the hook, contact "
-    "pairs). All runs take the hook and push the button with it. No pictures and "
-    "no program text were read."
+    "pairs). All runs take the hook and push the button with it. Film strips of 2 "
+    "runs were inspected; they agree with the tags. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

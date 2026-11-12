@@ -7,9 +7,10 @@ from typing import Any
 from experiments.contacts.features import Run, path_length, summary
 
 METHOD = (
-    "Tag groups proposed after a look at the object motion and the robot contacts "
-    "of all 32 runs. Each value is assigned by the rule of its group from numbers "
-    "of the recorded episode. No pictures and no program text were read."
+    "Tag groups proposed after a look at the object motion and the robot contacts of "
+    "all 32 runs. Each value is assigned by the rule of its group from numbers of the "
+    "recorded episode. Film strips of 5 runs were inspected; they agree with the tags "
+    "(objects that lie on their side in the tipped runs). No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

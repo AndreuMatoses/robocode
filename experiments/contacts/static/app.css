@@ -290,3 +290,5 @@ details.defbox > summary { cursor: pointer; color: var(--fg2); }
 details.defbox .defbar { border: 0; padding: 6px 0 0; background: none; }
 .pagehead { margin: 0 0 10px; color: var(--fg2); max-width: 1100px; }
 .pagehead b { color: var(--fg); }
+.strip { margin: 0 0 14px; }
+.strip img { display: block; width: 100%; max-width: 1400px; margin-top: 4px; border: 1px solid var(--grid); border-radius: 4px; }

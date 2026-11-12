@@ -707,6 +707,13 @@ class Handler(_BaseHandler):
                         _definition(query)[0],
                     )
                 )
+            elif path == "/api/strips":
+                folder = CONFIG.traces / catalog.SCENARIO_DIR / query["name"] / "strips"
+                index = folder / "strips.json"
+                rows = json.loads(index.read_text()) if index.exists() else []
+                for row in rows:
+                    row["url"] = _file_url(folder / row["file"])
+                self._json({"strips": rows})
             elif path == "/api/insights":
                 tags = semantic.load(query["name"]) or {}
                 self._json(

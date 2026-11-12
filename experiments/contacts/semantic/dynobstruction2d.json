@@ -6,13 +6,13 @@
   "reader": "Claude (claude-fable-5-2)",
   "date": "2026-11-12",
   "status": "not checked by a person",
-  "method": "Tag groups proposed after a look at the numbers of all 35 runs (order and shift of the two obstructions and of the target block, contact pairs). No pictures and no program text were read.",
+  "method": "Tag groups proposed after a look at the numbers of all 35 runs (order and shift of the two obstructions and of the target block, contact pairs). Film strips of 4 runs were inspected. They agree with the tags, and they showed that the run with a far obstruction carries it (the value was named thrown_off before). No program text was read.",
   "rules": "experiments/contacts/tag_rules/dynobstruction2d.py"
  },
  "insights": [
   "30 of 35 runs do not clear the surface first: the robot pushes the target block onto the surface, and the block pushes the obstructions away. 5 runs clear the surface first.",
-  "The fingers push the target block in 26 runs, and the base pushes it in 8 runs.",
-  "In 2 runs an obstruction leaves the table."
+  "The fingers push the target block in 26 runs. In 8 runs the round base of the robot pushes it; a film strip shows a robot that turns its gripper up and pushes with its body.",
+  "1 run takes an obstruction with the gripper and puts it on the other side of the table. In 1 run an obstruction leaves the scene."
  ],
  "codebook": [
   {
@@ -42,8 +42,9 @@
    "question": "Where do the obstructions end?",
    "source": "motion",
    "values": {
-    "shifted": "Each obstruction ends less than 1 m from its start.",
-    "thrown_off": "An obstruction ends 1 m or more from its start: it leaves the table."
+    "shifted": "Each obstruction ends less than 1 m from its start: pushed to the side.",
+    "carried_away": "An obstruction ends 1 m to 5 m from its start: the gripper takes it and puts it on the other side.",
+    "lost": "An obstruction ends more than 5 m from its start: it leaves the scene."
    },
    "rule": "largest shift of an obstruction"
   },
@@ -121,7 +122,7 @@
   "opus55-source/dynobstruction2d/seed222": {
    "plan": "clear_first",
    "pusher": "fingers",
-   "obstructions": "thrown_off",
+   "obstructions": "carried_away",
    "target_path": "straight",
    "pace": "slow"
   },
@@ -254,7 +255,7 @@
   "astra-source/dynobstruction2d/seed42": {
    "plan": "bulldoze",
    "pusher": "fingers",
-   "obstructions": "thrown_off",
+   "obstructions": "lost",
    "target_path": "detour",
    "pace": "slow"
   },

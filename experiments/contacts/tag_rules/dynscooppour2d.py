@@ -9,10 +9,11 @@ import numpy as np
 from experiments.contacts.features import Run, path_length, summary
 
 METHOD = (
-    "Tag groups proposed after a look at the numbers of all 30 runs (when each "
-    "small object passes the wall, how high it goes, motion of the hook, contact "
-    "pairs). The scene is a side view: y is up; the wall is at x = 1.75 m and is "
-    "1.5 m high. No pictures and no program text were read."
+    "Tag groups proposed after a look at the numbers of all 30 runs (when each small "
+    "object passes the wall, how high it goes, motion of the hook, contact pairs). "
+    "The scene is a side view: y is up; the wall is at x = 1.75 m and is 1.5 m high. "
+    "Film strips of 3 runs were inspected; they agree with the tags: the hook carries "
+    "a pile of objects over the wall as a shovel does. No program text was read."
 )
 WALL = 1.75
 # The main observations of this scenario, for its page in the viewer. Check them

@@ -112,6 +112,27 @@ class Run:
         return len(re.findall(pattern, text, flags=re.I))
 
 
+def nearest_gap(run: Run, entity: str, point: np.ndarray) -> float:
+    """Smallest distance from the outline of an entity to a point, over the episode.
+
+    Kinematic 2D traces only (they store the outline of every shape). Use it when a
+    touch can be the last instant of the episode, which the contact modes can miss.
+    """
+    wanted = next(e["id"] for e in run.meta["entities"] if e["name"] == entity)
+    geoms = [g["id"] for g in run.meta["geoms"] if g["entity"] == wanted]
+    with np.load(run.directory / "trace.npz") as data:
+        verts = data["verts"][:, geoms]  # [T, geom, V, 2]
+    best = np.inf
+    for geom in range(verts.shape[1]):
+        shape = verts[:, geom]
+        shape = shape[:, ~np.isnan(shape[0, :, 0])]
+        ahead = np.roll(shape, -1, axis=1)
+        for share in np.linspace(0.0, 1.0, 12, endpoint=False):
+            points = shape + share * (ahead - shape)
+            best = min(best, float(np.linalg.norm(points - point, axis=-1).min()))
+    return best
+
+
 def path_length(pos: np.ndarray) -> float:
     """Length of a path in metres."""
     return float(np.linalg.norm(np.diff(pos, axis=0), axis=1).sum())
@@ -160,6 +181,13 @@ def bouts(pos: np.ndarray, gap: int = 10, threshold: float = MOVE) -> int:
     """Number of separate motions of a body (a pause longer than ``gap`` steps splits)."""
     steps = moving(pos, threshold)
     return 0 if not len(steps) else int(1 + (np.diff(steps) > gap).sum())
+
+
+def moves_with(run: Run, body: str, other: str) -> float:
+    """Share of the moving steps of ``body`` in which ``other`` moves too (channels)."""
+    first = np.linalg.norm(np.diff(run.ch(body), axis=0), axis=1) > MOVE
+    second = np.linalg.norm(np.diff(run.ch(other), axis=0), axis=1) > MOVE
+    return float((first & second).sum() / first.sum()) if first.sum() else 0.0
 
 
 def load_runs(scenario: str, instance: str = "inst0") -> list[Run]:

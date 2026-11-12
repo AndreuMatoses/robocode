@@ -6,7 +6,7 @@
   "reader": "Claude (claude-fable-5-2)",
   "date": "2026-11-12",
   "status": "not checked by a person",
-  "method": "Tag groups proposed after a look at the numbers of all 22 runs (lift, drop and first motion of each cube, motion of the wiper, base path, contact pairs). No pictures and no program text were read.",
+  "method": "Tag groups proposed after a look at the numbers of all 22 runs (lift, drop and first motion of each cube, motion of the wiper, base path, contact pairs). Film strips of 4 runs were inspected; the pictures are small, and they agree with the tags (the wiper is in the gripper in the one wiper run). No program text was read.",
   "rules": "experiments/contacts/tag_rules/sweepintodrawer3d.py"
  },
  "insights": [
@@ -23,7 +23,7 @@
     "gripper": "The gripper moves the cubes. The wiper stays in its place.",
     "wiper": "The robot takes the wiper and sweeps with it."
    },
-   "rule": "wiper if the wiper moves 5 cm or more"
+   "rule": "wiper if the wiper moves in half or more of the env steps in which a cube moves"
   },
   {
    "key": "transfer",
@@ -269,6 +269,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 3.44,
    "steps": 339
   },
@@ -284,6 +285,7 @@
    ],
    "groups": 2,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 7.1,
    "steps": 332
   },
@@ -299,6 +301,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 3.85,
    "steps": 345
   },
@@ -314,6 +317,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 4.15,
    "steps": 617
   },
@@ -329,6 +333,7 @@
    ],
    "groups": 3,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 5.14,
    "steps": 610
   },
@@ -344,6 +349,7 @@
    ],
    "groups": 3,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 1.2,
    "steps": 129
   },
@@ -359,6 +365,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 2.76,
    "steps": 278
   },
@@ -374,6 +381,7 @@
    ],
    "groups": 1,
    "wiper_shift_m": 0.32,
+   "cube_steps_with_wiper_motion": 1.0,
    "base_path_m": 1.75,
    "steps": 241
   },
@@ -389,6 +397,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 3.38,
    "steps": 237
   },
@@ -404,6 +413,7 @@
    ],
    "groups": 3,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 3.49,
    "steps": 389
   },
@@ -419,6 +429,7 @@
    ],
    "groups": 3,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 4.32,
    "steps": 467
   },
@@ -434,6 +445,7 @@
    ],
    "groups": 3,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 5.79,
    "steps": 867
   },
@@ -449,6 +461,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 1.06,
    "steps": 884
   },
@@ -464,6 +477,7 @@
    ],
    "groups": 5,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 6.22,
    "steps": 812
   },
@@ -479,6 +493,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 4.42,
    "steps": 870
   },
@@ -494,6 +509,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 8.35,
    "steps": 865
   },
@@ -509,6 +525,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 2.75,
    "steps": 857
   },
@@ -524,6 +541,7 @@
    ],
    "groups": 5,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 0.97,
    "steps": 760
   },
@@ -539,6 +557,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 1.28,
    "steps": 878
   },
@@ -554,6 +573,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 0.83,
    "steps": 907
   },
@@ -569,6 +589,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 0.7,
    "steps": 612
   },
@@ -584,6 +605,7 @@
    ],
    "groups": 4,
    "wiper_shift_m": 0.0,
+   "cube_steps_with_wiper_motion": 0.0,
    "base_path_m": 0.94,
    "steps": 837
   }

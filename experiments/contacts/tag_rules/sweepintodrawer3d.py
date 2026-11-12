@@ -6,12 +6,14 @@ from typing import Any
 
 import numpy as np
 
-from experiments.contacts.features import Run, path_length, summary
+from experiments.contacts.features import Run, moves_with, path_length, summary
 
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 22 runs (lift, drop and "
-    "first motion of each cube, motion of the wiper, base path, contact pairs). No "
-    "pictures and no program text were read."
+    "first motion of each cube, motion of the wiper, base path, contact pairs). Film "
+    "strips of 4 runs were inspected; the pictures are small, and they agree with the "
+    "tags (the wiper is in the gripper in the one wiper run). No program text was "
+    "read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.
@@ -33,7 +35,8 @@ CODEBOOK = [
             "gripper": "The gripper moves the cubes. The wiper stays in its place.",
             "wiper": "The robot takes the wiper and sweeps with it.",
         },
-        "rule": "wiper if the wiper moves 5 cm or more",
+        "rule": "wiper if the wiper moves in half or more of the env steps in "
+        "which a cube moves",
     },
     {
         "key": "transfer",
@@ -100,8 +103,17 @@ def label(run: Run) -> tuple[dict[str, str], dict[str, Any]]:
     firsts = sorted(c["first"] for c in cubes if c["first"] is not None)
     groups = int(1 + (np.diff(firsts) > 15).sum())
     base_path = path_length(run.ch("base")[:, :2])
+    together = float(
+        np.mean(
+            [
+                moves_with(run, n, "obj:wiper_0")
+                for n in run.motion.channels
+                if n.startswith("obj:cube")
+            ]
+        )
+    )
     tags = {
-        "tool": "wiper" if wiper["shift"] >= 0.05 else "gripper",
+        "tool": "wiper" if together >= 0.5 else "gripper",
         "transfer": (
             "sweep" if lifted == 0 else "pick" if lifted == len(cubes) else "mixed"
         ),
@@ -120,6 +132,7 @@ def label(run: Run) -> tuple[dict[str, str], dict[str, Any]]:
         "first_motion_steps": firsts,
         "groups": groups,
         "wiper_shift_m": round(wiper["shift"], 2),
+        "cube_steps_with_wiper_motion": round(together, 2),
         "base_path_m": round(base_path, 2),
         "steps": run.steps,
     }

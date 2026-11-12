@@ -6,7 +6,7 @@
   "reader": "Claude (claude-fable-5-2)",
   "date": "2026-11-12",
   "status": "not checked by a person",
-  "method": "Tag groups proposed after a look at the base path of all 35 runs (numbers only). Each value is assigned by the rule of its group. No program text was read.",
+  "method": "Tag groups proposed after a look at the base path of all 35 runs (numbers only). Each value is assigned by the rule of its group. No pictures and no program text were read.",
   "rules": "experiments/contacts/tag_rules/motion2d.py"
  },
  "insights": [

@@ -7,21 +7,19 @@ from typing import Any
 from experiments.contacts.features import Run, moved_order, path_length, summary
 
 METHOD = (
-    "Tag groups proposed after a look at the task text (it names two solutions: "
-    "move the blocker, or get a spare block from the far table) and at the numbers "
-    "of all 33 runs (which blocks move, where the blocker ends, base path). No "
-    "pictures and no program text were read."
+    "Tag groups proposed after a look at the task text (it names two solutions: move "
+    "the blocker, or get a spare block from the far table) and at the numbers of all "
+    "33 runs (which blocks move, where the blocker ends, base path). Film strips of 5 "
+    "runs were inspected; the blocks are small in the pictures, and the pictures "
+    "agree with the plan of each run. The program text of the 3 pen_direct runs was "
+    "read to find how they take the block."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.
 INSIGHTS = [
-    "The task text names two solutions. 24 of 33 runs move the red blocker and take the "
-    "block from the pen. 6 runs drive to the far table and bring a spare block.",
-    "3 runs take the block from the pen and do not move the blocker. The task text says "
-    "that the blocker is in the way of the grasp, so this solution is not expected. How "
-    "these runs do it is not examined.",
-    "The blocker ends on the floor in 12 runs, on the plate in 6 runs and on the table in "
-    "6 runs.",
+    "The task text names two solutions. 24 of 33 runs move the red blocker and take the block from the pen. 6 runs drive to the far table and bring a spare block.",
+    "3 runs take the block from the pen and do not move the blocker, in 6 to 8 env steps. The task text says that only a horizontal grasp clears the walls. The three programs (all from methods that see the simulator code) search grasps in a private copy of the simulator; one of them names the solution: a side grasp tilted by about 20 degrees.",
+    "The blocker ends on the floor in 12 runs, on the plate in 6 runs and on the table in 6 runs.",
     "The two views see the plan (contact 0.91, motion 0.82).",
 ]
 CODEBOOK = [

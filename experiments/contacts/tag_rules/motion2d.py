@@ -9,9 +9,9 @@ import numpy as np
 from experiments.contacts.features import Run, path_length, stops
 
 METHOD = (
-    "Tag groups proposed after a look at the base path of all 35 runs (numbers "
-    "only). Each value is assigned by the rule of its group. No program text was "
-    "read."
+    "Tag groups proposed after a look at the base path of all 35 runs (numbers only). "
+    "Each value is assigned by the rule of its group. No pictures and no program text "
+    "were read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

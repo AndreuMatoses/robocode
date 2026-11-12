@@ -6,12 +6,12 @@
   "reader": "Claude (claude-fable-5-2)",
   "date": "2026-11-12",
   "status": "not checked by a person",
-  "method": "Tag groups proposed after a look at the task text and at the numbers of all 34 runs (the samples that each rover drives to, the path of each rover, the order of the contact events). A sample counts as taken by a rover that comes within 27 cm of it. No pictures and no program text were read.",
+  "method": "Tag groups proposed after a look at the task text and at the numbers of all 34 runs (the samples that each rover drives to, the path of each rover, the order of the contact events). A sample counts as taken by a rover that comes within 27 cm of it. Film strips of 2 runs were inspected. They show the wall in the middle of the arena: rock0 and soil0 are on the side of rover1. No program text was read.",
   "rules": "experiments/contacts/tag_rules/rovers.py"
  },
  "insights": [
   "32 of 34 runs give all the sample work to rover1; rover0 takes pictures only. 2 runs split the samples between the rovers.",
-  "28 runs take the same two samples, rock0 and soil0.",
+  "28 runs take the same two samples, rock0 and soil0. The film strips show the cause: a wall divides the arena, and these two samples are on the side of rover1.",
   "The contact view finds 9 strategies (effective number 7.9), but the plan is almost the same in all runs. One difference is the order of the events: the first event is a sample in 22 runs and a picture in 12 runs."
  ],
  "codebook": [

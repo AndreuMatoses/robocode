@@ -6,12 +6,13 @@
   "reader": "Claude (claude-fable-5-2)",
   "date": "2026-11-12",
   "status": "not checked by a person",
-  "method": "Tag groups proposed after a look at the numbers of all 35 runs (order, end position and path of the two obstructions and of the target block, contact pairs). The scene is a side view: y is up. No pictures and no program text were read.",
+  "method": "Tag groups proposed after a look at the numbers of all 35 runs (order, end position and path of the two obstructions and of the target block, contact pairs). The scene is a side view: y is up. Film strips of 4 runs were inspected. They showed obstructions that stay in the air, so the tag group release was added. No program text was read.",
   "rules": "experiments/contacts/tag_rules/obstruction2d.py"
  },
  "insights": [
   "29 of 35 runs move obstruction1 first, the one nearer to the target block.",
   "24 runs put one obstruction on each side, and 8 runs put the two on the right.",
+  "4 runs release an obstruction in the air and leave it there. The scene has no gravity, so this is a valid way to clear the surface.",
   "25 runs carry the target block up and over. 10 runs move it low and direct.",
   "The contact view finds 6 strategies, but it sees none of the tag groups (all near 0.5)."
  ],
@@ -49,6 +50,16 @@
    "rule": "largest shift of an obstruction"
   },
   {
+   "key": "release",
+   "question": "Where does the robot release the obstructions?",
+   "source": "motion",
+   "values": {
+    "on_table": "Each obstruction ends at the height of its start.",
+    "in_air": "An obstruction ends 5 cm or more above its start: the robot releases it in the air, and it stays there (the scene has no gravity)."
+   },
+   "rule": "height of each obstruction in the last state against its start"
+  },
+  {
    "key": "carry",
    "question": "How does the target block go to the surface?",
    "source": "motion",
@@ -84,6 +95,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "quick"
@@ -92,6 +104,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "quick"
@@ -100,6 +113,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "quick"
@@ -108,6 +122,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "clear",
    "pace": "quick"
@@ -116,6 +131,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "clear",
    "pace": "quick"
@@ -124,6 +140,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "quick"
@@ -132,6 +149,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "quick"
@@ -140,6 +158,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "clear",
    "pace": "quick"
@@ -148,6 +167,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "bumps",
    "pace": "quick"
@@ -156,6 +176,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "quick"
@@ -164,6 +185,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "clear",
    "pace": "quick"
@@ -172,6 +194,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "clear",
    "pace": "quick"
@@ -180,6 +203,7 @@
    "order": "obstruction0_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "slow"
@@ -188,6 +212,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "quick"
@@ -196,6 +221,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "in_air",
    "carry": "direct",
    "base": "bumps",
    "pace": "slow"
@@ -204,6 +230,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "quick"
@@ -212,6 +239,7 @@
    "order": "obstruction0_first",
    "sides": "one_only",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "quick"
@@ -220,6 +248,7 @@
    "order": "obstruction0_first",
    "sides": "one_only",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "slow"
@@ -228,6 +257,7 @@
    "order": "obstruction0_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "quick"
@@ -236,6 +266,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "bumps",
    "pace": "slow"
@@ -244,6 +275,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "slow"
@@ -252,6 +284,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "slow"
@@ -260,6 +293,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "quick"
@@ -268,6 +302,7 @@
    "order": "obstruction1_first",
    "sides": "both_left",
    "distance": "far",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "slow"
@@ -276,6 +311,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "slow"
@@ -284,6 +320,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "bumps",
    "pace": "slow"
@@ -292,6 +329,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "on_table",
    "carry": "direct",
    "base": "clear",
    "pace": "slow"
@@ -300,6 +338,7 @@
    "order": "obstruction0_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "slow"
@@ -308,6 +347,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "in_air",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "slow"
@@ -316,6 +356,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "just_off",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "quick"
@@ -324,6 +365,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "in_air",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "slow"
@@ -332,6 +374,7 @@
    "order": "obstruction0_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "slow"
@@ -340,6 +383,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "slow"
@@ -348,6 +392,7 @@
    "order": "obstruction1_first",
    "sides": "split",
    "distance": "far",
+   "release": "in_air",
    "carry": "up_and_over",
    "base": "clear",
    "pace": "slow"
@@ -356,6 +401,7 @@
    "order": "obstruction1_first",
    "sides": "both_right",
    "distance": "far",
+   "release": "on_table",
    "carry": "up_and_over",
    "base": "bumps",
    "pace": "slow"
@@ -371,6 +417,10 @@
    "x_shift_obstruction0_m": 0.11,
    "x_shift_obstruction1_m": -0.08,
    "target_path_ratio": 2.33,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.39,
    "steps": 48
   },
@@ -383,6 +433,10 @@
    "x_shift_obstruction0_m": 0.11,
    "x_shift_obstruction1_m": -0.04,
    "target_path_ratio": 2.08,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 1.88,
    "steps": 41
   },
@@ -395,6 +449,10 @@
    "x_shift_obstruction0_m": 0.13,
    "x_shift_obstruction1_m": -0.09,
    "target_path_ratio": 1.9,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.18,
    "steps": 41
   },
@@ -407,6 +465,10 @@
    "x_shift_obstruction0_m": -0.21,
    "x_shift_obstruction1_m": 0.21,
    "target_path_ratio": 1.32,
+   "rise_of_each_obstruction_m": [
+    0.01,
+    0.0
+   ],
    "base_path_m": 1.9,
    "steps": 37
   },
@@ -419,6 +481,10 @@
    "x_shift_obstruction0_m": -0.14,
    "x_shift_obstruction1_m": 0.25,
    "target_path_ratio": 1.47,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.07,
    "steps": 39
   },
@@ -431,6 +497,10 @@
    "x_shift_obstruction0_m": 0.11,
    "x_shift_obstruction1_m": -0.14,
    "target_path_ratio": 2.3,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.58,
    "steps": 56
   },
@@ -443,6 +513,10 @@
    "x_shift_obstruction0_m": 0.39,
    "x_shift_obstruction1_m": 0.29,
    "target_path_ratio": 1.66,
+   "rise_of_each_obstruction_m": [
+    0.01,
+    0.0
+   ],
    "base_path_m": 2.91,
    "steps": 48
   },
@@ -455,6 +529,10 @@
    "x_shift_obstruction0_m": -0.15,
    "x_shift_obstruction1_m": 0.29,
    "target_path_ratio": 1.38,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 1.83,
    "steps": 35
   },
@@ -467,6 +545,10 @@
    "x_shift_obstruction0_m": 0.3,
    "x_shift_obstruction1_m": -0.33,
    "target_path_ratio": 1.0,
+   "rise_of_each_obstruction_m": [
+    0.01,
+    0.0
+   ],
    "base_path_m": 2.89,
    "steps": 56
   },
@@ -479,6 +561,10 @@
    "x_shift_obstruction0_m": 0.15,
    "x_shift_obstruction1_m": -0.07,
    "target_path_ratio": 2.28,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.53,
    "steps": 51
   },
@@ -491,6 +577,10 @@
    "x_shift_obstruction0_m": 0.11,
    "x_shift_obstruction1_m": -0.45,
    "target_path_ratio": 1.01,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.74,
    "steps": 59
   },
@@ -503,6 +593,10 @@
    "x_shift_obstruction0_m": -0.55,
    "x_shift_obstruction1_m": 0.31,
    "target_path_ratio": 1.01,
+   "rise_of_each_obstruction_m": [
+    0.01,
+    0.0
+   ],
    "base_path_m": 2.48,
    "steps": 55
   },
@@ -515,6 +609,10 @@
    "x_shift_obstruction0_m": 0.1,
    "x_shift_obstruction1_m": -0.05,
    "target_path_ratio": 2.42,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.35,
    "steps": 64
   },
@@ -527,6 +625,10 @@
    "x_shift_obstruction0_m": 0.1,
    "x_shift_obstruction1_m": -0.12,
    "target_path_ratio": 1.9,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.24,
    "steps": 46
   },
@@ -539,6 +641,10 @@
    "x_shift_obstruction0_m": 0.12,
    "x_shift_obstruction1_m": 0.31,
    "target_path_ratio": 1.02,
+   "rise_of_each_obstruction_m": [
+    0.16,
+    0.05
+   ],
    "base_path_m": 2.58,
    "steps": 60
   },
@@ -551,6 +657,10 @@
    "x_shift_obstruction0_m": 0.12,
    "x_shift_obstruction1_m": -0.05,
    "target_path_ratio": 2.3,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.45,
    "steps": 59
   },
@@ -562,6 +672,10 @@
    "x_shift_obstruction0_m": 0.09,
    "x_shift_obstruction1_m": -0.02,
    "target_path_ratio": 1.81,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.02,
    "steps": 36
   },
@@ -574,6 +688,10 @@
    "x_shift_obstruction0_m": 0.08,
    "x_shift_obstruction1_m": -0.02,
    "target_path_ratio": 2.41,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.66,
    "steps": 62
   },
@@ -586,6 +704,10 @@
    "x_shift_obstruction0_m": 0.09,
    "x_shift_obstruction1_m": -0.05,
    "target_path_ratio": 1.96,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.04,
    "steps": 38
   },
@@ -598,6 +720,10 @@
    "x_shift_obstruction0_m": 0.28,
    "x_shift_obstruction1_m": 0.27,
    "target_path_ratio": 1.0,
+   "rise_of_each_obstruction_m": [
+    0.01,
+    0.01
+   ],
    "base_path_m": 3.52,
    "steps": 75
   },
@@ -610,6 +736,10 @@
    "x_shift_obstruction0_m": 0.34,
    "x_shift_obstruction1_m": 0.3,
    "target_path_ratio": 1.55,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 3.73,
    "steps": 92
   },
@@ -622,6 +752,10 @@
    "x_shift_obstruction0_m": 0.14,
    "x_shift_obstruction1_m": -0.07,
    "target_path_ratio": 2.31,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 3.25,
    "steps": 75
   },
@@ -634,6 +768,10 @@
    "x_shift_obstruction0_m": 0.13,
    "x_shift_obstruction1_m": -0.05,
    "target_path_ratio": 2.31,
+   "rise_of_each_obstruction_m": [
+    0.01,
+    0.01
+   ],
    "base_path_m": 2.58,
    "steps": 55
   },
@@ -646,6 +784,10 @@
    "x_shift_obstruction0_m": -0.61,
    "x_shift_obstruction1_m": -0.62,
    "target_path_ratio": 2.34,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 4.91,
    "steps": 106
   },
@@ -658,6 +800,10 @@
    "x_shift_obstruction0_m": 0.14,
    "x_shift_obstruction1_m": -0.07,
    "target_path_ratio": 2.33,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.92,
    "steps": 66
   },
@@ -670,6 +816,10 @@
    "x_shift_obstruction0_m": 0.3,
    "x_shift_obstruction1_m": 0.3,
    "target_path_ratio": 1.0,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.86,
    "steps": 63
   },
@@ -682,6 +832,10 @@
    "x_shift_obstruction0_m": 0.34,
    "x_shift_obstruction1_m": 0.34,
    "target_path_ratio": 1.0,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 3.21,
    "steps": 71
   },
@@ -694,6 +848,10 @@
    "x_shift_obstruction0_m": 0.15,
    "x_shift_obstruction1_m": -0.07,
    "target_path_ratio": 2.37,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.66,
    "steps": 67
   },
@@ -706,6 +864,10 @@
    "x_shift_obstruction0_m": 0.13,
    "x_shift_obstruction1_m": -0.08,
    "target_path_ratio": 3.71,
+   "rise_of_each_obstruction_m": [
+    0.21,
+    0.21
+   ],
    "base_path_m": 3.58,
    "steps": 85
   },
@@ -718,6 +880,10 @@
    "x_shift_obstruction0_m": 0.1,
    "x_shift_obstruction1_m": -0.05,
    "target_path_ratio": 2.29,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 2.43,
    "steps": 59
   },
@@ -730,6 +896,10 @@
    "x_shift_obstruction0_m": 0.45,
    "x_shift_obstruction1_m": 0.68,
    "target_path_ratio": 4.95,
+   "rise_of_each_obstruction_m": [
+    0.39,
+    0.28
+   ],
    "base_path_m": 7.08,
    "steps": 180
   },
@@ -742,6 +912,10 @@
    "x_shift_obstruction0_m": 0.6,
    "x_shift_obstruction1_m": -0.56,
    "target_path_ratio": 3.7,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 6.48,
    "steps": 315
   },
@@ -754,6 +928,10 @@
    "x_shift_obstruction0_m": 0.66,
    "x_shift_obstruction1_m": -0.6,
    "target_path_ratio": 4.24,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 8.81,
    "steps": 246
   },
@@ -766,6 +944,10 @@
    "x_shift_obstruction0_m": -0.64,
    "x_shift_obstruction1_m": 0.78,
    "target_path_ratio": 4.83,
+   "rise_of_each_obstruction_m": [
+    0.2,
+    0.2
+   ],
    "base_path_m": 7.13,
    "steps": 336
   },
@@ -778,6 +960,10 @@
    "x_shift_obstruction0_m": 0.41,
    "x_shift_obstruction1_m": 0.75,
    "target_path_ratio": 4.23,
+   "rise_of_each_obstruction_m": [
+    0.0,
+    0.0
+   ],
    "base_path_m": 7.83,
    "steps": 206
   }

@@ -11,17 +11,16 @@ from experiments.contacts.features import Run, path_length, summary
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 22 runs (motion of the "
     "two bins and of the cubes, contact pairs). The scoop does not move in any run, "
-    "so no tag group asks for it. No pictures and no program text were read."
+    "so no tag group asks for it. Film strips of 5 runs were inspected (one or more "
+    "for each transfer type). They agree with the tags, and they showed what the two "
+    "move_target runs do with the green bin. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.
 INSIGHTS = [
     "No run uses the scoop: it does not move in any of the 22 runs.",
-    "14 runs lift the yellow bin and pour the cubes into the green bin. 5 runs take the "
-    "cubes out one at a time.",
-    "2 runs (astra-source seed24 and seed444) move no cube: they lift the green bin and "
-    "bring it to the yellow bin. 1 run puts the yellow bin, with the cubes in it, into "
-    "the green bin.",
+    "14 runs lift the yellow bin and pour the cubes into the green bin. 5 runs take the cubes out one at a time.",
+    "2 runs (astra-source seed24 and seed444) move no cube: they lift the green bin, turn it over and put it on the yellow bin as a cover. 1 run puts the yellow bin, with the cubes in it, into the green bin. These three runs are from the method that sees the simulator code.",
     "The two views see the transfer type (0.93).",
 ]
 CODEBOOK = [
@@ -36,8 +35,8 @@ CODEBOOK = [
             "at a time.",
             "nest_bin": "The robot puts the yellow bin, with the cubes in it, into "
             "the green bin. The cubes are not poured out.",
-            "move_target": "No cube moves. The robot lifts the green bin and brings "
-            "it to the yellow bin.",
+            "move_target": "No cube moves. The robot lifts the green bin, turns it "
+            "over and puts it on the yellow bin as a cover.",
         },
         "rule": "shift of the yellow bin (20 cm or more: pour or nest_bin; nest_bin "
         "if the cubes end 5 cm or more above the floor of the green bin), else "

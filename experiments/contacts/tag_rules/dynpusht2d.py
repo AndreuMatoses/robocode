@@ -8,9 +8,9 @@ from experiments.contacts.features import Run, bouts, path_length, summary
 
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 34 runs (path of the "
-    "block and of the robot, number of contact modes, contact pairs). The traces "
-    "give the position of the block; its angle was not read. No pictures and no "
-    "program text were read."
+    "block and of the robot, number of contact modes, contact pairs). The traces give "
+    "the position of the block; its angle was not read. Film strips of 3 runs were "
+    "inspected; they agree with the tags. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

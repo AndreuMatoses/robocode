@@ -7,18 +7,18 @@ from typing import Any
 from experiments.contacts.features import Run, moved_order, path_length, summary
 
 METHOD = (
-    "Tag groups proposed after a look at the numbers of all 35 runs (order and "
-    "shift of the two obstructions and of the target block, contact pairs). No "
-    "pictures and no program text were read."
+    "Tag groups proposed after a look at the numbers of all 35 runs (order and shift "
+    "of the two obstructions and of the target block, contact pairs). Film strips of "
+    "4 runs were inspected. They agree with the tags, and they showed that the run "
+    "with a far obstruction carries it (the value was named thrown_off before). No "
+    "program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.
 INSIGHTS = [
-    "30 of 35 runs do not clear the surface first: the robot pushes the target block onto "
-    "the surface, and the block pushes the obstructions away. 5 runs clear the surface "
-    "first.",
-    "The fingers push the target block in 26 runs, and the base pushes it in 8 runs.",
-    "In 2 runs an obstruction leaves the table.",
+    "30 of 35 runs do not clear the surface first: the robot pushes the target block onto the surface, and the block pushes the obstructions away. 5 runs clear the surface first.",
+    "The fingers push the target block in 26 runs. In 8 runs the round base of the robot pushes it; a film strip shows a robot that turns its gripper up and pushes with its body.",
+    "1 run takes an obstruction with the gripper and puts it on the other side of the table. In 1 run an obstruction leaves the scene.",
 ]
 CODEBOOK = [
     {
@@ -51,9 +51,12 @@ CODEBOOK = [
         "question": "Where do the obstructions end?",
         "source": "motion",
         "values": {
-            "shifted": "Each obstruction ends less than 1 m from its start.",
-            "thrown_off": "An obstruction ends 1 m or more from its start: it "
-            "leaves the table.",
+            "shifted": "Each obstruction ends less than 1 m from its start: pushed "
+            "to the side.",
+            "carried_away": "An obstruction ends 1 m to 5 m from its start: the "
+            "gripper takes it and puts it on the other side.",
+            "lost": "An obstruction ends more than 5 m from its start: it leaves "
+            "the scene.",
         },
         "rule": "largest shift of an obstruction",
     },
@@ -98,7 +101,9 @@ def label(run: Run) -> tuple[dict[str, str], dict[str, Any]]:
     tags = {
         "plan": "bulldoze" if order and order[0] == "target_block" else "clear_first",
         "pusher": pusher,
-        "obstructions": "thrown_off" if far >= 1.0 else "shifted",
+        "obstructions": (
+            "shifted" if far < 1.0 else "carried_away" if far < 5.0 else "lost"
+        ),
         "target_path": "straight" if ratio < 1.2 else "detour",
         "pace": "quick" if run.steps <= 57 else "slow",
     }

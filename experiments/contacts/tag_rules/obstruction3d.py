@@ -7,9 +7,10 @@ from typing import Any
 from experiments.contacts.features import Run, moved_order, path_length, summary
 
 METHOD = (
-    "Tag groups proposed after a look at the numbers of all 32 runs (order, shift "
-    "and lift of the two obstructions and of the target block, base path, contact "
-    "pairs). No pictures and no program text were read."
+    "Tag groups proposed after a look at the numbers of all 32 runs (order, shift and "
+    "lift of the two obstructions and of the target block, base path, contact pairs). "
+    "Film strips of 3 runs were inspected; they agree with the tags. No program text "
+    "was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

@@ -9,17 +9,18 @@ from experiments.contacts.features import Run, moved_order, path_length, summary
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 35 runs (order, end "
     "position and path of the two obstructions and of the target block, contact "
-    "pairs). The scene is a side view: y is up. No pictures and no program text "
-    "were read."
+    "pairs). The scene is a side view: y is up. Film strips of 4 runs were inspected. "
+    "They showed obstructions that stay in the air, so the tag group release was "
+    "added. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.
 INSIGHTS = [
     "29 of 35 runs move obstruction1 first, the one nearer to the target block.",
     "24 runs put one obstruction on each side, and 8 runs put the two on the right.",
+    "4 runs release an obstruction in the air and leave it there. The scene has no gravity, so this is a valid way to clear the surface.",
     "25 runs carry the target block up and over. 10 runs move it low and direct.",
-    "The contact view finds 6 strategies, but it sees none of the tag groups (all near "
-    "0.5).",
+    "The contact view finds 6 strategies, but it sees none of the tag groups (all near 0.5).",
 ]
 CODEBOOK = [
     {
@@ -56,6 +57,18 @@ CODEBOOK = [
             "far": "An obstruction ends 20 cm or more from its start.",
         },
         "rule": "largest shift of an obstruction",
+    },
+    {
+        "key": "release",
+        "question": "Where does the robot release the obstructions?",
+        "source": "motion",
+        "values": {
+            "on_table": "Each obstruction ends at the height of its start.",
+            "in_air": "An obstruction ends 5 cm or more above its start: the "
+            "robot releases it in the air, and it stays there (the scene has no "
+            "gravity).",
+        },
+        "rule": "height of each obstruction in the last state against its start",
     },
     {
         "key": "carry",
@@ -105,11 +118,13 @@ def label(run: Run) -> tuple[dict[str, str], dict[str, Any]]:
     else:
         sides = "both_right" if signs[0] > 0 else "both_left"
     ratio = target["path"] / target["shift"]
+    rise = [info["end"][1] - info["start"][1] for info in (zero, one)]
     first = next((n for n in order if n.startswith("obstruction")), "obstruction0")
     tags = {
         "order": first + "_first",
         "sides": sides,
         "distance": "far" if max(zero["shift"], one["shift"]) >= 0.20 else "just_off",
+        "release": "in_air" if max(rise) >= 0.05 else "on_table",
         "carry": "direct" if ratio < 1.5 else "up_and_over",
         "base": (
             "bumps"
@@ -123,6 +138,7 @@ def label(run: Run) -> tuple[dict[str, str], dict[str, Any]]:
         "x_shift_obstruction0_m": round(shifts[0], 2),
         "x_shift_obstruction1_m": round(shifts[1], 2),
         "target_path_ratio": round(ratio, 2),
+        "rise_of_each_obstruction_m": [round(v, 2) for v in rise],
         "base_path_m": round(path_length(run.ch("base")), 2),
         "steps": run.steps,
     }

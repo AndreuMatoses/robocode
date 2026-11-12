@@ -10,9 +10,9 @@ from experiments.contacts.features import Run, moved_order, path_length, summary
 
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 31 runs (which blocks "
-    "move and in which order, end position of each block, contact pairs). Blocks 0 "
-    "to 2 start at the mouth of the shelf; blocks 3 to 6 start in the room. No "
-    "pictures and no program text were read."
+    "move and in which order, end position of each block, contact pairs). Blocks 0 to "
+    "2 start at the mouth of the shelf; blocks 3 to 6 start in the room. Film strips "
+    "of 4 runs were inspected; they agree with the tags. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

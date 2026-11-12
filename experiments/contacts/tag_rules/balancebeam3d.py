@@ -10,7 +10,8 @@ METHOD = (
     "Tag groups proposed after a look at the numbers of all 34 runs (order, end "
     "position, lift, path and contact pairs of each block). The end layout is the "
     "same in all runs (the task gives the target of each block), so it is not a tag "
-    "group. No pictures and no program text were read."
+    "group. Film strips of 2 runs were made, but the blocks are too small in the "
+    "pictures to check the tags. No program text was read."
 )
 BLOCKS = ("large_block", "small_block_1", "small_block_2")
 # The main observations of this scenario, for its page in the viewer. Check them

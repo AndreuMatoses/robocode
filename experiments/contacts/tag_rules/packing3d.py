@@ -8,9 +8,9 @@ from experiments.contacts.features import Run, moved_order, path_length, summary
 
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 33 runs (order, end "
-    "position and lift of the two parts, base path, contact pairs). part0 starts "
-    "on the +y side of the rack and part1 on the -y side. No pictures and no "
-    "program text were read."
+    "position and lift of the two parts, base path, contact pairs). part0 starts on "
+    "the +y side of the rack and part1 on the -y side. Film strips of 3 runs were "
+    "inspected; they agree with the tags. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

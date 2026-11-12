@@ -9,7 +9,8 @@ from experiments.contacts.features import Run, bouts, path_length, summary
 METHOD = (
     "Tag groups proposed after a look at the numbers of all 33 runs (shift of the "
     "target block and of the three obstructions, path of the hook, contact pairs). "
-    "All runs take the hook. No pictures and no program text were read."
+    "All runs take the hook. Film strips of 2 runs were inspected; they agree with "
+    "the tags. No program text was read."
 )
 # The main observations of this scenario, for its page in the viewer. Check them
 # against the tag counts when a rule changes.

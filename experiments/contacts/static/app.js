@@ -570,6 +570,20 @@ function insightsPanel(name) {
   return box;
 }
 
+// Film strips of the runs that a reader looked at to check the tags.
+function stripsPanel(name, runs) {
+  const box = h("div", {});
+  j("/api/strips?name=" + name).then((d) => {
+    if (!d.strips.length) return;
+    const byId = new Map(runs.map((r) => [r.run_id, r]));
+    fill(box, h("h2", {}, "Film strips ", h("small", {}, `— ${d.strips.length} runs that cover the tag values; the pictures are at equal steps of path length`)),
+      h("div", { class: "panel", style: "max-width:none" }, d.strips.map((row) => { const r = byId.get(row.run_id);
+        return h("div", { class: "strip" }, h("div", {}, h("b", {}, row.run_id.split("/")[0] + " · " + row.run_id.split("/")[2]), r && r.tags ? h("span", { class: "muted" }, "  " + Object.entries(r.tags).map(([k, v]) => `${k}: ${v}`).join(" · ")) : null,
+          r ? h("a", { href: "#/t/" + r.trace, style: "margin-left:10px" }, "open the trace") : null), h("img", { src: row.url, loading: "lazy", alt: "film strip of " + row.run_id })); })));
+  }).catch(() => {});
+  return box;
+}
+
 async function pageScenario(name) {
   $("#crumbs").replaceChildren(name);
   const app = $("#app");
@@ -1913,7 +1927,7 @@ async function pageViews(name, tab) {
           h("td", { style: "max-width:280px" }, g.rule), h("td", {}, g.source))))) : agree,
       h("h2", {}, "Runs and tags ", h("small", {}, "— hover a row for the numbers behind its tags; tick the tag groups that define a semantic strategy; click a tag group to sort")),
       h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
-      cross, controls(), selection, note);
+      cross, stripsPanel(name, runs), controls(), selection, note);
     else fill(body,
       h("p", { class: "pagehead" }, h("b", {}, "Compare the views: "), "the same runs in the contact view (what touches what), the motion view (where the bodies go) and the semantic view (the tags). The table shows what each distance sees."),
       tiles,
@@ -2105,6 +2119,9 @@ async function pageViewsAll() {
   const mean = (xs) => { const v = xs.filter((x) => x != null); return v.length ? v.reduce((p, q) => p + q, 0) / v.length : null; };
   const groups = rows.flatMap((sc) => Object.keys(sc.sees.contact.groups).map((g) => [sc.sees.contact.groups[g], (sc.sees.motion || { groups: {} }).groups[g]])).filter(([c, m]) => c != null && m != null);
   const count = (fn) => groups.filter(([c, m]) => fn(c, m)).length;
+  // the source of the rule of each tag group that has a separation value; "pace" counts apart
+  const sources = rows.flatMap((sc) => Object.entries(sc.sources || {}).filter(([key]) => sc.sees.contact.groups[key] != null).map(([key, source]) => key === "pace" ? "pace" : source)), total = sources.length;
+  const fromSource = (word) => sources.filter((x) => x === word).length;
   const table = h("table", { class: "heat" },
     h("tr", {}, h("th", {}, "scenario"), h("th", {}, "runs"), h("th", { title: "Contact strategies and their effective number, with the tuned definition of the simulator." }, "contact strategies"), h("th", { title: "Combinations of the values of the first two tag groups, and their effective number." }, "semantic strategies"),
       h("th", {}, "first tag group"), h("th", { title: "Separation of the first tag group by the elastic mode distance." }, "contact sees it"), h("th", { title: "Separation of the first tag group by dynamic time warping of the motion." }, "motion sees it"),
@@ -2117,7 +2134,7 @@ async function pageViewsAll() {
   app.replaceChildren(
     h("p", { class: "defn" }, "One row for each scenario: the final policies that solve the first start scene, in three views. A semantic strategy is a combination of the values of the first two tag groups. ",
       "“Sees it” is the probability that two runs with different tag values are farther apart than two runs with the same value (0.5 = the distance does not see the tag group, 1 = full separation). The tags are not yet checked by a person. ",
-      h("b", {}, "The two views are not on equal terms here: "), "most tag rules use the motion of the bodies (87 of 142 tag groups) and fewer use the contacts (24). A view agrees more with the tag groups that come from its own data."),
+      h("b", {}, "The two views are not on equal terms here: "), `most tag rules use the motion of the bodies (${fromSource("motion")} of ${total} tag groups) and fewer use the contacts (${fromSource("contacts")}); ${fromSource("pace")} use the number of env steps. A view agrees more with the tag groups that come from its own data.`),
     h("div", { class: "tiles" }, tile(String(groups.length), "tag groups in all scenarios"), tile(String(count((c, m) => Math.max(c, m) >= 0.8)), "a view separates the values well (0.8 or more)"),
       tile(String(count((c, m) => m > c + 0.1)), "the motion view is better by 0.1 or more"), tile(String(count((c, m) => c > m + 0.1)), "the contact view is better by 0.1 or more"), tile(String(count((c, m) => Math.max(c, m) < 0.65)), "no view sees the tag group (both below 0.65)")),
     h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table));
