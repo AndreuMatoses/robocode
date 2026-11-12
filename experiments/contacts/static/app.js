@@ -451,7 +451,7 @@ async function pageIndex() {
     h("div", { class: "body" }, h("b", {}, sc.name),
       h("span", { class: "muted" }, `${sc.num_runs} runs · ${sc.num_traces} traces`), h("br"),
       ...["simulator", "robot", "dynamics"].filter((k) => sc[k]).map((k) => h("span", { class: "tag" }, sc[k]))))));
-    app.replaceChildren(h("p", {}, h("a", { href: "#/d" }, "Diversity and optimality of the final policies, all scenarios →"), h("a", { href: "#/v", style: "margin-left:16px" }, "Three views (contact, motion, semantic), all scenarios →")), bar, cards);
+    app.replaceChildren(bar, cards);
   };
   draw();
 }
@@ -565,7 +565,7 @@ function insightsPanel(name) {
     box.replaceChildren(h("div", { class: "panel insights" }, h("b", {}, "Main observations"),
       h("ul", {}, d.insights.map((text) => h("li", {}, text))),
       h("div", { class: "muted" }, `From the semantic tags of the final policies on the first start scene. Written by ${d.provenance.reader}; ${d.provenance.status}. A number in brackets is the separation of a tag group by the contact view or by the motion view (0.5 = not seen, 1 = full). `,
-        h("a", { href: "#/v/" + name }, "three views of this scenario →"))));
+        h("a", { href: "#/vs/" + name }, "tags of each run →"))));
   }).catch(() => {});
   return box;
 }
@@ -667,10 +667,7 @@ async function pageScenario(name) {
   };
   const matrixBox = h("div", { class: "panel" });
   app.replaceChildren(
-    h("div", {}, Object.values(sc.tags).map((t) => h("span", { class: "tag" }, t)),
-      h("a", { href: "#/h/" + name, style: "margin-left:12px" }, "strategy histories of all runs →"),
-      h("a", { href: "#/d/" + name, style: "margin-left:12px" }, "diversity and optimality →"),
-      h("a", { href: "#/v/" + name, style: "margin-left:12px" }, "three views: contact, motion, semantic →")),
+    h("div", {}, Object.values(sc.tags).map((t) => h("span", { class: "tag" }, t))),
     insightsPanel(name),
     briefingPanel(name),
     h("h2", {}, "Runs ", h("small", {}, "— tick recorded runs to compare them; numbers are the reported solve rates")), matrixBox,
@@ -918,8 +915,7 @@ async function pageHistories(name) {
     h("label", {}, "x axis ", h("select", { onchange: (e) => { state.axis = e.target.value; draw(); } },
       [["fraction", "fraction of the commits"], ["time", "time elapsed since the first commit"]].map(([v, t]) => h("option", { value: v }, t)))),
     h("label", {}, "contacts by ", h("select", { onchange: (e) => { state.level = e.target.value; load(); } },
-      ["class", "entity", "surface"].map((v) => h("option", { value: v }, v)))),
-    h("a", { href: "#/d/" + name }, "diversity and optimality of the final policies →"));
+      ["class", "entity", "surface"].map((v) => h("option", { value: v }, v)))));
   app.replaceChildren(await defControls(load), controls, body, pairBox);
   const draw = () => {
     const runs = hs.runs, colour = strategyColour(hs.strategies), byId = new Map(hs.strategies.map((st) => [st.id, st]));
@@ -1029,9 +1025,22 @@ try { Object.assign(DEF, JSON.parse(localStorage.getItem("contactDefinition") ||
 const defQuery = () => `scope=${DEF.scope}&identity=${DEF.identity}&order=${DEF.order}&fingers=${DEF.fingers}&metric=${DEF.metric}&group=${DEF.group}&tau=${DEF.tau}` +
   ["gap", "min_duration", "min_mode"].map((k) => (DEF[k] === "" || DEF[k] == null ? "" : `&${k}=${DEF[k]}`)).join("");
 let PRESET_HINT = () => {};
+const defPreset = () => DEFS ? (Object.entries(DEFS.presets).find(([, v]) => Object.entries(v).every(([k, value]) => String(DEF[k]) === String(value))) || [""])[0] : "";
+const METRIC_WORDS = { edit: "mode edit distance", warp: "elastic mode distance", overlap: "timeline overlap" };
+const defText = () => `${defPreset() ? "preset “" + defPreset() + "”" : "a custom definition"}: ${DEF.group === "exact" ? "equal mode sequences" : `${METRIC_WORDS[DEF.metric] || DEF.metric} within ${DEF.tau}`}`;
+const saveDef = (patch) => { Object.assign(DEF, patch); try { localStorage.setItem("contactDefinition", JSON.stringify(DEF)); } catch (err) { /* not kept */ } };
+// One line for the pages that use the contact definition but do not show its bar.
+function contactNote(presetName, reload) {
+  const want = DEFS && DEFS.presets[presetName];
+  const differs = want && !Object.entries(want).every(([k, value]) => String(DEF[k]) === String(value));
+  return h("div", { class: "bar muted" }, h("span", {}, `Contact strategies here use ${defText()}. Change the definition on a Contact tab.`),
+    differs ? h("button", { onclick: () => { saveDef({ ...want }); reload(); } }, `Use “${presetName}”, the tuned definition for this simulator`) : null);
+}
 async function defControls(onChange) {
   DEFS = DEFS || await j("/api/definitions");
-  const box = h("div", { class: "bar defbar" }), fine = h("div", { class: "bar defbar deftimes" }), hint = h("div", {}), wrap = h("div", {}, box, fine, hint);
+  const box = h("div", { class: "bar defbar" }), fine = h("div", { class: "bar defbar deftimes" }), hint = h("div", {}), sum = h("summary", {});
+  const wrap = h("div", {}, h("details", { class: "defbox" }, sum, box, fine), hint);
+  const sync = () => sum.replaceChildren(h("b", {}, "Definition of a contact strategy: "), defText(), h("span", { class: "muted" }, " — open to change it"));
   // the tuned preset differs by simulator: offer it when the page shows another one
   PRESET_HINT = (name) => {
     const want = DEFS.presets[name];
@@ -1044,9 +1053,8 @@ async function defControls(onChange) {
   const time = (label, key, title) => sel(label, DEF[key] === "" || DEF[key] == null ? "" : DEF[key],
     [["", `default (${DEFS.times[key]} s)`], ...TIMES.filter((v) => v !== DEFS.times[key]).map((v) => [v, `${v} s`])], (v) => set({ [key]: v === "" ? "" : Number(v) }), title);
   const set = (patch) => {
-    Object.assign(DEF, patch);
-    try { localStorage.setItem("contactDefinition", JSON.stringify(DEF)); } catch (err) { /* not kept */ }
-    draw(); drawFine(); onChange();
+    saveDef(patch);
+    draw(); drawFine(); sync(); onChange();
   };
   const preset = () => (Object.entries(DEFS.presets).find(([, v]) => Object.entries(v).every(([k, value]) => String(DEF[k]) === String(value))) || [""])[0];
   const sel = (label, value, options, on, title) => h("label", { title }, label, h("select", { onchange: (e) => on(e.target.value) },
@@ -1068,7 +1076,7 @@ async function defControls(onChange) {
     time("shortest contact", "min_duration", "A contact shorter than this time does not count, unless it is a strong impact."),
     time("shortest mode", "min_mode", "A contact mode shorter than this time joins the mode before it."),
     h("button", { disabled: ["gap", "min_duration", "min_mode"].every((k) => DEF[k] === "" || DEF[k] == null), onclick: () => set({ gap: "", min_duration: "", min_mode: "" }) }, "defaults"));
-  draw(); drawFine();
+  draw(); drawFine(); sync();
   return wrap;
 }
 
@@ -1330,7 +1338,7 @@ async function pageDiversity(name) {
       h("p", { class: "muted" }, `One episode per run, on ${d.instance}: this is not the reported score. The reward is −1 per step on these scenarios, so the total reward is minus the episode length. ` +
         "“At the first solve” is the episode length of the first policy version of the run that solves this instance. “Policy compute” is the time that the policy code used during the episode."));
   };
-  app.replaceChildren(await defControls(load), h("div", { class: "bar" }, h("a", { href: "#/h/" + name }, "strategy histories of this scenario →"), h("a", { href: "#/m/" + name }, "what the distance means: explore the metrics →"), h("a", { href: "#/v/" + name }, "three views: contact, motion, semantic →"), h("a", { href: "#/d" }, "all scenarios →")), body);
+  app.replaceChildren(await defControls(load), body);
   await load();
 }
 
@@ -1667,7 +1675,7 @@ ${pct(cb[b])} of the pairs of two runs`));
   };
   slider.addEventListener("input", () => setD(Number(slider.value)));
   app.replaceChildren(await defControls(load),
-    h("div", { class: "bar" }, h("a", { href: "#/d/" + name }, "diversity of this scenario →"), h("a", { href: "#/h/" + name }, "strategy histories →"),
+    h("div", { class: "bar" },
       h("span", { class: "muted" }, "“contacts” and “names” apply to every distance here; “order” applies to the edit distance and to the elastic distance only; “same when” is replaced by the slider.")),
     table,
     h("div", { class: "bar defbar" }, h("b", {}, "Distance"), slider, sliderValue, [0.1, 0.2, 0.35, 0.5].map((v) => h("button", { onclick: () => setD(v) }, String(v)))),
@@ -1684,18 +1692,18 @@ const valueColour = (index) => index < 0 || index >= VALUE_VARS.length ? "var(--
 const hexOf = (colour) => { const m = /^var\((--[\w-]+)\)$/.exec(colour); return m ? cssVar(m[1]) : colour; };
 const effectiveNumber = (labels) => { const c = new Map(); labels.forEach((v) => c.set(v, (c.get(v) || 0) + 1)); let e = 0; for (const k of c.values()) e -= (k / labels.length) * Math.log2(k / labels.length); return [c.size, 2 ** e]; };
 
-async function pageViews(name) {
+const VIEW_STATE = new Map();  // scenario -> selection and choices, kept when the tab changes
+async function pageViews(name, tab) {
   const app = $("#app");
-  $("#crumbs").replaceChildren(h("a", { href: "#/d/" + name }, "diversity"), " / ", h("a", { href: "#/s/" + name }, name), " / three views");
-  const state = { bodies: "all", dist: null, colour: "method", group: null, channel: null, sel: new Set(), strategy: null, sort: null };
+  if (!VIEW_STATE.has(name)) VIEW_STATE.set(name, { bodies: "all", dist: null, colour: "method", group: null, channel: null, sel: new Set(), strategy: null, sort: null });
+  const state = VIEW_STATE.get(name);
   const body = h("div", { class: "v3" });
   let d = null, marks = [];  // marks[i] = the elements of run i (dot, paths, row, lines)
   const load = async () => {
     body.replaceChildren(h("p", { class: "muted" }, "loading… (the first request of a scenario computes the motion of each run)"));
+    DEFS = DEFS || await j("/api/definitions");
     d = await j(`/api/views?name=${name}&bodies=${state.bodies}&${defQuery()}`);
-    PRESET_HINT(d.preset);
     METHODS = d.method_order;
-    state.sel = new Set();
     draw();
   };
   const setHot = (hot) => {
@@ -1713,7 +1721,8 @@ async function pageViews(name) {
     if (!book.some((g) => g.key === state.group)) state.group = book.length ? book[0].key : null;
     if (state.strategy == null) state.strategy = new Set(book.slice(0, 2).map((g) => g.key));
     if (state.colour.startsWith("tag:") && !book.some((g) => "tag:" + g.key === state.colour)) state.colour = "method";
-    const cur = dists.find((x) => x.key === state.dist);
+    const shown = dists.find((x) => x.key === state.dist);  // the Paths tab maps a motion distance
+    const cur = tab === "motion" && shown.view !== "motion" ? (dists.find((x) => x.key === "motion:warp") || shown) : shown;
     const group = book.find((g) => g.key === state.group);
     const sids = [...new Set(runs.map((r) => r.sid))].sort((p, q) => Number(p.slice(1)) - Number(q.slice(1)));
     marks = runs.map(() => []);
@@ -1738,7 +1747,7 @@ async function pageViews(name) {
     const key = () => h("div", { class: "swatches" }, values.map((v) => h("span", { title: colourGroup ? colourGroup.values[v] : "" }, h("span", { class: "dot", style: `background:${colourOfValue(v)}` }), `${v} (${runs.filter((r) => valueOf(r) === v).length})`)));
     const choose = (label, value, options, on) => h("label", {}, label, h("select", { onchange: (e) => on(e.target.value) }, options.map(([v, text]) => h("option", { value: v, selected: v === value }, text))));
     const colourOptions = [["method", "method"], ["sid", "contact strategy"], ...book.map((g) => ["tag:" + g.key, "tag: " + g.key])];
-    const distOptions = dists.map((x) => [x.key, `${x.view}: ${x.name}`]);
+    const distOptions = dists.filter((x) => tab !== "motion" || x.view === "motion").map((x) => [x.key, `${x.view}: ${x.name}`]);
     const setColour = (v) => { state.colour = v; if (v.startsWith("tag:")) state.group = v.slice(4); draw(); };
 
     // tiles
@@ -1876,27 +1885,48 @@ async function pageViews(name) {
       : h("span", { class: "muted" }, "Click a dot, a path or a table row to select runs. A ghost video shows the selected runs in one scene."));
     const byValue = h("div", { class: "bar" }, h("span", { class: "muted" }, "select all runs with:"), values.map((v) => h("button", { onclick: () => { state.sel = new Set(runs.map((r, i) => valueOf(r) === v ? i : -1).filter((i) => i >= 0)); draw(); } }, h("span", { class: "dot", style: `background:${colourOfValue(v)};margin-right:5px` }), v)));
 
-    fill(body, tiles, insightsPanel(name),
-      h("h2", {}, "Does a distance see a tag group? ", h("small", {}, "— rows: tag groups of the semantic view; columns: distances of the contact view and of the motion view")), agree,
-      h("div", { class: "bar defbar" }, choose("distance of the map", state.dist, distOptions, (v) => { state.dist = v; draw(); }), choose("colour", state.colour, colourOptions, setColour),
-        d.paths ? choose("body of the paths", state.channel, d.paths.channels.map((c) => [c, c]), (v) => { state.channel = v; draw(); }) : null,
-        d.bodies_available ? choose("bodies in the motion distances", state.bodies, d.bodies_available.map((b) => [b, `${b}: ${d.bodies_text[b]}`]), (v) => { state.bodies = v; load(); }) : null),
-      key(),
-      h("div", { class: "v3cols" },
-        h("div", {}, h("h2", {}, "Map of the runs ", h("small", {}, `— ${cur.view}: ${cur.name}`)), h("div", { class: "panel" }, map, h("div", { class: "muted", style: "max-width:440px" }, "Two runs that are near on the map have a small distance (multidimensional scaling). The axes have no meaning of their own."))),
-        h("div", {}, h("h2", {}, "Paths ", h("small", {}, "— where the body goes")), h("div", { class: "panel", style: "max-width:none" }, pathBox))),
+    const controls = (...extra) => h("div", { class: "bar defbar" }, choose("colour", state.colour, colourOptions, setColour), ...extra.filter(Boolean));
+    const pickMap = choose("distance of the map", cur.key, distOptions, (v) => { state.dist = v; draw(); });
+    const pickBody = d.paths ? choose("body of the paths", state.channel, d.paths.channels.map((c) => [c, c]), (v) => { state.channel = v; draw(); }) : null;
+    const pickBodies = d.bodies_available ? choose("bodies in the motion distances", state.bodies, d.bodies_available.map((b) => [b, `${b}: ${d.bodies_text[b]}`]), (v) => { state.bodies = v; load(); }) : null;
+    const mapPanel = h("div", {}, h("h2", {}, "Map of the runs ", h("small", {}, `— ${cur.view}: ${cur.name}`)), h("div", { class: "panel" }, map, h("div", { class: "muted", style: "max-width:440px" }, "Two runs that are near on the map have a small distance (multidimensional scaling). The axes have no meaning of their own.")));
+    const pathPanel = h("div", {}, h("h2", {}, "Paths ", h("small", {}, "— where the body goes")), h("div", { class: "panel", style: "max-width:none" }, pathBox));
+    const selection = [h("h2", {}, "Selected runs ", h("small", {}, "— the selection stays when you go to another tab of this scenario")), byValue, picked];
+    const note = contactNote(d.preset, load);
+    const cells = [...tiles.children];
+    if (tab === "motion") fill(body,
+      h("p", { class: "pagehead" }, h("b", {}, "Motion view: "), "where the end effector, the base and the objects go in each run. The Distances tab explains the distances."),
+      h("div", { class: "tiles" }, cells[0], cells[3]),
+      controls(pickBody, pickMap, pickBodies), key(),
+      h("div", { class: "v3cols" }, pathPanel, mapPanel),
       profiles ? h("h2", {}, "Height and speed against time") : null, profiles,
-      h("h2", {}, "Selected runs"), byValue, picked,
-      h("h2", {}, "Runs and tags ", h("small", {}, "— hover a row for the numbers behind its tags; tick the tag groups that define a semantic strategy; click a tag group to sort")), h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
-      cross,
+      selection, note);
+    else if (tab === "semantic") fill(body,
+      h("p", { class: "pagehead" }, h("b", {}, "Semantic view: "), "a few questions about the solution (tag groups), each with a closed set of values. A rule on measured numbers gives each run its values. ",
+        d.semantic ? `Tags: ${d.semantic.provenance.reader}; ${d.semantic.provenance.status}.` : ""),
+      h("div", { class: "tiles" }, cells[0], cells[2], cells[1]),
+      insightsPanel(name),
+      d.semantic ? h("h2", {}, "The tag groups") : null,
+      d.semantic ? h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, h("table", { class: "vocab" }, h("tr", {}, ["tag group", "question", "values", "rule", "from"].map((x) => h("th", {}, x))),
+        book.map((g) => h("tr", { style: "cursor:pointer", onclick: () => setColour("tag:" + g.key) }, h("td", {}, h("b", {}, g.key)), h("td", { style: "max-width:240px" }, g.question),
+          h("td", { style: "max-width:460px" }, Object.entries(g.values).map(([v, text], k) => h("div", {}, h("span", { class: "dot", style: `background:${valueColour(k)};margin-right:5px` }), h("b", {}, `${v} (${runs.filter((r) => (r.tags || {})[g.key] === v).length})`), ": " + text))),
+          h("td", { style: "max-width:280px" }, g.rule), h("td", {}, g.source))))) : agree,
+      h("h2", {}, "Runs and tags ", h("small", {}, "— hover a row for the numbers behind its tags; tick the tag groups that define a semantic strategy; click a tag group to sort")),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
+      cross, controls(), selection, note);
+    else fill(body,
+      h("p", { class: "pagehead" }, h("b", {}, "Compare the views: "), "the same runs in the contact view (what touches what), the motion view (where the bodies go) and the semantic view (the tags). The table shows what each distance sees."),
+      tiles,
+      h("h2", {}, "Does a distance see a tag group? ", h("small", {}, "— rows: tag groups of the semantic view; columns: distances of the contact view and of the motion view")), agree,
+      controls(pickMap, pickBody, pickBodies), key(),
+      h("div", { class: "v3cols" }, mapPanel, pathPanel),
+      selection,
       h("h2", {}, "The distances ", h("small", {}, "— definitions, and how the distances order the pairs of runs")),
       h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, defs),
-      h("div", { class: "panel", style: "overflow-x:auto" }, h("div", { class: "muted", style: "margin-bottom:6px" }, "Rank correlation (Spearman) between the distances, over all pairs of runs. 1 = the two distances order the pairs in the same way."), heat));
+      h("div", { class: "panel", style: "overflow-x:auto" }, h("div", { class: "muted", style: "margin-bottom:6px" }, "Rank correlation (Spearman) between the distances, over all pairs of runs. 1 = the two distances order the pairs in the same way."), heat),
+      note);
   };
-  app.replaceChildren(await defControls(load),
-    h("div", { class: "bar" }, h("a", { href: "#/d/" + name }, "diversity of this scenario →"), h("a", { href: "#/m/" + name }, "contact distance metrics →"), h("a", { href: "#/vm/" + name }, "motion distance metrics →"), h("a", { href: "#/v" }, "three views of all scenarios →"),
-      h("span", { class: "muted" }, "The definition bar sets the contact view. The motion view and the semantic view do not use it.")),
-    body);
+  app.replaceChildren(body);
   await load();
 }
 
@@ -2061,7 +2091,7 @@ async function pageMotionDistances(name) {
       state.picked ? h("h2", {}, "Selected pair") : null, state.picked ? pairPanel(state.picked) : null,
       h("h2", {}, "Other measures in the literature ", h("small", {}, "— not in this viewer")), h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, options));
   };
-  app.replaceChildren(h("div", { class: "bar" }, h("a", { href: "#/v/" + name }, "three views of this scenario →"), h("a", { href: "#/m/" + name }, "contact distance metrics →")), body);
+  app.replaceChildren(body);
   await load();
 }
 
@@ -2093,9 +2123,35 @@ async function pageViewsAll() {
     h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table));
 }
 
+// Navigation: the top bar, and one row of tabs for the pages of a scenario.
+const TOP = [["#/", "Scenarios"], ["#/d", "All scenarios: diversity"], ["#/v", "All scenarios: three views"]];
+const TABS = [
+  ["Overview", [["s", "Overview", "The task, the main observations, the runs and their contact timelines"]]],
+  ["Contact", [["d", "Strategies", "Contact strategies of the final policies: diversity and optimality"], ["m", "Distances", "What a distance between two contact strategies means"], ["h", "Histories", "The contact strategy over the commits of each run"]]],
+  ["Motion", [["vp", "Paths", "Where the bodies go in each run"], ["vm", "Distances", "The distances between two motions"]]],
+  ["Semantic", [["vs", "Semantic", "The tags of each run and the main observations"]]],
+  ["Compare", [["v", "Compare", "Which distance sees which tag group; the three views side by side"]]],
+];
+let HAS_SLIDES = null;
+async function navigation(page, name) {
+  if (HAS_SLIDES == null) HAS_SLIDES = await fetch("/slides/").then((r) => r.ok).catch(() => false);
+  const active = name ? "#/" : "#/" + page;
+  $("#topnav").replaceChildren(...TOP.map(([href, text]) => h("a", { href, class: href === active ? "on" : "" }, text)),
+    ...(HAS_SLIDES ? [h("a", { href: "/slides/", target: "_blank" }, "Slides")] : []));
+  const tabs = $("#tabs");
+  tabs.hidden = !name;
+  if (!name) return;
+  tabs.replaceChildren(h("span", { class: "scn" }, name), ...TABS.map(([label, items]) => h("span", { class: "tabgroup" },
+    items.length > 1 ? h("span", { class: "tablabel" }, label) : null,
+    items.map(([key, text, title]) => h("a", { class: "tab" + (key === page ? " on" : ""), href: `#/${key}/${name}`, title }, text)))));
+}
+
 async function route() {
   tip({}, "");
   const [, page, ...rest] = decodeURIComponent(location.hash || "#/").split("/");
+  const scenario = ["t", "e"].includes(page) ? rest[1] : ["s", "h", "d", "m", "v", "vp", "vs", "vm"].includes(page) ? rest[0] : null;
+  $("#crumbs").replaceChildren();
+  await navigation(page || "", scenario || null);
   try {
     if (page === "s") await pageScenario(rest[0]);
     else if (page === "t") await pageTrace(rest.join("/"));
@@ -2103,13 +2159,16 @@ async function route() {
     else if (page === "h") await pageHistories(rest[0]);
     else if (page === "d") await (rest[0] ? pageDiversity(rest[0]) : pageDiversityAll());
     else if (page === "m") await pageMetrics(rest[0]);
-    else if (page === "v") await (rest[0] ? pageViews(rest[0]) : pageViewsAll());
+    else if (page === "v") await (rest[0] ? pageViews(rest[0], "compare") : pageViewsAll());
+    else if (page === "vp") await pageViews(rest[0], "motion");
+    else if (page === "vs") await pageViews(rest[0], "semantic");
     else if (page === "vm") await pageMotionDistances(rest[0]);
     else await pageIndex();
   } catch (err) {
     $("#app").replaceChildren(h("p", {}, "Error: " + err.message));
     throw err;
   }
+  if (!["t", "e"].includes(page)) $("#crumbs").replaceChildren();  // the tabs say where the page is
 }
 window.addEventListener("hashchange", route);
 route();

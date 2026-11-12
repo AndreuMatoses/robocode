@@ -516,6 +516,34 @@ the preset of its family (`strategy.TUNED_PRESET`, `TUNED_PRESET_OF_ROBOT`).
 - `things_to_fix.md` (repo root, untracked on purpose) lists dataset/viewer issues to
   report upstream.
 
+## The viewer: "Strategy explorer"
+
+`uv run python -m experiments.contacts.viewer` serves the web app (default
+`http://127.0.0.1:8010`). Its name in the browser is "Strategy explorer", because it
+shows three views of the solution strategies, not the contacts only. The Python
+package keeps the name `experiments/contacts`.
+
+The top bar has the pages for all scenarios. A scenario has one row of tabs:
+
+| Tab | Address | Content |
+| --- | --- | --- |
+| Scenarios (top bar) | `#/` | The scenario cards |
+| All scenarios: diversity (top bar) | `#/d` | Scenarios x methods, one contact metric at a time |
+| All scenarios: three views (top bar) | `#/v` | One row for each scenario: contact, semantic, what each view sees |
+| Overview | `#/s/<scenario>` | The task, the main observations, the briefing of the agents, the runs and their contact timelines |
+| Contact: Strategies | `#/d/<scenario>` | Diversity and optimality of the final policies, ghost videos |
+| Contact: Distances | `#/m/<scenario>` | What a distance between two contact strategies means |
+| Contact: Histories | `#/h/<scenario>` | The contact strategy over the commits of each run |
+| Motion: Paths | `#/vp/<scenario>` | Paths of a body, height and speed, a map of a motion distance |
+| Motion: Distances | `#/vm/<scenario>` | The six motion distances: sources, a threshold slider, example pairs, other measures |
+| Semantic | `#/vs/<scenario>` | Observations, tag groups and rules, the tags of each run, tags by method |
+| Compare | `#/v/<scenario>` | Which distance sees which tag group, maps and paths side by side |
+
+The pages of one trace (`#/t/<trace>`) and of one run (`#/e/<run>`) open from the
+Overview tab. The definition of a contact strategy is a closed box on the Contact
+tabs; the other tabs use it and say which one is in use. The runs that you select on
+the Motion, Semantic and Compare tabs stay selected when you change between them.
+
 ## Three views: contact, motion, semantic
 
 The contact view says what touches what. Two more views describe the same final
