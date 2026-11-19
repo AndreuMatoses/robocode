@@ -35,6 +35,7 @@ PRESS = 0.06  # [m] the button radius plus 1 cm
 CODEBOOK = [
     {
         "key": "plan",
+        "role": "plan",
         "question": "In which order does the robot press the buttons, and from "
         "where?",
         "source": "motion",
@@ -52,6 +53,7 @@ CODEBOOK = [
     },
     {
         "key": "floor_button",
+        "role": "plan",
         "question": "What presses the floor button?",
         "source": "motion",
         "values": {
@@ -67,6 +69,7 @@ CODEBOOK = [
     },
     {
         "key": "walls",
+        "role": "style",
         "question": "Does the base touch a wall?",
         "source": "contacts",
         "values": {
@@ -77,6 +80,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

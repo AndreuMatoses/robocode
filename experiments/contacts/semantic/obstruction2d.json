@@ -19,6 +19,7 @@
  "codebook": [
   {
    "key": "order",
+   "role": "plan",
    "question": "Which obstruction moves first?",
    "source": "motion",
    "values": {
@@ -29,6 +30,7 @@
   },
   {
    "key": "sides",
+   "role": "plan",
    "question": "To which side does each obstruction go?",
    "source": "motion",
    "values": {
@@ -41,6 +43,7 @@
   },
   {
    "key": "distance",
+   "role": "style",
    "question": "How far do the obstructions go?",
    "source": "motion",
    "values": {
@@ -51,6 +54,7 @@
   },
   {
    "key": "release",
+   "role": "plan",
    "question": "Where does the robot release the obstructions?",
    "source": "motion",
    "values": {
@@ -61,6 +65,7 @@
   },
   {
    "key": "carry",
+   "role": "style",
    "question": "How does the target block go to the surface?",
    "source": "motion",
    "values": {
@@ -71,6 +76,7 @@
   },
   {
    "key": "base",
+   "role": "style",
    "question": "Does the base or the arm touch a block?",
    "source": "contacts",
    "values": {
@@ -81,6 +87,7 @@
   },
   {
    "key": "pace",
+   "role": "style",
    "question": "How long is the episode?",
    "source": "motion",
    "values": {

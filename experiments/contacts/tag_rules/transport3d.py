@@ -27,6 +27,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "box_use",
+        "role": "plan",
         "question": "Does the robot use the box to carry a cube?",
         "source": "motion",
         "values": {
@@ -39,6 +40,7 @@ CODEBOOK = [
     },
     {
         "key": "order",
+        "role": "plan",
         "question": "Does the box move before the cubes?",
         "source": "motion",
         "values": {
@@ -50,6 +52,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base touch an object?",
         "source": "contacts",
         "values": {
@@ -60,6 +63,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How high does the robot carry an object?",
         "source": "motion",
         "values": {
@@ -70,6 +74,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

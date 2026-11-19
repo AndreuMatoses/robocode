@@ -27,6 +27,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "transfer",
+        "role": "plan",
         "question": "Do the cubes slide or does the robot carry them?",
         "source": "motion",
         "values": {
@@ -39,6 +40,7 @@ CODEBOOK = [
     },
     {
         "key": "wiper",
+        "role": "plan",
         "question": "What does the robot do with the wiper?",
         "source": "motion and contacts",
         "values": {
@@ -55,6 +57,7 @@ CODEBOOK = [
     },
     {
         "key": "layout",
+        "role": "plan",
         "question": "How do the cubes lie in the region at the end?",
         "source": "motion",
         "values": {
@@ -66,6 +69,7 @@ CODEBOOK = [
     },
     {
         "key": "carry_height",
+        "role": "style",
         "question": "How high does a cube go?",
         "source": "motion",
         "values": {
@@ -76,6 +80,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "How far does the base drive?",
         "source": "motion",
         "values": {
@@ -86,6 +91,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

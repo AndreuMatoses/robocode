@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "transport",
+        "role": "plan",
         "question": "How does the robot move an object on the shelf?",
         "source": "motion",
         "values": {
@@ -39,6 +40,7 @@ CODEBOOK = [
     },
     {
         "key": "order",
+        "role": "plan",
         "question": "Which object moves first?",
         "source": "motion",
         "values": {
@@ -50,6 +52,7 @@ CODEBOOK = [
     },
     {
         "key": "hold",
+        "role": "plan",
         "question": "Does the gripper hold each moved object with its pads?",
         "source": "contacts",
         "values": {
@@ -61,6 +64,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "How much does the base move?",
         "source": "motion",
         "values": {
@@ -73,6 +77,7 @@ CODEBOOK = [
     },
     {
         "key": "end_pose",
+        "role": "style",
         "question": "Do the objects stay upright?",
         "source": "motion",
         "values": {
@@ -84,6 +89,7 @@ CODEBOOK = [
     },
     {
         "key": "side_effect",
+        "role": "style",
         "question": "Does the robot disturb the scene?",
         "source": "motion and contacts",
         "values": {

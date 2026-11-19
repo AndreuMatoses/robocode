@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "route",
+        "role": "style",
         "question": "Does the base drive in a straight line?",
         "source": "motion",
         "values": {
@@ -35,6 +36,7 @@ CODEBOOK = [
     },
     {
         "key": "stop",
+        "role": "style",
         "question": "Where in the target region does the base stop?",
         "source": "motion",
         "values": {

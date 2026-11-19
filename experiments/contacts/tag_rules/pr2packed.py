@@ -26,6 +26,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "layout",
+        "role": "plan",
         "question": "How do the blocks lie on the plate?",
         "source": "motion",
         "values": {
@@ -37,6 +38,7 @@ CODEBOOK = [
     },
     {
         "key": "order",
+        "role": "plan",
         "question": "In which order do the blocks go to the plate?",
         "source": "motion",
         "values": {
@@ -48,6 +50,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How high does the robot lift a block?",
         "source": "motion",
         "values": {
@@ -60,6 +63,7 @@ CODEBOOK = [
     },
     {
         "key": "drive",
+        "role": "style",
         "question": "How far does the base drive?",
         "source": "motion",
         "values": {
@@ -70,6 +74,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

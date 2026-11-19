@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "pushes",
+        "role": "style",
         "question": "In how many pushes does the block reach the goal?",
         "source": "motion",
         "values": {
@@ -37,6 +38,7 @@ CODEBOOK = [
     },
     {
         "key": "wall",
+        "role": "plan",
         "question": "Does the block touch the top wall?",
         "source": "contacts",
         "values": {
@@ -48,6 +50,7 @@ CODEBOOK = [
     },
     {
         "key": "block_path",
+        "role": "style",
         "question": "Does the block go straight to the goal?",
         "source": "motion",
         "values": {
@@ -59,6 +62,7 @@ CODEBOOK = [
     },
     {
         "key": "robot_travel",
+        "role": "style",
         "question": "How much does the robot move around the block?",
         "source": "motion",
         "values": {
@@ -70,6 +74,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

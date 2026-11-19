@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "pushes",
+        "role": "plan",
         "question": "Which chairs does the base push away?",
         "source": "motion",
         "values": {
@@ -37,6 +38,7 @@ CODEBOOK = [
     },
     {
         "key": "drive",
+        "role": "plan",
         "question": "Does the base drive straight to the goal?",
         "source": "motion",
         "values": {
@@ -49,6 +51,7 @@ CODEBOOK = [
     },
     {
         "key": "chairs",
+        "role": "style",
         "question": "Do the chairs stay upright?",
         "source": "motion",
         "values": {
@@ -59,6 +62,7 @@ CODEBOOK = [
     },
     {
         "key": "wall",
+        "role": "style",
         "question": "Does a chair hit a wall?",
         "source": "contacts",
         "values": {
@@ -69,6 +73,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

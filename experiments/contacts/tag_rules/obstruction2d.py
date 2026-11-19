@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "order",
+        "role": "plan",
         "question": "Which obstruction moves first?",
         "source": "motion",
         "values": {
@@ -36,6 +37,7 @@ CODEBOOK = [
     },
     {
         "key": "sides",
+        "role": "plan",
         "question": "To which side does each obstruction go?",
         "source": "motion",
         "values": {
@@ -50,6 +52,7 @@ CODEBOOK = [
     },
     {
         "key": "distance",
+        "role": "style",
         "question": "How far do the obstructions go?",
         "source": "motion",
         "values": {
@@ -60,6 +63,7 @@ CODEBOOK = [
     },
     {
         "key": "release",
+        "role": "plan",
         "question": "Where does the robot release the obstructions?",
         "source": "motion",
         "values": {
@@ -72,6 +76,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How does the target block go to the surface?",
         "source": "motion",
         "values": {
@@ -83,6 +88,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base or the arm touch a block?",
         "source": "contacts",
         "values": {
@@ -93,6 +99,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

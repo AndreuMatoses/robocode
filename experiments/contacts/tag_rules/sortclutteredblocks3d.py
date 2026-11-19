@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "first",
+        "role": "plan",
         "question": "Which cube does the robot take first?",
         "source": "motion",
         "values": {
@@ -37,6 +38,7 @@ CODEBOOK = [
     },
     {
         "key": "pile",
+        "role": "style",
         "question": "Does a grasp disturb the other cubes of the pile?",
         "source": "contacts and motion",
         "values": {
@@ -49,6 +51,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How high does the robot carry a cube?",
         "source": "motion",
         "values": {
@@ -59,6 +62,7 @@ CODEBOOK = [
     },
     {
         "key": "pick",
+        "role": "style",
         "question": "Does the gripper touch the table at a grasp?",
         "source": "contacts",
         "values": {
@@ -69,6 +73,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base move between the cubes?",
         "source": "motion",
         "values": {
@@ -79,6 +84,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

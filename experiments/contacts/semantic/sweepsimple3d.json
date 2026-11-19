@@ -18,6 +18,7 @@
  "codebook": [
   {
    "key": "transfer",
+   "role": "plan",
    "question": "Do the cubes slide or does the robot carry them?",
    "source": "motion",
    "values": {
@@ -28,6 +29,7 @@
   },
   {
    "key": "wiper",
+   "role": "plan",
    "question": "What does the robot do with the wiper?",
    "source": "motion and contacts",
    "values": {
@@ -39,6 +41,7 @@
   },
   {
    "key": "layout",
+   "role": "plan",
    "question": "How do the cubes lie in the region at the end?",
    "source": "motion",
    "values": {
@@ -49,6 +52,7 @@
   },
   {
    "key": "carry_height",
+   "role": "style",
    "question": "How high does a cube go?",
    "source": "motion",
    "values": {
@@ -59,6 +63,7 @@
   },
   {
    "key": "base",
+   "role": "style",
    "question": "How far does the base drive?",
    "source": "motion",
    "values": {
@@ -69,6 +74,7 @@
   },
   {
    "key": "pace",
+   "role": "style",
    "question": "How long is the episode?",
    "source": "motion",
    "values": {

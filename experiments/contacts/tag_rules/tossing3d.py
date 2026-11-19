@@ -29,6 +29,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "swing",
+        "role": "plan",
         "question": "From where does the arm swing?",
         "source": "motion",
         "values": {
@@ -42,6 +43,7 @@ CODEBOOK = [
     },
     {
         "key": "arc",
+        "role": "style",
         "question": "In which direction does the cube leave the gripper?",
         "source": "motion",
         "values": {
@@ -55,6 +57,7 @@ CODEBOOK = [
     },
     {
         "key": "alignment",
+        "role": "style",
         "question": "Does the robot throw along the room axis?",
         "source": "motion",
         "values": {
@@ -68,6 +71,7 @@ CODEBOOK = [
     },
     {
         "key": "standoff",
+        "role": "style",
         "question": "How far from the bin does the robot throw?",
         "source": "motion",
         "values": {
@@ -79,6 +83,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base move during the throw?",
         "source": "motion",
         "values": {
@@ -89,6 +94,7 @@ CODEBOOK = [
     },
     {
         "key": "aim",
+        "role": "program",
         "question": "How does the program select the throw?",
         "source": "program",
         "values": {

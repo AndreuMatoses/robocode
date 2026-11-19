@@ -29,6 +29,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "tool",
+        "role": "plan",
         "question": "Does the robot use the hook as a scoop?",
         "source": "motion and contacts",
         "values": {
@@ -40,6 +41,7 @@ CODEBOOK = [
     },
     {
         "key": "trips",
+        "role": "plan",
         "question": "In how many trips do the objects pass the wall?",
         "source": "motion",
         "values": {
@@ -52,6 +54,7 @@ CODEBOOK = [
     },
     {
         "key": "share",
+        "role": "style",
         "question": "How many objects are on the right at the end?",
         "source": "motion",
         "values": {
@@ -62,6 +65,7 @@ CODEBOOK = [
     },
     {
         "key": "height",
+        "role": "style",
         "question": "How high do the objects go?",
         "source": "motion",
         "values": {
@@ -72,6 +76,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

@@ -23,6 +23,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "plan",
+        "role": "plan",
         "question": "How does the robot clear the surface?",
         "source": "motion",
         "values": {
@@ -35,6 +36,7 @@ CODEBOOK = [
     },
     {
         "key": "pusher",
+        "role": "plan",
         "question": "Which robot part moves the target block?",
         "source": "contacts",
         "values": {
@@ -48,6 +50,7 @@ CODEBOOK = [
     },
     {
         "key": "obstructions",
+        "role": "style",
         "question": "Where do the obstructions end?",
         "source": "motion",
         "values": {
@@ -62,6 +65,7 @@ CODEBOOK = [
     },
     {
         "key": "target_path",
+        "role": "style",
         "question": "Does the target block go straight to the surface?",
         "source": "motion",
         "values": {
@@ -73,6 +77,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

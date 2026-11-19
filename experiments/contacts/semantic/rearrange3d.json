@@ -18,6 +18,7 @@
  "codebook": [
   {
    "key": "transport",
+   "role": "plan",
    "question": "How does the robot move an object on the shelf?",
    "source": "motion",
    "values": {
@@ -29,6 +30,7 @@
   },
   {
    "key": "order",
+   "role": "plan",
    "question": "Which object moves first?",
    "source": "motion",
    "values": {
@@ -39,6 +41,7 @@
   },
   {
    "key": "hold",
+   "role": "plan",
    "question": "Does the gripper hold each moved object with its pads?",
    "source": "contacts",
    "values": {
@@ -49,6 +52,7 @@
   },
   {
    "key": "base",
+   "role": "style",
    "question": "How much does the base move?",
    "source": "motion",
    "values": {
@@ -60,6 +64,7 @@
   },
   {
    "key": "end_pose",
+   "role": "style",
    "question": "Do the objects stay upright?",
    "source": "motion",
    "values": {
@@ -70,6 +75,7 @@
   },
   {
    "key": "side_effect",
+   "role": "style",
    "question": "Does the robot disturb the scene?",
    "source": "motion and contacts",
    "values": {

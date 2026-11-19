@@ -341,11 +341,8 @@ def summary(detail: dict[str, Any]) -> dict[str, Any]:
     book = detail["semantic"]["codebook"]
     main = book[0]["key"]
     counts = Counter(run["tags"][main] for run in runs if run.get("tags"))
-    both = [
-        " / ".join(run["tags"][g["key"]] for g in book[:2])
-        for run in runs
-        if run.get("tags")
-    ]
+    plan = semantic.plan_keys(book)
+    both = [semantic.strategy_of(run["tags"], plan) for run in runs if run.get("tags")]
     out["main"] = {
         "key": main,
         "question": book[0]["question"],
@@ -353,7 +350,7 @@ def summary(detail: dict[str, Any]) -> dict[str, Any]:
         "effective": round(effective([run["tags"][main] for run in runs]), 2),
     }
     out["semantic"] = {
-        "groups": [g["key"] for g in book[:2]],
+        "groups": plan,
         "strategies": len(set(both)),
         "effective": round(effective(both), 2),
     }

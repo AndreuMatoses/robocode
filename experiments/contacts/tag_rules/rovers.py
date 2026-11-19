@@ -31,6 +31,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "sampling",
+        "role": "plan",
         "question": "Which rover takes the samples?",
         "source": "motion",
         "values": {
@@ -43,6 +44,7 @@ CODEBOOK = [
     },
     {
         "key": "samples",
+        "role": "plan",
         "question": "Which samples do the rovers take?",
         "source": "motion",
         "values": {
@@ -54,6 +56,7 @@ CODEBOOK = [
     },
     {
         "key": "first_event",
+        "role": "plan",
         "question": "What is the first event of the episode?",
         "source": "contacts",
         "values": {
@@ -66,6 +69,7 @@ CODEBOOK = [
     },
     {
         "key": "travel",
+        "role": "style",
         "question": "How far do the two rovers drive?",
         "source": "motion",
         "values": {
@@ -76,6 +80,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

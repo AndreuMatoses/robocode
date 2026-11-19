@@ -1739,7 +1739,7 @@ async function pageViews(name, tab) {
     const dists = d.distances, measured = dists.filter((x) => x.view !== "semantic");
     if (!dists.some((x) => x.key === state.dist)) state.dist = (dists.find((x) => x.key === "motion:warp") || dists[0]).key;
     if (!book.some((g) => g.key === state.group)) state.group = book.length ? book[0].key : null;
-    if (state.strategy == null) state.strategy = new Set(book.slice(0, 2).map((g) => g.key));
+    if (state.strategy == null) state.strategy = new Set(book.filter((g) => g.role === "plan").map((g) => g.key));  // a semantic strategy = the plan groups
     if (state.colour.startsWith("tag:") && !book.some((g) => "tag:" + g.key === state.colour)) state.colour = "method";
     const shown = dists.find((x) => x.key === state.dist);  // the Paths tab maps a motion distance
     const cur = tab === "motion" && shown.view !== "motion" ? (dists.find((x) => x.key === "motion:warp") || shown) : shown;
@@ -1775,8 +1775,8 @@ async function pageViews(name, tab) {
     const warp = dists.find((x) => x.key === "motion:warp");
     const tiles = h("div", { class: "tiles" },
       tile(String(n), `final policies solve ${d.instance}`),
-      tile(`${d.contact.strategies} · ${fmt(d.contact.effective, 1)}`, "contact strategies · effective number", `Complete linkage on “${d.contact.metric}” at ${d.contact.tau}.`),
-      d.semantic ? tile(`${semCount} · ${fmt(semEff, 1)}`, `semantic strategies · effective number (${[...state.strategy].join(" × ") || "no tag group"})`, "A semantic strategy is a combination of the values of the tag groups that are ticked in the table of the runs.") : tile("–", "no semantic tags for this scenario"),
+      tile(String(d.contact.strategies), `contact strategies (effective number ${fmt(d.contact.effective, 1)})`, `Complete linkage on “${d.contact.metric}” at ${d.contact.tau}.`),
+      d.semantic ? tile(String(semCount), `semantic strategies (effective number ${fmt(semEff, 1)}), from the tag groups: ${[...state.strategy].join(", ") || "none"}`, "A semantic strategy is the combination of the values of the plan groups (what the robot does). The style groups (how it does it) do not count. You can tick other groups in the table of the runs.") : tile("–", "no semantic tags for this scenario"),
       warp ? tile(`${fmt(warp.mean * 100, 1)} cm`, `mean motion distance (warp) = ${pct(warp.mean / d.scale)} of the workspace (${fmt(d.scale, 2)} m)`, "The workspace size is the diagonal of the box around all end effector positions.") : tile("–", d.motion_note || "no motion data"));
 
     // agreement of each distance with each tag group
@@ -1927,8 +1927,9 @@ async function pageViews(name, tab) {
       h("div", { class: "tiles" }, cells[0], cells[2], cells[1]),
       insightsPanel(name),
       d.semantic ? h("h2", {}, "The tag groups") : null,
-      d.semantic ? h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, h("table", { class: "vocab" }, h("tr", {}, ["tag group", "question", "values", "rule", "from"].map((x) => h("th", {}, x))),
-        book.map((g) => h("tr", { style: "cursor:pointer", onclick: () => setColour("tag:" + g.key) }, h("td", {}, h("b", {}, g.key)), h("td", { style: "max-width:240px" }, g.question),
+      d.semantic ? h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, h("table", { class: "vocab" }, h("tr", {}, ["tag group", "role", "question", "values", "rule", "from"].map((x) => h("th", {}, x))),
+        book.map((g) => h("tr", { style: "cursor:pointer", onclick: () => setColour("tag:" + g.key) }, h("td", {}, h("b", {}, g.key)),
+          h("td", { title: g.role === "plan" ? "What the robot does. The plan groups define the semantic strategy." : g.role === "style" ? "How the robot does it. Not a part of the semantic strategy." : "A property of the program text." }, g.role === "plan" ? h("b", {}, "plan") : g.role), h("td", { style: "max-width:240px" }, g.question),
           h("td", { style: "max-width:460px" }, Object.entries(g.values).map(([v, text], k) => h("div", {}, h("span", { class: "dot", style: `background:${valueColour(k)};margin-right:5px` }), h("b", {}, `${v} (${runs.filter((r) => (r.tags || {})[g.key] === v).length})`), ": " + text))),
           h("td", { style: "max-width:280px" }, g.rule), h("td", {}, g.source))))) : agree,
       h("h2", {}, "Runs and tags ", h("small", {}, "— hover a row for the numbers behind its tags; tick the tag groups that define a semantic strategy; click a tag group to sort")),
@@ -2130,9 +2131,9 @@ async function pageTagHistory(name) {
     const runs = Object.keys(d.runs).sort((a, b) => METHODS.indexOf(a.split("/")[0]) - METHODS.indexOf(b.split("/")[0]) || seedNum(a.split("/")[2]) - seedNum(b.split("/")[2]));
     // summary of each tag group
     const table = h("table", { class: "vocab metrics" },
-      h("tr", {}, ["tag group", "question", "runs with two solved versions or more", "runs where the value changes", "runs where the first value is not the last", "first value → last value (runs)"].map((x) => h("th", {}, x))),
+      h("tr", {}, ["tag group", "role", "question", "runs with two solved versions or more", "runs where the value changes", "runs where the first value is not the last", "first value → last value (runs)"].map((x) => h("th", {}, x))),
       d.groups.map((g, k) => { const sm = d.summary[k];
-        return h("tr", { class: g.key === state.group ? "on" : "", onclick: () => { state.group = g.key; draw(); } }, h("td", {}, h("b", {}, g.key)), h("td", { style: "max-width:280px" }, g.question),
+        return h("tr", { class: g.key === state.group ? "on" : "", onclick: () => { state.group = g.key; draw(); } }, h("td", {}, h("b", {}, g.key)), h("td", {}, g.role === "plan" ? h("b", {}, "plan") : g.role), h("td", { style: "max-width:280px" }, g.question),
           sm.runs == null ? h("td", { colspan: 4, class: "muted" }, "read in the final program only: no history") : [h("td", {}, String(sm.runs)), h("td", {}, `${sm.changed} (${pct(sm.runs ? sm.changed / sm.runs : 0)})`), h("td", {}, `${sm.moved} (${pct(sm.runs ? sm.moved / sm.runs : 0)})`),
             h("td", { style: "max-width:520px" }, Object.entries(sm.paths).filter(([path]) => { const [a, b] = path.split(" -> "); return a !== b; }).slice(0, 5).map(([path, n]) => `${path.replace(" -> ", " → ")} ${n}`).join(" · ") || "no run changes")]); }));
     // one lane for each run; one segment for each commit
@@ -2157,12 +2158,270 @@ async function pageTagHistory(name) {
     fill(body,
       h("p", { class: "pagehead" }, h("b", {}, "Tags over the commits: "), "the rules of the semantic view on each commit of each run that solves the first start scene. It shows if an agent keeps its first solution or changes it. ",
         `Tags: ${d.provenance.reader}; ${d.provenance.status}.`),
+      h("div", { class: "tiles" }, tile(String(d.strategy.runs), "runs with two solved policy versions or more"),
+        tile(d.strategy.runs ? pct(d.strategy.kept / d.strategy.runs) : "–", "of these runs end with the semantic strategy of their first solved version", "The semantic strategy is the combination of the values of the plan groups."),
+        tile(d.strategy.runs ? pct(d.strategy.constant / d.strategy.runs) : "–", "never change their semantic strategy")),
       h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
       h("h2", {}, `“${group.key}” over the commits of each run `, h("small", {}, `— ${group.question}`)),
       h("div", { class: "swatches" }, group.values.map((v) => h("span", {}, h("span", { class: "dot", style: `background:${colour(v)}` }), v)),
         h("span", {}, h("span", { class: "dot", style: "background:var(--failc)" }), "not solved"), h("span", {}, h("span", { class: "dot", style: "background:var(--crashc)" }), "crashed"), h("span", {}, h("span", { class: "dot", style: "background:var(--grid)" }), "no trace")),
       h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, svg,
         h("div", { class: "muted" }, "One lane for each run and one segment for each commit, in order (the width is not time). Click a row of the table to see another tag group. Click a segment to open its trace.")));
+  };
+  draw();
+}
+
+// ------------------------------------------------- the whole strategy over the commits
+// One lane for each run, coloured by the combination of the values of the chosen
+// tag groups: does an agent keep one strategy and tune it, or does it try others?
+const HISTORY_KINDS = [["same", "no tag changes"], ["other", "only a tag group outside the strategy changes"], ["new", "a strategy that is new for the run"], ["back", "a return to an earlier strategy of the run"]];
+async function pageStrategyHistory(name) {
+  const app = $("#app"), body = h("div", { class: "v3" });
+  app.replaceChildren(body);
+  body.replaceChildren(h("p", { class: "muted" }, "loading…"));
+  const d = await j("/api/tag_history?name=" + name);
+  METHODS = d.method_order;
+  // a group that is read in the final program only has no history
+  const usable = d.groups.map((g, k) => ({ ...g, k })).filter((g) => g.source !== "program");
+  const ofRole = (role) => usable.filter((g) => role === "all" || g.role === role).map((g) => g.key);
+  const state = { keys: new Set(ofRole("plan")), colour: "strategy", lengths: true, sort: "method", progress: 1, timer: null, bars: "strategy", scale: "solved" };
+  const runIds = Object.keys(d.runs);
+  const draw = () => {
+    const chosen = usable.filter((g) => state.keys.has(g.key)), rest = usable.filter((g) => !state.keys.has(g.key));
+    const nameOf = (tags) => chosen.map((g) => tags[g.k]).join(" / ") || "one strategy";
+    const differ = (a, b, groups) => groups.filter((g) => a[g.k] !== b[g.k]).length;
+    // the solved policy versions of each run, and what changes between two of them
+    const runs = runIds.map((id) => {
+      const [method, , seed] = id.split("/"), commits = d.runs[id];
+      const versions = commits.filter((c) => c.tags && c.version).map((c) => ({ c, name: nameOf(c.tags) }));
+      const seen = new Set();
+      versions.forEach((v, k) => {
+        const before = versions[k - 1];
+        v.kind = !before ? "first" : v.name !== before.name ? (seen.has(v.name) ? "back" : "new") : differ(v.c.tags, before.c.tags, rest) ? "other" : "same";
+        v.ratio = before && before.c.steps && v.c.steps ? v.c.steps / before.c.steps : null;
+        seen.add(v.name);
+      });
+      const kinds = versions.map((v) => v.kind);
+      return { id, method, seed, commits, versions, distinct: seen.size, changes: kinds.filter((x) => x === "new" || x === "back").length, returns: kinds.filter((x) => x === "back").length };
+    });
+    const many = runs.filter((r) => r.versions.length >= 2), share = (n) => (many.length ? pct(n / many.length) : "–");
+    const constant = many.filter((r) => r.distinct === 1).length, kept = many.filter((r) => r.versions[0].name === r.versions[r.versions.length - 1].name).length;
+    // strategies, most runs first; a colour for the eight most common ones
+    const counts = new Map();
+    for (const r of runs) for (const nm of new Set(r.versions.map((v) => v.name))) counts.set(nm, (counts.get(nm) || 0) + 1);
+    const final = new Map();
+    for (const r of runs) if (r.versions.length) { const nm = r.versions[r.versions.length - 1].name; final.set(nm, (final.get(nm) || 0) + 1); }
+    const strategies = [...counts.entries()].sort((p, q) => q[1] - p[1] || (final.get(q[0]) || 0) - (final.get(p[0]) || 0) || p[0].localeCompare(q[0])).map(([nm]) => nm);
+    const OTHER = "color-mix(in srgb, var(--fg3) 70%, var(--surface))";
+    const colourOf = (nm) => { const k = strategies.indexOf(nm); return k < VALUE_VARS.length ? valueColour(k) : OTHER; };
+    const shade = (v) => `color-mix(in srgb, var(--accent) ${Math.round(10 + 90 * v)}%, var(--surface))`;
+    const first = new Map(runs.map((r) => [r.id, r.versions.length ? r.versions[0].c.tags : null]));
+    // the solved version at or before each commit: the reference of "the version before"
+    const fillOf = (r, c, before) => {
+      if (state.colour === "strategy") return colourOf(nameOf(c.tags));
+      const ref = state.colour === "first" ? first.get(r.id) : before;
+      return shade(ref && chosen.length ? differ(c.tags, ref, chosen) / chosen.length : 0);
+    };
+    const maxSteps = Math.max(1, ...runs.flatMap((r) => r.versions.map((v) => v.c.steps || 0)));
+    const order = [...runs].sort((a, b) => (state.sort === "changes" ? b.changes - a.changes || b.distinct - a.distinct : 0) || METHODS.indexOf(a.method) - METHODS.indexOf(b.method) || seedNum(a.seed) - seedNum(b.seed));
+
+    // lanes
+    const labelW = 150, cols = ["strategies", "changes", "returns", "episode length, first → last"], colW = [64, 56, 52, 150];
+    const laneH = 13, lenH = state.lengths ? 9 : 0, rowH = laneH + lenH + 9, gap = 8;
+    const right = colW.reduce((p, q) => p + q, 0), pw = Math.max(480, Math.min(1000, (body.clientWidth || 1200) - labelW - right - 50));
+    let y = 24;
+    const rows = [];
+    order.forEach((r, i) => { if (state.sort === "method" && i && order[i - 1].method !== r.method) y += gap; rows.push([r, y]); y += rowH; });
+    const svg = s("svg", { width: labelW + pw + right + 10, height: y + 8, class: "evo" });
+    svg.append(s("text", { x: labelW, y: 11 }, "first commit"), s("text", { x: labelW + pw, y: 11, "text-anchor": "end" }, "last commit"));
+    let cx = labelW + pw;
+    cols.forEach((c, k) => { cx += colW[k]; svg.append(s("text", { x: cx, y: 11, "text-anchor": "end" }, c)); });
+    for (const [r, top] of rows) {
+      const n = r.commits.length, kindAt = new Map(r.versions.map((v) => [v.c.commit, v]));
+      svg.append(s("rect", { x: 2, y: top + 6, width: 8, height: laneH - 5, fill: methodColor(r.method) }), s("text", { x: 14, y: top + laneH + 1 }, `${r.method} · ${r.seed}`));
+      let before = null;
+      r.commits.forEach((c, k) => {
+        const x = labelW + (k / n) * pw, w = Math.max(pw / n, 1), v = kindAt.get(c.commit);
+        const fill = c.tags ? fillOf(r, c, before) : c.state === "failed" ? "var(--failc)" : c.state === "crashed" ? "var(--crashc)" : "var(--grid)";
+        const rect = s("rect", { x, y: top + 5, width: w + 0.4, height: laneH - 2, class: "seg" + (c.tags ? "" : " " + c.state), fill, "fill-opacity": c.tags ? 1 : 0.9 });
+        const changed = c.tags && before ? chosen.filter((g) => c.tags[g.k] !== before[g.k]).map((g) => `${g.key}: ${before[g.k]} → ${c.tags[g.k]}`) : [];
+        rect.addEventListener("mousemove", (e) => tip(e, `${r.method} · ${r.seed} · commit ${c.commit} of ${n - 1}${c.subject ? "\n" + c.subject : ""}\n${c.state}${c.steps && c.tags ? ` in ${c.steps} steps` : ""}` +
+          (c.tags ? `\nstrategy: ${nameOf(c.tags)}` + (v && v.kind !== "first" ? `\nagainst the solved version before: ${HISTORY_KINDS.find(([key]) => key === v.kind)[1]}` : "") + (changed.length ? "\n" + changed.join("\n") : "") +
+            (rest.length ? "\nother tag groups: " + rest.map((g) => `${g.key} ${c.tags[g.k]}`).join(", ") : "") : "") + (c.trace ? "\nclick to open the trace" : "")));
+        rect.addEventListener("mouseleave", (e) => tip(e, ""));
+        if (c.trace) rect.addEventListener("click", () => { location.hash = "#/t/" + c.trace; });
+        svg.append(rect);
+        if (v && (v.kind === "new" || v.kind === "back")) svg.append(s("path", { d: `M${x - 3.5} ${top - 1} L${x + 3.5} ${top - 1} L${x} ${top + 5} Z`, fill: v.kind === "new" ? "var(--fg)" : "var(--surface)", stroke: "var(--fg)", "stroke-width": 1 }));
+        if (state.lengths && c.tags && c.steps) { const bh = Math.max(1, (c.steps / maxSteps) * lenH); svg.append(s("rect", { x, y: top + 4 + laneH + lenH - bh, width: Math.max(w - (w > 3 ? 0.6 : 0), 1), height: bh, fill: "var(--fg3)", "fill-opacity": 0.6 })); }
+        if (c.tags && c.version) before = c.tags;
+      });
+      const a = r.versions[0], b = r.versions[r.versions.length - 1];
+      const cells = [r.versions.length ? String(r.distinct) : "–", r.versions.length ? String(r.changes) : "–", r.versions.length ? String(r.returns) : "–",
+        !a ? "not solved" : a === b ? `${a.c.steps} (one version)` : `${a.c.steps} → ${b.c.steps}`];
+      let tx = labelW + pw;
+      cells.forEach((text, k) => { tx += colW[k]; svg.append(s("text", { x: tx, y: top + laneH + 1, "text-anchor": "end" }, text)); });
+    }
+
+    // what changes between two solved versions that follow each other
+    const steps = many.flatMap((r) => r.versions.slice(1).map((v) => ({ ...v, method: r.method })));
+    const part = (list, kind) => list.filter((v) => v.kind === kind);
+    const cell = (n, total) => h("td", { style: total && n ? `background:${tint(n / total)}` : "" }, total ? `${n} (${pct(n / total)})` : "–");
+    const kindTable = h("table", { class: "heat" },
+      h("tr", {}, h("th", {}, `from one solved version to the next (${steps.length})`), h("th", {}, "all runs"), h("th", { title: "The episode is shorter by more than 2 %." }, "episode shorter"), h("th", { title: "The episode is longer by more than 2 %." }, "episode longer"), h("th", { title: "Median of: episode length of the new version / episode length of the version before." }, "median length ratio"),
+        METHODS.map((m) => h("th", {}, h("span", { class: "dot", style: `background:${methodColor(m)}` }), m))),
+      HISTORY_KINDS.map(([kind, text]) => { const mine = part(steps, kind), timed = mine.filter((v) => v.ratio != null);
+        return h("tr", {}, h("th", { style: "white-space:normal;max-width:280px" }, text), cell(mine.length, steps.length),
+          h("td", {}, timed.length ? pct(timed.filter((v) => v.ratio < 0.98).length / timed.length) : "–"), h("td", {}, timed.length ? pct(timed.filter((v) => v.ratio > 1.02).length / timed.length) : "–"),
+          h("td", {}, timed.length ? "×" + fmt(median(timed.map((v) => v.ratio))) : "–"),
+          METHODS.map((m) => { const all = steps.filter((v) => v.method === m); return cell(part(all, kind).length, all.length); })); }));
+
+    // the most common changes of strategy
+    const moves = new Map();
+    for (const r of many) r.versions.forEach((v, k) => { if (v.kind !== "new" && v.kind !== "back") return; const key = `${r.versions[k - 1].name} → ${v.name}`;
+      if (!moves.has(key)) moves.set(key, { from: r.versions[k - 1], to: v, runs: new Set(), ratios: [], times: 0 });
+      const mv = moves.get(key); mv.runs.add(r.id); mv.times += 1; if (v.ratio != null) mv.ratios.push(v.ratio); });
+    const top = [...moves.values()].sort((p, q) => q.runs.size - p.runs.size || q.times - p.times).slice(0, 10);
+    const dot = (nm) => h("span", { class: "dot", style: `background:${colourOf(nm)}` });
+    const moveTable = h("table", { class: "vocab" }, h("tr", {}, ["from", "to", "what changes", "runs", "times", "median length ratio"].map((t) => h("th", {}, t))),
+      top.map((mv) => h("tr", {}, h("td", {}, dot(mv.from.name), mv.from.name), h("td", {}, dot(mv.to.name), mv.to.name),
+        h("td", { style: "max-width:420px" }, chosen.filter((g) => mv.from.c.tags[g.k] !== mv.to.c.tags[g.k]).map((g) => `${g.key}: ${mv.from.c.tags[g.k]} → ${mv.to.c.tags[g.k]}`).join("; ")),
+        h("td", {}, String(mv.runs.size)), h("td", {}, String(mv.times)), h("td", {}, mv.ratios.length ? "×" + fmt(median(mv.ratios)) : "–"))));
+
+    // ---- the distribution of the strategies over the runs, at a share of the commits of each run.
+    // The strategy of a run at a share p: that of its commit at p, if that commit solves; else none.
+    const bars = strategies.slice(0, 10), columns = [...bars, ...(strategies.length > bars.length ? ["other"] : []), "none"];
+    const columnOf = (nm) => (nm == null ? "none" : bars.includes(nm) ? nm : "other");
+    const columnColour = (c) => (c === "none" ? "var(--failc)" : c === "other" ? OTHER : colourOf(c));
+    const columnName = (c) => (c === "none" ? "no policy that solves" : c === "other" ? `${strategies.length - bars.length} less common strategies` : c);
+    const strategyAt = (r, p) => { const c = r.commits[Math.round(p * (r.commits.length - 1))]; return c && c.tags ? nameOf(c.tags) : null; };
+    const STEPS = 60;
+    const series = Array.from({ length: STEPS + 1 }, (_, k) => { const count = new Map(columns.map((c) => [c, 0])); for (const r of runs) { const c = columnOf(strategyAt(r, k / STEPS)); count.set(c, count.get(c) + 1); } return count; });
+    const charts = h("div", {}), slider = h("input", { type: "range", min: 0, max: 100, step: 1, value: Math.round(state.progress * 100), style: "width:260px" });
+    const stop = () => { if (state.timer) { clearInterval(state.timer); state.timer = null; } play.textContent = "Play"; };
+    const setProgress = (p) => { state.progress = Math.max(0, Math.min(1, p)); slider.value = Math.round(state.progress * 100); drawDist(); };
+    const play = h("button", { onclick: () => {
+      if (state.timer) { stop(); return; }
+      if (state.progress >= 1) setProgress(0);
+      play.textContent = "Pause";
+      state.timer = setInterval(() => { if (!document.body.contains(charts)) { clearInterval(state.timer); state.timer = null; return; } setProgress(state.progress + 1 / STEPS); if (state.progress >= 1) stop(); }, 140);
+    } }, state.timer ? "Pause" : "Play");
+    slider.addEventListener("input", () => { stop(); setProgress(Number(slider.value) / 100); });
+    const drawDist = () => {
+      // state.scale: "solved" = shares of the runs with a policy that solves at that moment; "runs" = numbers of runs, with the runs that have none
+      const share = state.scale === "solved", p = state.progress, total = runs.length, bw = 44, left = 40, top = 26, ph = 170;
+      const now = new Map(columns.map((c) => [c, new Map()]));
+      for (const r of runs) { const by = now.get(columnOf(strategyAt(r, p))); by.set(r.method, (by.get(r.method) || 0) + 1); }
+      const countOf = (c) => [...now.get(c).values()].reduce((a, b) => a + b, 0);
+      const solved = total - countOf("none"), shown = share ? columns.filter((c) => c !== "none") : columns, full = share ? Math.max(solved, 1) : total;
+      // the histogram: one bar for each strategy
+      const hw = left + shown.length * bw + 8, hist = s("svg", { width: hw, height: top + ph + 36, class: "evo" });
+      for (const v of [0, 0.5, 1]) { const y = top + ph - v * ph; hist.append(s("line", { class: "grid", x1: left, x2: hw - 4, y1: y, y2: y }), s("text", { x: left - 6, y: y + 4, "text-anchor": "end" }, share ? `${v * 100} %` : String(Math.round(v * total)))); }
+      shown.forEach((c, k) => {
+        const x = left + k * bw + 5, w = bw - 10, by = now.get(c), count = countOf(c), part = share && c !== "none" ? ` (${pct(count / full)} of the ${solved} runs that solve)` : "";
+        let y = top + ph;
+        if (state.bars === "strategy" && count) {
+          y -= (count / full) * ph;
+          const rect = s("rect", { x, y, width: w, height: Math.max((count / full) * ph, 1), fill: columnColour(c) });
+          rect.addEventListener("mousemove", (e) => tip(e, `${columnName(c)}\n${count} of ${total} runs${part}\n${METHODS.filter((m) => by.get(m)).map((m) => `${m}: ${by.get(m)}`).join("\n")}`)); rect.addEventListener("mouseleave", (e) => tip(e, "")); hist.append(rect);
+        }
+        if (state.bars === "method") for (const m of METHODS) { const n = by.get(m) || 0; if (!n) continue; const hgt = (n / full) * ph; y -= hgt;
+          const rect = s("rect", { x, y, width: w, height: Math.max(hgt - 1, 1), fill: methodColor(m) });
+          rect.addEventListener("mousemove", (e) => tip(e, `${columnName(c)}\n${m}: ${n} run${n > 1 ? "s" : ""}\nall methods: ${count} of ${total} runs${part}`)); rect.addEventListener("mouseleave", (e) => tip(e, "")); hist.append(rect); }
+        const mark = s("rect", { x, y: top + ph + 5, width: w, height: 7, rx: 2, fill: columnColour(c) });
+        mark.append(s("title", {}, columnName(c)));
+        hist.append(s("text", { x: x + w / 2, y: y - 4, "text-anchor": "middle" }, !count ? "" : share ? pct(count / full) : String(count)), mark,
+          s("text", { x: x + w / 2, y: top + ph + 27, "text-anchor": "middle" }, c === "none" ? "none" : c === "other" ? "other" : String(k + 1)));
+      });
+      // the same at every share of the commits: one band for each strategy
+      const pw = Math.max(360, Math.min(700, (body.clientWidth || 1200) - hw - 110)), aw = left + pw + 24, area = s("svg", { width: aw, height: top + ph + 36, class: "evo", style: "cursor:pointer" });
+      const solvedAt = (k) => total - series[k].get("none"), fullAt = (k) => (share ? Math.max(solvedAt(k), 1) : total);
+      const first = share ? series.findIndex((count, k) => solvedAt(k) > 0) : 0;  // no band before the first run that solves
+      const ax = (k) => left + (k / STEPS) * pw, ay = (n, k) => top + ph - (n / fullAt(k)) * ph;
+      const steps = first < 0 ? [] : series.map((count, k) => k).slice(first);
+      let below = series.map(() => 0);
+      for (const c of shown) {
+        const above = series.map((count, k) => below[k] + count.get(c));
+        if (steps.length) {
+          const d2 = steps.map((k, i) => `${i ? "L" : "M"}${ax(k).toFixed(1)},${ay(above[k], k).toFixed(1)}`).join("") + [...steps].reverse().map((k) => `L${ax(k).toFixed(1)},${ay(below[k], k).toFixed(1)}`).join("") + "Z";
+          const band = s("path", { d: d2, fill: columnColour(c), stroke: "var(--surface)", "stroke-width": 0.6 });
+          band.append(s("title", {}, columnName(c)));
+          area.append(band);
+        }
+        below = above;
+      }
+      for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+        area.append(s("text", { x: left + v * pw, y: top + ph + 16, "text-anchor": "middle" }, `${Math.round(v * 100)} %`));
+        // in the share view the base changes: the number of runs that solve at this place
+        if (share) area.append(s("text", { x: left + v * pw, y: top - 12, "text-anchor": v === 0 ? "start" : v === 1 ? "end" : "middle" }, `${v === 0 ? "runs that solve: " : ""}${solvedAt(Math.round(v * STEPS))}`));
+      }
+      area.append(s("text", { x: left - 6, y: top + 4, "text-anchor": "end" }, share ? "100 %" : String(total)), s("text", { x: left - 6, y: top + ph + 4, "text-anchor": "end" }, share ? "0 %" : "0"),
+        s("text", { x: left + pw / 2, y: top + ph + 32, "text-anchor": "middle" }, "share of the commits of each run"),
+        s("line", { x1: left + p * pw, x2: left + p * pw, y1: top - 6, y2: top + ph, stroke: "var(--fg)", "stroke-width": 1.6 }));
+      const pick = (e) => { const box = area.getBoundingClientRect(); stop(); setProgress((e.clientX - box.left - left) / pw); };
+      area.addEventListener("click", pick);
+      area.addEventListener("mousemove", (e) => { if (e.buttons === 1) pick(e); });
+      const counts = bars.map((c) => [c, countOf(c)]).sort((a, b) => b[1] - a[1]);
+      const lead = counts[0] && counts[0][1] ? counts[0] : null;
+      const what = share ? "Share of the runs that solve" : "Runs";
+      charts.replaceChildren(
+        h("div", { class: "muted", style: "margin:4px 0 8px" }, h("b", { style: "color:var(--fg)" }, `At ${Math.round(p * 100)} % of the commits: `),
+          `${solved} of ${total} runs have a policy that solves the first start scene.`, lead ? ` ${lead[1]} of them (${pct(lead[1] / solved)}) have the most common strategy: ${lead[0]}.` : ""),
+        h("div", { class: "v3cols", style: "align-items:flex-start" },
+          h("div", {}, h("div", { class: "muted" }, `${what} in each strategy; ${state.bars === "strategy" ? "the colour is the strategy" : "one colour for each method"}`), hist),
+          h("div", {}, h("div", { class: "muted" }, `${what} in each strategy over the commits; one colour for each strategy. Click to move the line.`), area)));
+    };
+    const methodsKey = methodKey(METHODS);
+    const showKey = () => { methodsKey.style.display = state.bars === "method" ? "" : "none"; };  // the key of the methods: only when the bars show them
+    showKey();
+    const barColour = h("label", {}, "colour of the bars ", h("select", { onchange: (e) => { state.bars = e.target.value; showKey(); drawDist(); } },
+      [["strategy", "strategy"], ["method", "method (stacked)"]].map(([v, text]) => h("option", { value: v, selected: v === state.bars }, text))));
+    const scale = h("label", { title: "Share: of the runs with a policy that solves at that moment; it shows if the distribution gets narrower. Number: all runs, with the runs that have no such policy." }, "show ",
+      h("select", { onchange: (e) => { state.scale = e.target.value; drawDist(); } }, [["solved", "share of the runs that solve"], ["runs", "number of runs (with none)"]].map(([v, text]) => h("option", { value: v, selected: v === state.scale }, text))));
+    drawDist();
+
+    // controls
+    const sameSet = (keys) => keys.length === state.keys.size && keys.every((k) => state.keys.has(k));
+    const preset = ["plan", "style", "all"].find((role) => ofRole(role).length && sameSet(ofRole(role))) || "";
+    const choose = (label, value, opts, on) => h("label", {}, label, h("select", { onchange: (e) => on(e.target.value) }, opts.map(([v, text]) => h("option", { value: v, selected: v === value }, text))));
+    const controls = h("div", { class: "bar defbar" }, h("b", {}, "One strategy = the values of"),
+      choose("", preset, [["plan", `the plan groups (${ofRole("plan").length})`], ["style", `the style groups (${ofRole("style").length})`], ["all", `all tag groups (${usable.length})`], ...(preset ? [] : [["", "my choice"]])], (v) => { if (v) { state.keys = new Set(ofRole(v)); draw(); } }),
+      usable.map((g) => h("label", { title: `${g.role}: ${g.question}` }, h("input", { type: "checkbox", checked: state.keys.has(g.key), onchange: (e) => { if (e.target.checked) state.keys.add(g.key); else state.keys.delete(g.key); draw(); } }), g.key, h("span", { class: "muted" }, ` ${g.role}`))),
+      choose("colour ", state.colour, [["strategy", "the strategy"], ["first", "tag groups that differ from the first solved version"], ["before", "tag groups that differ from the solved version before"]], (v) => { state.colour = v; draw(); }),
+      choose("order ", state.sort, [["method", "by method"], ["changes", "most changes first"]], (v) => { state.sort = v; draw(); }),
+      h("label", {}, h("input", { type: "checkbox", checked: state.lengths, onchange: (e) => { state.lengths = e.target.checked; draw(); } }), "episode length below each lane"));
+    const shown = strategies.slice(0, VALUE_VARS.length), folded = strategies.length - shown.length;
+    const swatch = (colour, text, title) => h("span", { title }, h("span", { class: "dot", style: `background:${colour}` }), text);
+    const legend = h("div", { class: "swatches" },
+      ...(state.colour === "strategy" ? [...shown.map((nm) => swatch(colourOf(nm), `${nm} ×${counts.get(nm)}`, `${counts.get(nm)} run(s) have a solved version with this strategy; it is the final strategy of ${final.get(nm) || 0} run(s)`)),
+        folded > 0 ? swatch(OTHER, folded === 1 ? "1 other strategy" : `${folded} other strategies`, strategies.slice(shown.length).map((nm) => `${nm} ×${counts.get(nm)}`).join("\n")) : null]
+        : [0, 0.5, 1].map((v) => swatch(shade(v), v === 0 ? "no group differs" : v === 1 ? "all groups differ" : "half of the groups differ"))),
+      swatch("var(--failc)", "not solved"), swatch("var(--crashc)", "crashed"), swatch("var(--grid)", "no trace"),
+      h("span", {}, "▼ change to a strategy that is new for the run"), h("span", {}, "▽ return to an earlier strategy"));
+    const none = !chosen.length;
+    fill(body,
+      h("p", { class: "pagehead" }, h("b", {}, "The whole strategy over the commits: "), "each solved commit has one strategy, the combination of its values in the chosen tag groups. A run with one colour keeps one strategy and tunes it. A run with more colours tries other strategies. ",
+        `Tags: ${d.provenance.reader}; ${d.provenance.status}.`),
+      controls,
+      none ? h("p", { class: "muted" }, usable.length ? "No tag group is chosen, so all solved commits have the same strategy. Tick one group or more." : "This scenario has no tag group with a history.") : null,
+      h("div", { class: "tiles" }, tile(String(many.length), "runs with two solved policy versions or more"),
+        tile(share(constant), "keep one strategy in all solved versions", `${constant} of ${many.length} runs`),
+        tile(share(kept - constant), "try another strategy and end with the first one", `${kept - constant} of ${many.length} runs`),
+        tile(share(many.length - kept), "end with a strategy that is not the first one", `${many.length - kept} of ${many.length} runs`),
+        tile(many.length ? fmt(many.reduce((p, r) => p + r.distinct, 0) / many.length, 1) : "–", "strategies for each run (mean)"),
+        tile(String(strategies.length), "strategies in all solved versions of the scenario")),
+      h("h2", {}, "Distribution of the strategies ", h("small", {}, "— how the runs spread over the strategies, and how this changes over the commits")),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" },
+        h("div", { class: "bar" }, play, slider, h("span", { class: "muted" }, "share of the commits of each run: 0 % = first commit, 100 % = final policy"), scale, barColour, methodsKey),
+        charts,
+        h("div", { class: "muted", style: "max-width:980px" }, "The strategy of a run at a share of its commits is the strategy of the commit at that place, if that commit solves the first start scene. “Share of the runs that solve” divides by the runs with such a policy at that moment (the numbers above the band chart): flat bands show that the distribution does not change. The number below a bar is the rank of the strategy; its colour mark is the colour of the strategy in the band chart and in the lanes below. With “colour of the bars: method”, each bar shows the methods of its runs: a tall first bar that holds all methods shows that the runs arrive at one strategy.")),
+      h("h2", {}, "Strategy of each commit ", h("small", {}, `— ${chosen.length ? chosen.map((g) => g.key).join(" / ") : "no tag group"}`)),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, legend, svg,
+        h("div", { class: "muted" }, "One lane for each run and one segment for each commit, in order (the width is not time). " + (state.lengths ? `The grey bars below a lane are the episode length of each solved commit (the full height is ${maxSteps} steps): shorter bars with one colour above them show that the agent tunes one strategy. ` : "") + "Click a segment to open its trace.")),
+      h("h2", {}, "What changes from one solved version to the next ", h("small", {}, "— runs with two solved policy versions or more")),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, kindTable,
+        h("div", { class: "muted", style: "max-width:900px" }, "A solved version is a commit that changes the policy and solves the first start scene. The first two rows are changes inside one strategy. The last two rows are changes of strategy.")),
+      top.length ? h("h2", {}, "The most common changes of strategy ", h("small", {}, `— ${moves.size} different changes; the ${top.length} with the most runs`)) : null,
+      top.length ? h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, moveTable) : null);
   };
   draw();
 }
@@ -2181,16 +2440,16 @@ async function pageViewsAll() {
   const sources = rows.flatMap((sc) => Object.entries(sc.sources || {}).filter(([key]) => sc.sees.contact.groups[key] != null).map(([key, source]) => key === "pace" ? "pace" : source)), total = sources.length;
   const fromSource = (word) => sources.filter((x) => x === word).length;
   const table = h("table", { class: "heat" },
-    h("tr", {}, h("th", {}, "scenario"), h("th", {}, "runs"), h("th", { title: "Contact strategies and their effective number, with the tuned definition of the simulator." }, "contact strategies"), h("th", { title: "Combinations of the values of the first two tag groups, and their effective number." }, "semantic strategies"),
+    h("tr", {}, h("th", {}, "scenario"), h("th", {}, "runs"), h("th", { title: "Contact strategies and their effective number, with the tuned definition of the simulator." }, "contact strategies (effective number)"), h("th", { title: "Combinations of the values of the plan tag groups, and their effective number." }, "semantic strategies (effective number)"),
       h("th", {}, "first tag group"), h("th", { title: "Separation of the first tag group by the elastic mode distance." }, "contact sees it"), h("th", { title: "Separation of the first tag group by dynamic time warping of the motion." }, "motion sees it"),
       h("th", { title: "Mean separation over all tag groups of the scenario." }, "contact, all groups"), h("th", {}, "motion, all groups")),
     rows.map((sc) => h("tr", {}, h("th", {}, h("a", { href: "#/v/" + sc.name }, sc.name)), h("td", {}, String(sc.runs)),
-      h("td", {}, `${sc.contact.strategies} · ${fmt(sc.contact.effective, 1)}`), h("td", {}, `${sc.semantic.strategies} · ${fmt(sc.semantic.effective, 1)}`),
+      h("td", {}, String(sc.contact.strategies), h("span", { class: "muted" }, ` (${fmt(sc.contact.effective, 1)})`)), h("td", {}, String(sc.semantic.strategies), h("span", { class: "muted" }, ` (${fmt(sc.semantic.effective, 1)})`)),
       h("th", { style: "white-space:normal;max-width:330px", title: sc.main.question }, h("b", {}, sc.main.key), ": " + Object.entries(sc.main.values).filter(([, n]) => n).map(([v, n]) => `${v} ${n}`).join(", ")),
       cell(sc.sees.contact.main), cell(sc.sees.motion ? sc.sees.motion.main : null), cell(sc.sees.contact.mean), cell(sc.sees.motion ? sc.sees.motion.mean : null))),
     h("tr", { class: "foot" }, h("th", { colspan: 5 }, `mean of the ${rows.length} scenarios`), cell(mean(rows.map((sc) => sc.sees.contact.main))), cell(mean(rows.map((sc) => sc.sees.motion && sc.sees.motion.main))), cell(mean(rows.map((sc) => sc.sees.contact.mean))), cell(mean(rows.map((sc) => sc.sees.motion && sc.sees.motion.mean)))));
   app.replaceChildren(
-    h("p", { class: "defn" }, "One row for each scenario: the final policies that solve the first start scene, in three views. A semantic strategy is a combination of the values of the first two tag groups. ",
+    h("p", { class: "defn" }, "One row for each scenario: the final policies that solve the first start scene, in three views. A semantic strategy is the combination of the values of the plan tag groups (what the robot does: tool, transfer, order, route); the style groups (pace, heights, side effects) do not count. ",
       "“Sees it” is the probability that two runs with different tag values are farther apart than two runs with the same value (0.5 = the distance does not see the tag group, 1 = full separation). The tags are not yet checked by a person. ",
       h("b", {}, "The two views are not on equal terms here: "), `most tag rules use the motion of the bodies (${fromSource("motion")} of ${total} tag groups) and fewer use the contacts (${fromSource("contacts")}); ${fromSource("pace")} use the number of env steps. A view agrees more with the tag groups that come from its own data.`),
     h("div", { class: "tiles" }, tile(String(groups.length), "tag groups in all scenarios"), tile(String(count((c, m) => Math.max(c, m) >= 0.8)), "a view separates the values well (0.8 or more)"),
@@ -2204,15 +2463,18 @@ const TABS = [
   ["Overview", [["s", "Overview", "The task, the main observations, the runs and their contact timelines"]]],
   ["Contact", [["d", "Strategies", "Contact strategies of the final policies: diversity and optimality"], ["m", "Distances", "What a distance between two contact strategies means"], ["h", "Histories", "The contact strategy over the commits of each run"]]],
   ["Motion", [["vp", "Paths", "Where the bodies go in each run"], ["vm", "Distances", "The distances between two motions"]]],
-  ["Semantic", [["vs", "Tags", "The tags of each run, the main observations and the film strips"], ["vh", "History", "The tags over the commits of each run"]]],
+  ["Semantic", [["vs", "Tags", "The tags of each run, the main observations and the film strips"], ["vh", "Tag history", "One tag group over the commits of each run"], ["vx", "Strategy history", "The whole strategy over the commits: does an agent keep one strategy or try others?"]]],
   ["Compare", [["v", "Compare", "Which distance sees which tag group; the three views side by side"]]],
 ];
+// The local slide decks, if they are there: the final deck and the first deck (the methods in detail).
+const DECKS = [["/slides/final.html", "Slides", "The final deck: diversity and evolution of the strategies"], ["/slides/", "First deck", "The first deck: the definitions and the distances in detail"]];
 let HAS_SLIDES = null;
 async function navigation(page, name) {
-  if (HAS_SLIDES == null) HAS_SLIDES = await fetch("/slides/").then((r) => r.ok).catch(() => false);
+  if (HAS_SLIDES == null) HAS_SLIDES = await Promise.all(DECKS.map(([href]) => fetch(href).then((r) => r.arrayBuffer().then(() => r.ok)).catch(() => false)));
   const active = name ? "#/" : "#/" + page;
   $("#topnav").replaceChildren(...TOP.map(([href, text]) => h("a", { href, class: href === active ? "on" : "" }, text)),
-    ...(HAS_SLIDES ? [h("a", { href: "/slides/", target: "_blank" }, "Slides")] : []),
+    ...DECKS.filter((deck, k) => HAS_SLIDES[k]).map(([href, text, title]) => h("a", { href, title, target: "_blank" }, text)),
+    ...(HAS_SLIDES.some(Boolean) ? [h("a", { href: "/slides.zip", download: "strategy-slides.zip", title: "All slide decks with their figures and videos as one archive. Unpack it and open final.html: it works without the viewer." }, "Download slides")] : []),
     h("label", { class: "scenepick", title: "Background of the videos that you render from now on (episode video and ghost video). Only the MuJoCo scenarios have the lab room of Kinder; the other scenarios ignore this choice." }, "video background ",
       h("select", { onchange: (e) => { SCENE = e.target.value; try { localStorage.setItem("videoScene", SCENE); } catch (err) { /* not kept */ } } },
         [["lab", "lab room"], ["plain", "plain"]].map(([v, text]) => h("option", { value: v, selected: v === SCENE }, text)))));
@@ -2227,7 +2489,7 @@ async function navigation(page, name) {
 async function route() {
   tip({}, "");
   const [, page, ...rest] = decodeURIComponent(location.hash || "#/").split("/");
-  const scenario = ["t", "e"].includes(page) ? rest[1] : ["s", "h", "d", "m", "v", "vp", "vs", "vh", "vm"].includes(page) ? rest[0] : null;
+  const scenario = ["t", "e"].includes(page) ? rest[1] : ["s", "h", "d", "m", "v", "vp", "vs", "vh", "vx", "vm"].includes(page) ? rest[0] : null;
   $("#crumbs").replaceChildren();
   await navigation(page || "", scenario || null);
   try {
@@ -2242,6 +2504,7 @@ async function route() {
     else if (page === "vs") await pageViews(rest[0], "semantic");
     else if (page === "vm") await pageMotionDistances(rest[0]);
     else if (page === "vh") await pageTagHistory(rest[0]);
+    else if (page === "vx") await pageStrategyHistory(rest[0]);
     else await pageIndex();
   } catch (err) {
     $("#app").replaceChildren(h("p", {}, "Error: " + err.message));

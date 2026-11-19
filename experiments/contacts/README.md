@@ -58,6 +58,7 @@ simulator; their contacts are built from the geometry (see "Simulator backends")
 | `experiments/contacts/semantic.py`, `semantic/<scenario>.json` | The semantic view: tag groups (a codebook) and the tags of each final policy, with the evidence of each run; `separation` measures how well a distance agrees with a tag group; `build` runs the rules of a scenario and writes its file (`python -m experiments.contacts.semantic <scenario>`). Files for all 28 scenarios; the tags are not yet checked by a person |
 | `experiments/contacts/features.py` | The measured numbers of a final policy (`Run`: motion, contact pairs, program text) and helpers for the rules (`summary`, `moved_order`, `bouts`, `path_length`). `python -m experiments.contacts.features <scenario>` prints the spread of the numbers over the runs: read it before you write rules |
 | `experiments/contacts/tag_rules/<scenario>.py` | The rules of the semantic tags as code: `CODEBOOK` (the tag groups), `METHOD` (what the reader looked at), `INSIGHTS` (the main observations of the scenario, shown on its pages) and `label(run)` (tags and evidence of one run) |
+| `experiments/contacts/evolution.py` | How the solution of an agent changes over its solved policy versions: semantic and contact strategy kept or changed, a change against a tuning step, what follows a change, the motion from the first to the last version |
 | `experiments/contacts/strips.py` | Film strips of final policies (all four simulators): a few runs that cover the tag values, six pictures each at equal steps of path length; `outputs/contact_traces/_scenarios/<scenario>/strips/` |
 | `experiments/contacts/views.py` | The three views on the same runs (`scenario_views`): the distances of each view, a 2-D map of each distance, the agreement of each distance with each tag group, the paths of the bodies. `summary` is the row of a scenario in the table of all scenarios. The motion distances are kept in `outputs/contact_traces/_scenarios/<scenario>/motion_<bodies>.npz`. Viewer pages `#/v` (all scenarios), `#/v/<scenario>` and `#/vm/<scenario>` (the motion distances: definitions, sources, a threshold slider, example pairs, other measures of the literature), routes `/api/views_overview` and `/api/views`; `python -m experiments.contacts.views <scenario>` prints the agreement table |
 | `experiments/contacts/briefing.py` | What the agent was told: `env_description.md` and the system prompt and prompt from the start of `run_experiment.log`, grouped into variants with equal text (`/api/briefing`, the panel "Information given to the agent" on a scenario page) |
@@ -538,7 +539,8 @@ The top bar has the pages for all scenarios. A scenario has one row of tabs:
 | Motion: Paths | `#/vp/<scenario>` | Paths of a body, height and speed, a map of a motion distance |
 | Motion: Distances | `#/vm/<scenario>` | The seven motion distances: sources, a threshold slider, example pairs, other measures |
 | Semantic: Tags | `#/vs/<scenario>` | Observations, tag groups and rules, the tags of each run, tags by method, film strips |
-| Semantic: History | `#/vh/<scenario>` | The tags of each commit of each run: does an agent keep its first solution? |
+| Semantic: Tag history | `#/vh/<scenario>` | One tag group over the commits of each run. |
+| Semantic: Strategy history | `#/vx/<scenario>` | The whole strategy over the commits of each run: does an agent keep one strategy and tune it, or try others? |
 | Compare | `#/v/<scenario>` | Which distance sees which tag group, maps and paths side by side |
 
 The pages of one trace (`#/t/<trace>`) and of one run (`#/e/<run>`) open from the
@@ -570,7 +572,11 @@ policies (the final policy of each run that solves start scene 0):
   come from the trace.
 - **Semantic view** (`semantic.py`, `tag_rules/`): for each scenario, a few questions
   about the solution (tag groups), each with a closed set of values and a rule on
-  measured numbers. A semantic strategy is a combination of tag values.
+  measured numbers. Each group has a role: a *plan* group says what the robot does
+  (the tool, the transfer type, the order, the route), a *style* group says how it
+  does it (pace, heights, distances, side effects). A **semantic strategy** is the
+  combination of the values of the plan groups (50 of the 144 groups). The marks are
+  a proposal of the reader: correct `"role"` in a rule file and build again.
 
 The semantic tags are the reference: they show what each distance sees. The measure is
 `semantic.separation`: the probability that two runs with different tag values are
@@ -617,6 +623,15 @@ farther apart than two runs with the same value (0.5 = no relation, 1 = full sep
     move the blocker;
   - obstruction2d: 4 runs leave an obstruction in the air (the scene has no gravity).
 
+### Semantic strategies against contact strategies
+
+With the plan groups, a scenario has 4.2 semantic strategies on average (effective
+number 3.1; mean of 28 scenarios) against 6.0 contact strategies (effective number
+4.3). The effective numbers of the two views agree weakly over the scenarios (rank
+correlation 0.38). motion2d and basemotion3d have one semantic
+strategy. The count of semantic strategies is a product of the plan groups, so it
+grows with their number: clutteredstorage2d has three plan groups and 15 strategies.
+
 ### Limits
 
 - A reader that is a language model (the file names it) proposed the tag groups and the
@@ -629,21 +644,40 @@ farther apart than two runs with the same value (0.5 = no relation, 1 = full sep
   contact groups it is 0.65 (contact) and 0.56 (motion). The `source` of a group says
   where its rule comes from. Tags that come from pictures or from the program text have
   no such bias; only tossing3d has one (the aim method).
-- The tags describe the final policy on start scene 0. Commit histories are not tagged.
+- The tags describe the policy on start scene 0 only (the final policy, and each
+  commit in "Tags over the commits").
 - The motion view has positions only. An angle (the pose of the T block in dynpusht2d)
   is not seen.
 
 ### Tags over the commits
 
 `semantic.build_history` runs the rules of a scenario on each commit of each run that
-solves start scene 0 (`semantic/history/<scenario>.json`; the History tab shows them).
+solves start scene 0 (`semantic/history/<scenario>.json`). Two tabs show them:
+
+- **Tag history**: one tag group over the commits of each run.
+- **Strategy history**: the whole strategy over the commits of each run. Its first
+  panel is the distribution of the strategies: a histogram of the runs in each
+  strategy (stacked by method) at a share of the commits of each run, and the same
+  counts over all shares as bands. A slider and a Play button move through the
+  commits. The strategy of a run at a share of its commits is that of the commit at
+  that place, if it solves start scene 0.
+  Below it: A strategy
+  is the combination of the values of the chosen tag groups: the plan groups (the
+  default), the style groups, all groups, or your own choice. A lane with one colour
+  is a run that keeps one strategy; the grey bars below it are the episode lengths.
+  The page sorts each step from one solved version to the next into four kinds: no
+  tag changes, only a tag group outside the strategy changes, a strategy that is new
+  for the run, and a return to an earlier strategy. A second colour shows the number
+  of tag groups that differ from the first solved version (a Hamming distance, the
+  tag equivalent of the mode edit distance).
+
 Over the 28 scenarios (853 runs with two solved policy versions or more):
 
 - The first tag group of a scenario changes at some commit in 25 % of the runs, and
   its first value is not its last value in 19 %.
-- The semantic strategy (the first two tag groups) of the first solved version is the
-  strategy of the final version in 64 % of the runs: an agent mostly keeps its first
-  solution and tunes it. The pace changes most (45 % of the runs).
+- The semantic strategy (the plan groups) of the first solved version is the strategy
+  of the final version in 71 % of the runs, and it never changes in 63 %: an agent
+  mostly keeps its first plan and tunes it. The pace changes most (45 % of the runs).
 - Some scenarios never change (tossing3d: the swing type changes in 1 run of 30;
   dynscooppour2d, motion2d, sweepsimple3d: 0 runs), and some change in half of the
   runs or more (dynpusht2d: the number of pushes; sortclutteredblocks3d: the first
@@ -658,6 +692,46 @@ final program.
 
 ```bash
 uv run python -m experiments.contacts.semantic --history <scenario>
+```
+
+### How the solutions of an agent evolve (key takeaways)
+
+`evolution.py` joins the semantic strategy (plan groups), the contact strategy and
+two quality measures (episode length on start scene 0, solve rate of the commit) for
+each solved policy version of each run: 853 runs with two solved versions or more,
+10 502 steps between versions that follow each other, 28 scenarios.
+
+1. **An agent mostly keeps its first solution.** 71 % of the runs end with the
+   semantic strategy of their first solved version (interval 68 to 74 %; 28 % to
+   100 % by scenario), and 63 % never change it. For the contact strategy: 59 % and
+   51 %. The final motion is at 0.43 of the distance to another run from the first
+   solved motion (0.27 if the semantic strategy stays, 0.83 if it changes).
+2. **A new strategy changes the result more often, but not more often for the
+   better.** Each new version is compared with the version before it in the same run;
+   "faster" means fewer env steps for the task on start scene 0, and "the same" means
+   within 2 %. With another strategy, the new version is faster in 52 % of the cases
+   and slower in 34 %. With the same strategy (the agent only tunes it), it is faster
+   in 18 % and slower in 10 %; the other 72 % change nothing. When the speed does
+   change, it is for the better about 6 times in 10 in the two cases (61 % and 64 %).
+   The solve rate goes up in 43 % of the changes of strategy and down in 20 %.
+3. **More strategies in a run do not give a clearly better end.** Runs that change
+   start a little worse (first solved episode 1.33 times the scenario median, against
+   1.25) and end a little better (0.97 against 1.00). The rank correlation between
+   the number of strategies of a run and its final episode length is -0.15, the same
+   as for the number of versions: runs that change also have more versions (14
+   against 9), so the two causes are not separate here.
+4. **Agents react to a bad change.** After a change that makes the episode longer,
+   47 % of the runs go back to the strategy before, 36 % keep the new one and 17 %
+   change again; 43 % end with a shorter episode than before that change. After a
+   change for the better, 51 % keep it and 33 % go back later.
+
+Cautions: quality is measured on one start scene (episode length) and by the solve
+rate of the commit; only commits that solve start scene 0 count, so a version that
+breaks the policy is not a step; a strategy with two values can only "go back" at its
+next change; the plan marks are a proposal.
+
+```bash
+uv run python -m experiments.contacts.evolution     # all numbers; --scenario NAME
 ```
 
 ### Film pass: a check of the tags with pictures
@@ -738,7 +812,8 @@ and must be re-created (or copied) on the new machine.
 ## Usage
 
 ```bash
-# thumbnails for the index page (no policy code)
+# card pictures of the landing page (no policy code); --force makes them again;
+# the MuJoCo scenarios are in the lab room (--scene plain: no background)
 uv run python -m experiments.contacts.catalog
 
 # record: final commit, instance 0, all runs of a scenario (one subprocess per run)

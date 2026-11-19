@@ -26,6 +26,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "transfer",
+        "role": "plan",
         "question": "How do the cubes get into the green bin?",
         "source": "motion",
         "values": {
@@ -44,6 +45,7 @@ CODEBOOK = [
     },
     {
         "key": "bins",
+        "role": "style",
         "question": "Do the two bins touch?",
         "source": "contacts",
         "values": {
@@ -54,6 +56,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base drive during the task?",
         "source": "motion",
         "values": {
@@ -65,6 +68,7 @@ CODEBOOK = [
     },
     {
         "key": "island",
+        "role": "style",
         "question": "Does the base touch the kitchen island?",
         "source": "contacts",
         "values": {
@@ -75,6 +79,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

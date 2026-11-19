@@ -18,6 +18,7 @@
  "codebook": [
   {
    "key": "transfer",
+   "role": "plan",
    "question": "How do the cubes get into the green bin?",
    "source": "motion",
    "values": {
@@ -30,6 +31,7 @@
   },
   {
    "key": "bins",
+   "role": "style",
    "question": "Do the two bins touch?",
    "source": "contacts",
    "values": {
@@ -40,6 +42,7 @@
   },
   {
    "key": "base",
+   "role": "style",
    "question": "Does the base drive during the task?",
    "source": "motion",
    "values": {
@@ -50,6 +53,7 @@
   },
   {
    "key": "island",
+   "role": "style",
    "question": "Does the base touch the kitchen island?",
    "source": "contacts",
    "values": {
@@ -60,6 +64,7 @@
   },
   {
    "key": "pace",
+   "role": "style",
    "question": "How long is the episode?",
    "source": "motion",
    "values": {

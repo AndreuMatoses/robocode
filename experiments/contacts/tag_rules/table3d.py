@@ -23,6 +23,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "cube",
+        "role": "plan",
         "question": "Which cube does the robot take?",
         "source": "motion",
         "values": {
@@ -35,6 +36,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base move to the cube?",
         "source": "motion",
         "values": {
@@ -45,6 +47,7 @@ CODEBOOK = [
     },
     {
         "key": "lift",
+        "role": "style",
         "question": "How high does the cube go?",
         "source": "motion",
         "values": {
@@ -55,6 +58,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

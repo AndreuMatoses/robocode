@@ -23,6 +23,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "clearing",
+        "role": "plan",
         "question": "Does the robot move an obstruction before it takes the target?",
         "source": "motion",
         "values": {
@@ -36,6 +37,7 @@ CODEBOOK = [
     },
     {
         "key": "removal",
+        "role": "plan",
         "question": "How does an obstruction move?",
         "source": "contacts",
         "values": {
@@ -49,6 +51,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "Does the target block go straight to the region?",
         "source": "motion",
         "values": {
@@ -60,6 +63,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base touch an obstruction?",
         "source": "contacts",
         "values": {
@@ -70,6 +74,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

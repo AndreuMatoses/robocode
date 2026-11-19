@@ -3,8 +3,14 @@
 A file ``semantic/<scenario>.json`` holds a **codebook** and the **labels** of the
 runs of one scenario. The codebook is a list of tag groups. A group is one question
 about the solution ("how does the arm swing?") with a closed set of values, and the
-rule that assigns a value. A run has one value in each group, so a strategy is a
-combination of values, and runs can be grouped on any subset of the groups.
+rule that assigns a value. A run has one value in each group.
+
+A group has a **role**. A *plan* group says what the robot does (the tool, the
+transfer type, the order, the route). A *style* group says how it does it (pace,
+heights, distances, side effects). A **semantic strategy** is the combination of the
+values of the plan groups (``plan_keys``, ``strategy_of``): two runs with the same
+plan and another style have one semantic strategy. A scenario with no plan group
+has one semantic strategy.
 
 The tags come from a reader (the file says who and when) that looked at the motion,
 at the contacts and at the program, and then wrote a rule for each group. The rules
@@ -43,6 +49,19 @@ def load(scenario: str) -> dict[str, Any] | None:
 def values(data: dict[str, Any], run_ids: list[str], group: str) -> list[str | None]:
     """The value of each run in a tag group (None for a run without labels)."""
     return [data["labels"].get(run, {}).get(group) for run in run_ids]
+
+
+ROLES = ("plan", "style", "program")
+
+
+def plan_keys(groups: list[dict[str, Any]]) -> list[str]:
+    """The keys of the tag groups that define a semantic strategy."""
+    return [group["key"] for group in groups if group.get("role") == "plan"]
+
+
+def strategy_of(tags: dict[str, str], keys: list[str]) -> str:
+    """The semantic strategy of a run: its values in the plan groups."""
+    return " / ".join(tags[key] for key in keys) or "one plan"
 
 
 def separation(distance: np.ndarray, tags: list[str | None]) -> dict[str, Any]:
@@ -87,6 +106,10 @@ def build(scenario: str, instance: str = "inst0") -> dict[str, Any]:
     for run in features.load_runs(scenario, instance):
         labels[run.run_id], evidence[run.run_id] = rules.label(run)
     for group in rules.CODEBOOK:
+        if group.get("role") not in ROLES:
+            raise ValueError(
+                f"{scenario}/{group['key']}: no role (plan, style, program)"
+            )
         used = {tags[group["key"]] for tags in labels.values()}
         if not used <= set(group["values"]):
             raise ValueError(f"{scenario}/{group['key']}: unknown values {used}")
@@ -167,6 +190,7 @@ def build_history(scenario: str, instance: str = "inst0") -> dict[str, Any]:
                 "question": g["question"],
                 "values": list(g["values"]),
                 "source": g["source"],
+                "role": g["role"],
             }
             for g in rules.CODEBOOK
         ],
@@ -223,6 +247,28 @@ def history_summary(data: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+def history_strategy(data: dict[str, Any]) -> dict[str, int]:
+    """Runs whose semantic strategy at the first solved version is that of the last.
+
+    ``runs``: runs with two solved policy versions or more; ``kept``: the first and
+    the last strategy are equal; ``constant``: the strategy never changes.
+    """
+    index = [k for k, g in enumerate(data["groups"]) if g.get("role") == "plan"]
+    runs = kept = constant = 0
+    for rows in data["runs"].values():
+        seq = [
+            tuple(r["tags"][k] for k in index)
+            for r in rows
+            if r.get("tags") and r.get("version")
+        ]
+        if len(seq) < 2:
+            continue
+        runs += 1
+        kept += seq[0] == seq[-1]
+        constant += len(set(seq)) == 1
+    return {"runs": runs, "kept": kept, "constant": constant}
+
+
 def main() -> None:
     """Build the tag files of the given scenarios (``--history``: over the commits)."""
     import sys  # pylint: disable=import-outside-toplevel
@@ -250,7 +296,7 @@ def main() -> None:
         for group in data["codebook"]:
             counts = Counter(tags[group["key"]] for tags in data["labels"].values())
             row = ", ".join(f"{v} {counts.get(v, 0)}" for v in group["values"])
-            print(f"  {group['key']:14s} {row}")
+            print(f"  {group['key']:14s} {group['role']:7s} {row}")
 
 
 if __name__ == "__main__":

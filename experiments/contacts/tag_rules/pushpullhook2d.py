@@ -26,6 +26,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "side",
+        "role": "plan",
         "question": "From which side of the button does the robot work?",
         "source": "motion",
         "values": {
@@ -39,6 +40,7 @@ CODEBOOK = [
     },
     {
         "key": "grip",
+        "role": "style",
         "question": "Where does the robot hold the hook?",
         "source": "motion",
         "values": {
@@ -51,6 +53,7 @@ CODEBOOK = [
     },
     {
         "key": "hook_path",
+        "role": "style",
         "question": "Does the hook go straight to the button?",
         "source": "motion",
         "values": {
@@ -62,6 +65,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

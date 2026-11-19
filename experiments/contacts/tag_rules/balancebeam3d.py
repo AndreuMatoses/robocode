@@ -28,6 +28,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "order",
+        "role": "plan",
         "question": "Which block goes on the beam first?",
         "source": "motion",
         "values": {
@@ -40,6 +41,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How high does the robot carry a block?",
         "source": "motion",
         "values": {
@@ -50,6 +52,7 @@ CODEBOOK = [
     },
     {
         "key": "transfer",
+        "role": "style",
         "question": "Does each block move in one motion?",
         "source": "motion",
         "values": {
@@ -62,6 +65,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "How far does the base drive?",
         "source": "motion",
         "values": {
@@ -72,6 +76,7 @@ CODEBOOK = [
     },
     {
         "key": "beam",
+        "role": "style",
         "question": "Does the robot disturb the beam?",
         "source": "contacts",
         "values": {
@@ -84,6 +89,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

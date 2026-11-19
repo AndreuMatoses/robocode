@@ -17,6 +17,7 @@
  "codebook": [
   {
    "key": "direction",
+   "role": "plan",
    "question": "Which way does the target block go to the wall?",
    "source": "motion",
    "values": {
@@ -27,6 +28,7 @@
   },
   {
    "key": "obstructions",
+   "role": "style",
    "question": "What happens to the obstructions?",
    "source": "motion",
    "values": {
@@ -37,6 +39,7 @@
   },
   {
    "key": "hook_contact",
+   "role": "plan",
    "question": "Does the hook touch the target block?",
    "source": "contacts",
    "values": {
@@ -47,6 +50,7 @@
   },
   {
    "key": "strokes",
+   "role": "style",
    "question": "Does the target block move in one stroke?",
    "source": "motion",
    "values": {
@@ -57,6 +61,7 @@
   },
   {
    "key": "pace",
+   "role": "style",
    "question": "How long is the episode?",
    "source": "motion",
    "values": {

@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "plan",
+        "role": "plan",
         "question": "Which green block goes to the plate, and how?",
         "source": "motion",
         "values": {
@@ -39,6 +40,7 @@ CODEBOOK = [
     },
     {
         "key": "blocker",
+        "role": "style",
         "question": "Where does the blocker end?",
         "source": "motion and contacts",
         "values": {
@@ -52,6 +54,7 @@ CODEBOOK = [
     },
     {
         "key": "drive",
+        "role": "style",
         "question": "How far does the base drive?",
         "source": "motion",
         "values": {
@@ -62,6 +65,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

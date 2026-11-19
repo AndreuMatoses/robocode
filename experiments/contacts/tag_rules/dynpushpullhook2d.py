@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "direction",
+        "role": "plan",
         "question": "Which way does the target block go to the wall?",
         "source": "motion",
         "values": {
@@ -37,6 +38,7 @@ CODEBOOK = [
     },
     {
         "key": "obstructions",
+        "role": "style",
         "question": "What happens to the obstructions?",
         "source": "motion",
         "values": {
@@ -49,6 +51,7 @@ CODEBOOK = [
     },
     {
         "key": "hook_contact",
+        "role": "plan",
         "question": "Does the hook touch the target block?",
         "source": "contacts",
         "values": {
@@ -60,6 +63,7 @@ CODEBOOK = [
     },
     {
         "key": "strokes",
+        "role": "style",
         "question": "Does the target block move in one stroke?",
         "source": "motion",
         "values": {
@@ -71,6 +75,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

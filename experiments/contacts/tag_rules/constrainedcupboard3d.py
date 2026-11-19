@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "order",
+        "role": "plan",
         "question": "In which order does the robot move the rods?",
         "source": "motion",
         "values": {
@@ -38,6 +39,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How high does the robot carry a rod?",
         "source": "motion",
         "values": {
@@ -50,6 +52,7 @@ CODEBOOK = [
     },
     {
         "key": "insertion",
+        "role": "style",
         "question": "Does the robot touch the cupboard when it puts a rod in?",
         "source": "contacts",
         "values": {
@@ -61,6 +64,7 @@ CODEBOOK = [
     },
     {
         "key": "pick",
+        "role": "style",
         "question": "Does the gripper touch the floor at the grasp?",
         "source": "contacts",
         "values": {
@@ -71,6 +75,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "How far does the base drive?",
         "source": "motion",
         "values": {
@@ -81,6 +86,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

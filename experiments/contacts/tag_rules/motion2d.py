@@ -24,6 +24,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "route",
+        "role": "plan",
         "question": "Which way does the robot go to the target?",
         "source": "motion",
         "values": {
@@ -34,6 +35,7 @@ CODEBOOK = [
     },
     {
         "key": "clearance",
+        "role": "style",
         "question": "Does the robot touch an obstacle on the way?",
         "source": "contacts",
         "values": {
@@ -45,6 +47,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "Does the robot go at full speed without a stop?",
         "source": "motion",
         "values": {
@@ -55,6 +58,7 @@ CODEBOOK = [
     },
     {
         "key": "path",
+        "role": "style",
         "question": "How long is the path against the straight line?",
         "source": "motion",
         "values": {

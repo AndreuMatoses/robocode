@@ -24,6 +24,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "layout",
+        "role": "plan",
         "question": "Where do the two cubes go on the shelf?",
         "source": "motion",
         "values": {
@@ -36,6 +37,7 @@ CODEBOOK = [
     },
     {
         "key": "depth",
+        "role": "style",
         "question": "How deep on the shelf do the cubes go?",
         "source": "motion",
         "values": {
@@ -46,6 +48,7 @@ CODEBOOK = [
     },
     {
         "key": "order",
+        "role": "plan",
         "question": "Which cube goes first?",
         "source": "motion",
         "values": {
@@ -56,6 +59,7 @@ CODEBOOK = [
     },
     {
         "key": "insertion",
+        "role": "style",
         "question": "Does the robot touch the cupboard when it puts a cube in?",
         "source": "contacts",
         "values": {
@@ -66,6 +70,7 @@ CODEBOOK = [
     },
     {
         "key": "pick",
+        "role": "style",
         "question": "Does the gripper touch the floor at the grasp?",
         "source": "contacts",
         "values": {
@@ -76,6 +81,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "How far does the base drive?",
         "source": "motion",
         "values": {
@@ -86,6 +92,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

@@ -28,6 +28,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "shelf_blocks",
+        "role": "plan",
         "question": "What does the robot do with the three blocks at the shelf?",
         "source": "motion",
         "values": {
@@ -43,6 +44,7 @@ CODEBOOK = [
     },
     {
         "key": "columns",
+        "role": "plan",
         "question": "In how many columns of the shelf do the room blocks end?",
         "source": "motion",
         "values": {
@@ -56,6 +58,7 @@ CODEBOOK = [
     },
     {
         "key": "far_order",
+        "role": "plan",
         "question": "Which of the two farthest blocks goes first?",
         "source": "motion",
         "values": {
@@ -66,6 +69,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base touch a block?",
         "source": "contacts",
         "values": {
@@ -76,6 +80,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

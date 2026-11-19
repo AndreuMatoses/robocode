@@ -17,6 +17,7 @@ import argparse
 import dataclasses
 import functools
 import hashlib
+import io
 import json
 import mimetypes
 import queue
@@ -25,6 +26,7 @@ import subprocess
 import sys
 import threading
 import time
+import zipfile
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -42,7 +44,7 @@ from experiments.contacts import (
     strategy,
 )
 from experiments.contacts import views as view_set
-from experiments.contacts.commits import load_versions
+from experiments.contacts.commits import load_versions, versions_path
 from experiments.contacts.trace import load_meta, summarise, trace_dirs, trace_id
 from experiments.render_run import DEFAULT_DATA, REPO, RUN_ID
 from experiments.results_viewer import Handler as _BaseHandler
@@ -662,6 +664,24 @@ def diversity_overview(instance: str, level: str, grouping: Grouping) -> dict[st
 # --------------------------------------------------------------------- server
 
 
+def _add_lengths(name: str, data: dict[str, Any]) -> None:
+    """Add the episode length, solve rate and subject to each commit of a tag history."""
+    for run_id, rows in data["runs"].items():
+        if not versions_path(CONFIG.traces, run_id).exists():
+            continue
+        commits = {
+            row["commit"]: row
+            for row in histories.run_history(
+                CONFIG.traces, run_id, _versions(run_id), data["instance"]
+            )
+        }
+        for row in rows:
+            source = commits.get(row["commit"], {})
+            row["steps"] = source.get("num_steps")
+            row["rate"] = source.get("solve_rate")
+            row["subject"] = source.get("subject")
+
+
 class Handler(_BaseHandler):
     """Routes of the contact viewer (HTTP helpers come from the results viewer)."""
 
@@ -733,6 +753,8 @@ class Handler(_BaseHandler):
                 if data is None:
                     raise FileNotFoundError(f"no tag history of {query['name']}")
                 data["summary"] = semantic.history_summary(data)
+                data["strategy"] = semantic.history_strategy(data)
+                _add_lengths(query["name"], data)
                 data["method_order"] = [
                     m
                     for m in METHOD_ORDER
@@ -806,6 +828,8 @@ class Handler(_BaseHandler):
                 self._file(catalog.thumbnail_path(CONFIG.traces, query["name"]))
             elif path.startswith("/files/"):
                 self._file(CONFIG.traces / path.removeprefix("/files/"))
+            elif path == "/slides.zip":
+                self._slides_zip()
             elif path == "/slides":
                 self.send_response(302)
                 self.send_header("Location", "/slides/")
@@ -838,13 +862,55 @@ class Handler(_BaseHandler):
         ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         self._send(200, path.read_bytes(), ctype)
 
+    def _slides_zip(self) -> None:
+        """The slide decks as one archive: unpack it and open ``final.html``.
+
+        The pages use relative paths only, so they work from a local folder. The
+        scripts that make the assets are not in the archive: they need this repository.
+        """
+        if not SLIDES.is_dir():
+            raise FileNotFoundError("slides")
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as archive:
+            for path in sorted(SLIDES.rglob("*")):
+                parts = path.relative_to(SLIDES).parts
+                if not path.is_file() or parts[0] in ("scripts", "__pycache__"):
+                    continue
+                # a video or a picture does not get smaller: store it as it is
+                packed = path.suffix.lower() in (".mp4", ".png", ".jpg")
+                archive.write(
+                    path,
+                    Path("strategy-slides", *parts).as_posix(),
+                    zipfile.ZIP_STORED if packed else zipfile.ZIP_DEFLATED,
+                )
+        data = buffer.getvalue()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/zip")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header(
+            "Content-Disposition", 'attachment; filename="strategy-slides.zip"'
+        )
+        self.send_header("Cache-Control", "no-cache, no-store")
+        self.end_headers()
+        self.wfile.write(data)
+
     def _slides(self, name: str) -> None:
         """A file of the slide deck folder (pages, figures and videos)."""
         path = (SLIDES / name).resolve()
         if not path.is_relative_to(SLIDES) or not path.is_file():
             raise FileNotFoundError(name)
         ctype = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-        self._send_file(path, ctype)
+        if ctype.startswith("video/"):
+            self._send_file(path, ctype)
+            return
+        # pages, scripts, data and figures change often: the browser must ask again
+        data = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-cache, no-store")
+        self.end_headers()
+        self.wfile.write(data)
 
     def _file(self, path: Path) -> None:
         path = path.resolve()

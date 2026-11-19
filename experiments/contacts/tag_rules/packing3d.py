@@ -24,6 +24,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "placement",
+        "role": "plan",
         "question": "On which side of the rack does each part end?",
         "source": "motion",
         "values": {
@@ -35,6 +36,7 @@ CODEBOOK = [
     },
     {
         "key": "contact",
+        "role": "style",
         "question": "Do the two parts touch?",
         "source": "contacts",
         "values": {
@@ -46,6 +48,7 @@ CODEBOOK = [
     },
     {
         "key": "order",
+        "role": "plan",
         "question": "Which part goes first?",
         "source": "motion",
         "values": {
@@ -56,6 +59,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base move?",
         "source": "motion",
         "values": {
@@ -66,6 +70,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How high does the robot carry a part?",
         "source": "motion",
         "values": {
@@ -76,6 +81,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

@@ -29,6 +29,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "tool",
+        "role": "plan",
         "question": "What moves the cubes?",
         "source": "motion",
         "values": {
@@ -40,6 +41,7 @@ CODEBOOK = [
     },
     {
         "key": "transfer",
+        "role": "plan",
         "question": "Do the cubes slide or does the robot lift them?",
         "source": "motion",
         "values": {
@@ -52,6 +54,7 @@ CODEBOOK = [
     },
     {
         "key": "batches",
+        "role": "plan",
         "question": "How many cubes move together?",
         "source": "motion",
         "values": {
@@ -64,6 +67,7 @@ CODEBOOK = [
     },
     {
         "key": "drawer",
+        "role": "plan",
         "question": "How does the robot open the drawer?",
         "source": "contacts",
         "values": {
@@ -74,6 +78,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base drive during the task?",
         "source": "motion",
         "values": {
@@ -84,6 +89,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

@@ -25,6 +25,7 @@ INSIGHTS = [
 CODEBOOK = [
     {
         "key": "order",
+        "role": "plan",
         "question": "Which obstruction moves first?",
         "source": "motion",
         "values": {
@@ -35,6 +36,7 @@ CODEBOOK = [
     },
     {
         "key": "drop_zone",
+        "role": "style",
         "question": "How far from the region does the robot put the obstructions?",
         "source": "motion",
         "values": {
@@ -46,6 +48,7 @@ CODEBOOK = [
     },
     {
         "key": "base",
+        "role": "style",
         "question": "Does the base move?",
         "source": "motion",
         "values": {
@@ -56,6 +59,7 @@ CODEBOOK = [
     },
     {
         "key": "carry",
+        "role": "style",
         "question": "How high does the robot carry a block?",
         "source": "motion",
         "values": {
@@ -66,6 +70,7 @@ CODEBOOK = [
     },
     {
         "key": "pace",
+        "role": "style",
         "question": "How long is the episode?",
         "source": "motion",
         "values": {

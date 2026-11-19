@@ -17,6 +17,7 @@
  "codebook": [
   {
    "key": "tool",
+   "role": "plan",
    "question": "What moves the cubes?",
    "source": "motion",
    "values": {
@@ -27,6 +28,7 @@
   },
   {
    "key": "transfer",
+   "role": "plan",
    "question": "Do the cubes slide or does the robot lift them?",
    "source": "motion",
    "values": {
@@ -38,6 +40,7 @@
   },
   {
    "key": "batches",
+   "role": "plan",
    "question": "How many cubes move together?",
    "source": "motion",
    "values": {
@@ -49,6 +52,7 @@
   },
   {
    "key": "drawer",
+   "role": "plan",
    "question": "How does the robot open the drawer?",
    "source": "contacts",
    "values": {
@@ -59,6 +63,7 @@
   },
   {
    "key": "base",
+   "role": "style",
    "question": "Does the base drive during the task?",
    "source": "motion",
    "values": {
@@ -69,6 +74,7 @@
   },
   {
    "key": "pace",
+   "role": "style",
    "question": "How long is the episode?",
    "source": "motion",
    "values": {

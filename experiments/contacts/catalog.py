@@ -123,9 +123,9 @@ def thumbnail_path(out: Path, scenario: str) -> Path:
     return out / SCENARIO_DIR / scenario / "thumb.png"
 
 
-def write_thumbnail(out: Path, scenario: str) -> Path:
-    """Render the scenario after ``reset(seed=0)``."""
-    env = make_env(scenario)
+def write_thumbnail(out: Path, scenario: str, scene: str | None = "lab") -> Path:
+    """Render the scenario after ``reset(seed=0)`` (MuJoCo: in the lab room)."""
+    env = make_env(scenario, scene)
     try:
         env.reset(seed=0)
         frame = env.render()
@@ -144,16 +144,22 @@ def main() -> None:
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--data", type=Path, default=DEFAULT_DATA)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument(
+        "--scene",
+        choices=sorted(SCENES),
+        default="lab",
+        help="background of the MuJoCo scenarios (default: the lab room)",
+    )
     args = parser.parse_args()
     if len(args.scenarios) == 1:
-        print(write_thumbnail(args.out, args.scenarios[0]))
+        print(write_thumbnail(args.out, args.scenarios[0], args.scene))
         return
     names = args.scenarios or [s["name"] for s in scenarios(args.data)]
     for name in names:
         if thumbnail_path(args.out, name).exists() and not args.force:
             continue
         cmd = [sys.executable, "-m", "experiments.contacts.catalog", name]
-        cmd += ["--out", str(args.out)]
+        cmd += ["--out", str(args.out), "--scene", args.scene]
         ok = subprocess.run(cmd, check=False, capture_output=True).returncode == 0
         print(f"{name}: {'ok' if ok else 'FAILED'}", flush=True)
 
