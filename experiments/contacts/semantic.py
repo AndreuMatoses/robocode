@@ -325,6 +325,9 @@ def build_scenes(scenario: str, instances: tuple[int, ...] = tuple(range(20))) -
                     "tags": [tags[key] for key in keys],
                     "steps": run.steps,
                     "objects": len(run.objects),
+                    # the object count of the environment: it also counts the
+                    # objects that cannot move (buttons, passages)
+                    "count": run.meta["metrics"].get("object_count"),
                 }
             if rows:
                 found.append((name, rows))
@@ -332,10 +335,8 @@ def build_scenes(scenario: str, instances: tuple[int, ...] = tuple(range(20))) -
             continue
         name, rows = found[0]
         if len(found) == 2:
-            count = lambda r: Counter(v["objects"] for v in r.values()).most_common(1)[
-                0
-            ][0]
-            if count(found[1][1]) == count(rows) and len(found[1][1]) > len(rows):
+            other = found[1][1]
+            if _variant_of(other) == _variant_of(rows) and len(other) > len(rows):
                 name, rows = found[1]
         scenes[f"inst{k}"] = rows
         sources[f"inst{k}"] = name
@@ -360,6 +361,12 @@ def build_scenes(scenario: str, instances: tuple[int, ...] = tuple(range(20))) -
     return data
 
 
+def _variant_of(rows: dict[str, Any]) -> tuple[Any, Any]:
+    """The variant of a start scene: its object count and its movable objects."""
+    values = Counter((row.get("count"), row["objects"]) for row in rows.values())
+    return values.most_common(1)[0][0]
+
+
 def load_scenes(scenario: str) -> dict[str, Any] | None:
     """The tags on several start scenes, if the file exists."""
     path = SCENES / f"{scenario}.json"
@@ -367,19 +374,18 @@ def load_scenes(scenario: str) -> dict[str, Any] | None:
 
 
 def comparable_scenes(data: dict[str, Any]) -> list[str]:
-    """The start scenes with the number of objects of the first one.
+    """The start scenes of the variant of the first one: the layouts.
 
-    Another number of objects is another task, so those scenes are left out.
+    Another number of objects is another task, so those scenes are left out. The
+    count of the environment is used too, because it also has the objects that
+    cannot move.
     """
     order = sorted(data["scenes"], key=lambda scene: int(scene.removeprefix("inst")))
     if not order:
         return []
 
-    def count(scene: str) -> int:
-        values = Counter(row["objects"] for row in data["scenes"][scene].values())
-        return values.most_common(1)[0][0]
-
-    return [scene for scene in order if count(scene) == count(order[0])]
+    first = _variant_of(data["scenes"][order[0]])
+    return [scene for scene in order if _variant_of(data["scenes"][scene]) == first]
 
 
 def stability(data: dict[str, Any]) -> list[dict[str, Any]]:

@@ -4,7 +4,7 @@
  "population": "final policy of each run that solves the instance",
  "provenance": {
   "reader": "Claude (claude-fable-5-2)",
-  "date": "2026-11-12",
+  "date": "2026-11-20",
   "status": "not checked by a person",
   "method": "Tag groups proposed after a look at the numbers of all 35 runs (path and end of the stick, end of the base, contact pairs) and at the place of the three buttons in the scene: button0 and button1 are on the table, button2 is on the floor. All runs take the stick. Film strips of 3 runs (one for each plan) were inspected. They showed that the base, not the stick, is at the floor button in the plan table_then_drive, so the rule of floor_button now uses distances. No program text was read.",
   "rules": "experiments/contacts/tag_rules/stickbutton2d.py"
@@ -24,9 +24,11 @@
    "values": {
     "table_then_reach": "The table buttons first. Then the robot reaches with the stick to the floor button from a distance (the base stays on the left of x = 2.2 m).",
     "table_then_drive": "The table buttons first. Then the base drives to the floor button with the stick in the gripper.",
-    "floor_then_table": "The floor button first. The episode ends with the stick at the table buttons."
+    "floor_then_table": "The floor button first. The episode ends with the stick at the table buttons.",
+    "table_only": "The layout has no floor button.",
+    "floor_only": "The layout has no table button."
    },
-   "rule": "height of the stick in the last state (1.2 m or more: at the table), and x of the base in the last state"
+   "rule": "the stick in the last state (in the table region: at the table), and the distance of the base in the last state to the nearest floor button (less than 0.75 m: the base drives to it). A button is a table button if its centre is in the table region"
   },
   {
    "key": "floor_button",
@@ -35,7 +37,9 @@
    "source": "motion",
    "values": {
     "stick": "The stick comes within 6 cm of the centre of the floor button, and no robot part does.",
-    "robot": "The base, the arm or the gripper head comes within 6 cm of the centre of the floor button: the robot presses it directly."
+    "robot": "The base, the arm or the gripper head comes within 6 cm of the centre of the floor button: the robot presses it directly.",
+    "mixed": "The layout has two floor buttons or more: the robot presses one, and the stick presses another.",
+    "none": "The layout has no floor button."
    },
    "rule": "smallest distance over the episode from the outline of the stick and of each robot part to the centre of the floor button (the button has a radius of 5 cm). The contact pairs are not used, because the press can be the last instant of the episode"
   },
@@ -286,11 +290,16 @@
    ],
    "base_path_m": 3.6,
    "steps": 69,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.027,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.022,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "arm~stick",
@@ -311,11 +320,16 @@
    ],
    "base_path_m": 3.43,
    "steps": 65,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.031,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.036,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "gripper.head~stick",
@@ -334,11 +348,16 @@
    ],
    "base_path_m": 5.11,
    "steps": 105,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.312,
-    "base": 0.025,
-    "arm": 0.123,
-    "head": 0.301
+    "button2": {
+     "stick": 0.317,
+     "base": 0.03,
+     "arm": 0.129,
+     "head": 0.305
+    }
    },
    "contacts": [
     "arm~stick",
@@ -359,11 +378,16 @@
    ],
    "base_path_m": 3.74,
    "steps": 71,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.025,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.03,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "arm~stick",
@@ -384,11 +408,16 @@
    ],
    "base_path_m": 3.45,
    "steps": 65,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.045,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.05,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "gripper.head~stick",
@@ -407,11 +436,16 @@
    ],
    "base_path_m": 5.05,
    "steps": 99,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.313,
-    "base": 0.025,
-    "arm": 0.123,
-    "head": 0.288
+    "button2": {
+     "stick": 0.318,
+     "base": 0.03,
+     "arm": 0.128,
+     "head": 0.293
+    }
    },
    "contacts": [
     "base~left_wall",
@@ -431,11 +465,16 @@
    ],
    "base_path_m": 4.74,
    "steps": 86,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 1.865,
-    "base": 0.038,
-    "arm": 0.137,
-    "head": 0.22
+    "button2": {
+     "stick": 1.87,
+     "base": 0.043,
+     "arm": 0.142,
+     "head": 0.224
+    }
    },
    "contacts": [
     "base~button",
@@ -456,11 +495,16 @@
    ],
    "base_path_m": 3.94,
    "steps": 71,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.023,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.028,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "gripper.head~stick",
@@ -479,11 +523,16 @@
    ],
    "base_path_m": 3.46,
    "steps": 66,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.026,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.029,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "gripper.head~stick",
@@ -502,11 +551,16 @@
    ],
    "base_path_m": 5.39,
    "steps": 108,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.347,
-    "base": 0.036,
-    "arm": 0.135,
-    "head": 0.33
+    "button2": {
+     "stick": 0.35,
+     "base": 0.04,
+     "arm": 0.139,
+     "head": 0.333
+    }
    },
    "contacts": [
     "base~left_wall",
@@ -526,11 +580,16 @@
    ],
    "base_path_m": 4.64,
    "steps": 88,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 1.819,
-    "base": 0.033,
-    "arm": 0.132,
-    "head": 0.209
+    "button2": {
+     "stick": 1.824,
+     "base": 0.038,
+     "arm": 0.137,
+     "head": 0.213
+    }
    },
    "contacts": [
     "base~bottom_wall",
@@ -551,11 +610,16 @@
    ],
    "base_path_m": 5.28,
    "steps": 95,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.318,
-    "base": 0.025,
-    "arm": 0.123,
-    "head": 0.295
+    "button2": {
+     "stick": 0.322,
+     "base": 0.03,
+     "arm": 0.128,
+     "head": 0.299
+    }
    },
    "contacts": [
     "base~left_wall",
@@ -576,11 +640,16 @@
    ],
    "base_path_m": 3.83,
    "steps": 70,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.042,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.047,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "base~left_wall",
@@ -600,11 +669,16 @@
    ],
    "base_path_m": 4.78,
    "steps": 89,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 1.803,
-    "base": 0.045,
-    "arm": 0.143,
-    "head": 0.207
+    "button2": {
+     "stick": 1.808,
+     "base": 0.05,
+     "arm": 0.148,
+     "head": 0.211
+    }
    },
    "contacts": [
     "arm~stick",
@@ -626,11 +700,16 @@
    ],
    "base_path_m": 4.88,
    "steps": 96,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.272,
-    "base": 0.046,
-    "arm": 0.144,
-    "head": 0.229
+    "button2": {
+     "stick": 0.277,
+     "base": 0.05,
+     "arm": 0.147,
+     "head": 0.234
+    }
    },
    "contacts": [
     "gripper.head~stick",
@@ -649,11 +728,16 @@
    ],
    "base_path_m": 5.57,
    "steps": 116,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.211,
-    "base": 0.022,
-    "arm": 0.12,
-    "head": 0.189
+    "button2": {
+     "stick": 0.215,
+     "base": 0.027,
+     "arm": 0.126,
+     "head": 0.193
+    }
    },
    "contacts": [
     "base~left_wall",
@@ -673,11 +757,16 @@
    ],
    "base_path_m": 6.17,
    "steps": 124,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.316,
-    "base": 0.001,
-    "arm": 0.101,
-    "head": 0.296
+    "button2": {
+     "stick": 0.319,
+     "base": 0.004,
+     "arm": 0.104,
+     "head": 0.299
+    }
    },
    "contacts": [
     "gripper.suction~stick",
@@ -696,11 +785,16 @@
    ],
    "base_path_m": 5.21,
    "steps": 102,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.347,
-    "base": 0.039,
-    "arm": 0.138,
-    "head": 0.331
+    "button2": {
+     "stick": 0.351,
+     "base": 0.043,
+     "arm": 0.143,
+     "head": 0.335
+    }
    },
    "contacts": [
     "gripper.head~stick",
@@ -719,11 +813,16 @@
    ],
    "base_path_m": 5.1,
    "steps": 97,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.338,
-    "base": 0.03,
-    "arm": 0.129,
-    "head": 0.312
+    "button2": {
+     "stick": 0.342,
+     "base": 0.035,
+     "arm": 0.134,
+     "head": 0.316
+    }
    },
    "contacts": [
     "gripper.suction~stick",
@@ -741,11 +840,16 @@
    ],
    "base_path_m": 5.33,
    "steps": 94,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.236,
-    "base": 0.023,
-    "arm": 0.12,
-    "head": 0.211
+    "button2": {
+     "stick": 0.241,
+     "base": 0.028,
+     "arm": 0.125,
+     "head": 0.216
+    }
    },
    "contacts": [
     "base~bottom_wall",
@@ -766,11 +870,16 @@
    ],
    "base_path_m": 3.99,
    "steps": 82,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.001,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.006,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "gripper.suction~stick",
@@ -788,11 +897,16 @@
    ],
    "base_path_m": 3.92,
    "steps": 75,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.026,
-    "base": 0.691,
-    "arm": 0.789,
-    "head": 0.836
+    "button2": {
+     "stick": 0.031,
+     "base": 0.696,
+     "arm": 0.794,
+     "head": 0.841
+    }
    },
    "contacts": [
     "base~table",
@@ -811,11 +925,16 @@
    ],
    "base_path_m": 6.48,
    "steps": 133,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.317,
-    "base": 0.025,
-    "arm": 0.123,
-    "head": 0.301
+    "button2": {
+     "stick": 0.321,
+     "base": 0.03,
+     "arm": 0.128,
+     "head": 0.305
+    }
    },
    "contacts": [
     "arm~stick",
@@ -835,11 +954,16 @@
    ],
    "base_path_m": 5.4,
    "steps": 104,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.31,
-    "base": 0.001,
-    "arm": 0.1,
-    "head": 0.284
+    "button2": {
+     "stick": 0.314,
+     "base": 0.006,
+     "arm": 0.105,
+     "head": 0.288
+    }
    },
    "contacts": [
     "base~left_wall",
@@ -858,11 +982,16 @@
    ],
    "base_path_m": 6.91,
    "steps": 152,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 1.227,
-    "base": 0.114,
-    "arm": 0.07,
-    "head": 0.038
+    "button2": {
+     "stick": 1.233,
+     "base": 0.119,
+     "arm": 0.074,
+     "head": 0.042
+    }
    },
    "contacts": [
     "arm~stick",
@@ -883,11 +1012,16 @@
    ],
    "base_path_m": 5.18,
    "steps": 100,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.334,
-    "base": 0.033,
-    "arm": 0.132,
-    "head": 0.322
+    "button2": {
+     "stick": 0.338,
+     "base": 0.037,
+     "arm": 0.136,
+     "head": 0.325
+    }
    },
    "contacts": [
     "arm~stick",
@@ -908,11 +1042,16 @@
    ],
    "base_path_m": 5.56,
    "steps": 112,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.302,
-    "base": 0.005,
-    "arm": 0.094,
-    "head": 0.282
+    "button2": {
+     "stick": 0.305,
+     "base": 0.001,
+     "arm": 0.098,
+     "head": 0.285
+    }
    },
    "contacts": [
     "gripper.head~stick",
@@ -931,11 +1070,16 @@
    ],
    "base_path_m": 5.26,
    "steps": 105,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.23,
-    "base": 0.043,
-    "arm": 0.142,
-    "head": 0.207
+    "button2": {
+     "stick": 0.234,
+     "base": 0.048,
+     "arm": 0.147,
+     "head": 0.212
+    }
    },
    "contacts": [
     "gripper.suction~stick",
@@ -953,11 +1097,16 @@
    ],
    "base_path_m": 5.77,
    "steps": 108,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.232,
-    "base": 0.045,
-    "arm": 0.142,
-    "head": 0.209
+    "button2": {
+     "stick": 0.236,
+     "base": 0.05,
+     "arm": 0.147,
+     "head": 0.213
+    }
    },
    "contacts": [
     "base~bottom_wall",
@@ -978,11 +1127,16 @@
    ],
    "base_path_m": 5.1,
    "steps": 95,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.335,
-    "base": 0.04,
-    "arm": 0.138,
-    "head": 0.31
+    "button2": {
+     "stick": 0.339,
+     "base": 0.045,
+     "arm": 0.143,
+     "head": 0.314
+    }
    },
    "contacts": [
     "base~left_wall",
@@ -1002,11 +1156,16 @@
    ],
    "base_path_m": 7.5,
    "steps": 217,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 1.431,
-    "base": 0.016,
-    "arm": 0.108,
-    "head": 0.098
+    "button2": {
+     "stick": 1.436,
+     "base": 0.019,
+     "arm": 0.112,
+     "head": 0.103
+    }
    },
    "contacts": [
     "arm~stick",
@@ -1029,11 +1188,16 @@
    ],
    "base_path_m": 6.0,
    "steps": 135,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 1.205,
-    "base": 0.115,
-    "arm": 0.015,
-    "head": 0.011
+    "button2": {
+     "stick": 1.21,
+     "base": 0.119,
+     "arm": 0.019,
+     "head": 0.014
+    }
    },
    "contacts": [
     "arm~button",
@@ -1054,11 +1218,16 @@
    ],
    "base_path_m": 6.64,
    "steps": 233,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.259,
-    "base": 0.045,
-    "arm": 0.144,
-    "head": 0.232
+    "button2": {
+     "stick": 0.263,
+     "base": 0.05,
+     "arm": 0.149,
+     "head": 0.236
+    }
    },
    "contacts": [
     "base~bottom_wall",
@@ -1078,11 +1247,16 @@
    ],
    "base_path_m": 5.84,
    "steps": 131,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 0.326,
-    "base": 0.034,
-    "arm": 0.132,
-    "head": 0.298
+    "button2": {
+     "stick": 0.331,
+     "base": 0.04,
+     "arm": 0.138,
+     "head": 0.303
+    }
    },
    "contacts": [
     "arm~stick",
@@ -1102,11 +1276,16 @@
    ],
    "base_path_m": 5.42,
    "steps": 118,
+   "floor_buttons": [
+    "button2"
+   ],
    "nearest_to_floor_button_m": {
-    "stick": 1.284,
-    "base": 0.016,
-    "arm": 0.114,
-    "head": 0.189
+    "button2": {
+     "stick": 1.289,
+     "base": 0.021,
+     "arm": 0.119,
+     "head": 0.193
+    }
    },
    "contacts": [
     "base~button",

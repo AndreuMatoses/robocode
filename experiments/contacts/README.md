@@ -695,6 +695,40 @@ uv run python -m experiments.contacts.record '*/sweepsimple3d/*' --commit -1 \
     --instances 1 4 5 ... 19 --count 5 --no-video --jobs 12
 ```
 
+### What a policy does when the layout changes
+
+For a tag group that is not "policy", the value of a policy is not a description of
+the policy. `python -m experiments.contacts.layouts <scenario ...>` writes
+`semantic/rules/<scenario>.json` with three descriptions that do not change with the
+layout (`layouts.py`):
+
+- the **logic** of each policy in the group: `always <value>` (one value on 90 % of
+  its layouts or more), `follows the layout` (on 85 % of its layouts it has the value
+  of most other policies), or `own rule`;
+- a **rule class** for the policies with their own rule: two policies are in one class
+  if they have the same value on 85 % of their common layouts or more;
+- a **choice rule**, for the 10 tag groups that ask which object the robot moves first
+  (`layouts.CHOICES`): the simple rule on the start poses that predicts the object
+  ("the nearest to the robot base", "the smallest x", "always cube1", ...), if it is
+  correct on 85 % of the layouts of the policy or more.
+
+`layouts.invariant_tag` joins them into one tag for each policy and group, and
+`layouts.invariant_strategies` gives the semantic strategy from these tags. The
+Semantic: Tags tab shows the result in the table "When the layout changes".
+
+Result (33 plan groups that are not "policy", 1 035 policy-group pairs): a constant
+value 32 %, a named rule 11 %, follows the layout 20 %, an own rule that another
+policy shares 14 %, an own rule 22 %. So 78 % of the pairs get a description that
+does not change with the layout. The choice rules explain 65 % of the policies in
+their 10 groups. Examples: dynamicshelf3d (16 policies take the cube nearest to the
+robot base, 9 always take cube1), obstruction3d (17 take the higher obstruction
+first), clutteredstorage2d (24 take the block nearest to block0 first). No simple
+rule explains obstruction2d and sortclutteredblocks3d.
+
+Three rules used a position of start scene 0 and are now relative to the layout:
+the floor button of stickbutton2d, the side of pushpullhook2d, and the nearer cube of
+dynamicshelf3d. Their labels on start scene 0 did not change.
+
 ### Tags over the commits
 
 `semantic.build_history` runs the rules of a scenario on each commit of each run that

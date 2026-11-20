@@ -4,7 +4,7 @@
  "population": "final policy of each run that solves the instance",
  "provenance": {
   "reader": "Claude (claude-fable-5-2)",
-  "date": "2026-11-12",
+  "date": "2026-11-20",
   "status": "not checked by a person",
   "method": "Tag groups proposed after a look at the numbers of all 29 runs (order, end position of each cube on the shelf, base path, contact pairs). Film strips of 3 runs were inspected; the camera shows the cupboard only, and the pictures agree with the layout tags. No program text was read.",
   "rules": "experiments/contacts/tag_rules/dynamicshelf3d.py"
@@ -43,10 +43,10 @@
    "question": "Which cube goes first?",
    "source": "motion",
    "values": {
-    "near_first": "cube1, the cube nearer to the robot at the start.",
-    "far_first": "cube2, the cube on the other side of the room."
+    "near_first": "The cube nearer to the robot base at the start (cube1 on start scene 0).",
+    "far_first": "The cube farther from the robot base at the start."
    },
-   "rule": "the cube with the first motion"
+   "rule": "the cube with the first motion, against the distance of each cube to the robot base at the start"
   },
   {
    "key": "insertion",

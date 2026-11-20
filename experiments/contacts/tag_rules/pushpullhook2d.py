@@ -31,12 +31,11 @@ CODEBOOK = [
         "source": "motion",
         "values": {
             "from_left": "The base is on the left of the button at the push "
-            "(x below 1.7 m).",
-            "from_right": "The base is below or on the right of the button "
-            "(x of 1.7 m or more).",
+            "(0.22 m or more on the left of its start; x below 1.7 m on start scene 0).",
+            "from_right": "The base is below or on the right of the button " "(else).",
         },
-        "rule": "x of the base at the first motion of the button (the button "
-        "starts at x = 1.92 m)",
+        "rule": "x of the base at the first motion of the button, against the x of "
+        "the button at its start minus 0.22 m",
     },
     {
         "key": "grip",
@@ -86,7 +85,8 @@ def label(run: Run) -> tuple[dict[str, str], dict[str, Any]]:
     info = summary(hook)
     ratio = info["path"] / info["shift"]
     tags = {
-        "side": "from_left" if base[first][0] < 1.7 else "from_right",
+        # 0.22 m to the left of the button at its start (x = 1.7 m on start scene 0)
+        "side": "from_left" if base[first][0] < button[0][0] - 0.22 else "from_right",
         "grip": "end" if grip >= 0.7 else "middle",
         "hook_path": "direct" if ratio < 1.3 else "detour",
         "pace": "quick" if run.steps <= 55 else "slow",

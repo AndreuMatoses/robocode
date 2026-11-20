@@ -27,6 +27,7 @@ import sys
 import threading
 import time
 import zipfile
+from collections import Counter
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -38,6 +39,7 @@ from experiments.contacts import (
     catalog,
     diversity,
     histories,
+    layouts,
     metrics,
     repeat,
     semantic,
@@ -664,6 +666,47 @@ def diversity_overview(instance: str, level: str, grouping: Grouping) -> dict[st
 # --------------------------------------------------------------------- server
 
 
+def _layout_rules(name: str) -> dict[str, Any]:
+    """What the policies do when the layout changes (``layouts.py``), in short."""
+    data = layouts.load(name)
+    if data is None:
+        return {"groups": [], "layouts": 0}
+    choice = data["choice"]
+    groups = []
+    for key, group in data["groups"].items():
+        if group["kind"] == "policy":
+            continue
+        mine = choice if choice and choice["group"] == key else None
+        tags = Counter(
+            layouts.invariant_tag(group, mine, run) for run in group["policies"]
+        )
+        groups.append(
+            {
+                "key": key,
+                "role": group["role"],
+                "kind": group["kind"],
+                "repeat": group["repeat"],
+                "agree": group["agree"],
+                "policies": len(group["policies"]),
+                "tags": tags.most_common(),
+                "choice": (
+                    None
+                    if mine is None
+                    else Counter(
+                        p["rule"] for p in mine["policies"].values()
+                    ).most_common()
+                ),
+            }
+        )
+    strategies = Counter(layouts.invariant_strategies(data).values())
+    return {
+        "layouts": data["layouts"],
+        "thresholds": data["thresholds"],
+        "groups": groups,
+        "strategies": strategies.most_common(),
+    }
+
+
 def _add_lengths(name: str, data: dict[str, Any]) -> None:
     """Add the episode length, solve rate and subject to each commit of a tag history."""
     for run_id, rows in data["runs"].items():
@@ -761,6 +804,8 @@ class Handler(_BaseHandler):
                     if any(run.split("/")[0] == m for run in data["runs"])
                 ]
                 self._json(data)
+            elif path == "/api/layout_rules":
+                self._json(_layout_rules(query["name"]))
             elif path == "/api/strips":
                 folder = CONFIG.traces / catalog.SCENARIO_DIR / query["name"] / "strips"
                 index = folder / "strips.json"

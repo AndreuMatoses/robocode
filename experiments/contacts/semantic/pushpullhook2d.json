@@ -4,7 +4,7 @@
  "population": "final policy of each run that solves the instance",
  "provenance": {
   "reader": "Claude (claude-fable-5-2)",
-  "date": "2026-11-12",
+  "date": "2026-11-20",
   "status": "not checked by a person",
   "method": "Tag groups proposed after a look at the numbers of all 35 runs (place of the base at the push, place of the grasp on the hook, path of the hook, contact pairs). All runs take the hook and push the button with it. Film strips of 2 runs were inspected; they agree with the tags. No program text was read.",
   "rules": "experiments/contacts/tag_rules/pushpullhook2d.py"
@@ -21,10 +21,10 @@
    "question": "From which side of the button does the robot work?",
    "source": "motion",
    "values": {
-    "from_left": "The base is on the left of the button at the push (x below 1.7 m).",
-    "from_right": "The base is below or on the right of the button (x of 1.7 m or more)."
+    "from_left": "The base is on the left of the button at the push (0.22 m or more on the left of its start; x below 1.7 m on start scene 0).",
+    "from_right": "The base is below or on the right of the button (else)."
    },
-   "rule": "x of the base at the first motion of the button (the button starts at x = 1.92 m)"
+   "rule": "x of the base at the first motion of the button, against the x of the button at its start minus 0.22 m"
   },
   {
    "key": "grip",

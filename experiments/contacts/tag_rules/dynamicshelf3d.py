@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
+
 from experiments.contacts.features import Run, moved_order, path_length
 
 METHOD = (
@@ -52,10 +54,12 @@ CODEBOOK = [
         "question": "Which cube goes first?",
         "source": "motion",
         "values": {
-            "near_first": "cube1, the cube nearer to the robot at the start.",
-            "far_first": "cube2, the cube on the other side of the room.",
+            "near_first": "The cube nearer to the robot base at the start (cube1 on "
+            "start scene 0).",
+            "far_first": "The cube farther from the robot base at the start.",
         },
-        "rule": "the cube with the first motion",
+        "rule": "the cube with the first motion, against the distance of each cube "
+        "to the robot base at the start",
     },
     {
         "key": "insertion",
@@ -110,10 +114,16 @@ def label(run: Run) -> tuple[dict[str, str], dict[str, Any]]:
     gap = float(abs(one[1] - two[1]))
     depth = float((one[0] + two[0]) / 2)
     base_path = path_length(run.ch("base")[:, :2])
+    # the cube that is nearer to the base at the start (cube1 on start scene 0)
+    origin = run.ch("base")[0][:2]
+    nearer = min(
+        ("cube1", "cube2"),
+        key=lambda c: float(np.linalg.norm(run.ch("obj:" + c)[0][:2] - origin)),
+    )
     tags = {
         "layout": "close" if gap < 0.2 else "apart",
         "depth": "deep" if depth >= 1.52 else "front",
-        "order": "near_first" if moved_order(run)[0] == "cube1" else "far_first",
+        "order": "near_first" if moved_order(run)[0] == nearer else "far_first",
         "insertion": (
             "touches" if run.touches(r"^(arm|gripper)\.\w+~cupboard") else "free"
         ),

@@ -1721,6 +1721,27 @@ function stabilityCell(st) {
     h("b", { style: `color:${colour}` }, st.kind), h("span", { class: "muted" }, ` ${fmt(st.repeat)} · ${fmt(st.agree)}`));
 }
 
+// What the policies do when the layout changes: for each tag group that is not a property
+// of the policy, a description of each policy that does not change with the layout.
+function layoutRulesPanel(name) {
+  const box = h("div", {});
+  j("/api/layout_rules?name=" + name).then((d) => {
+    if (!d.groups.length) return;
+    const list = (items) => items.map(([text, n]) => h("div", {}, h("b", {}, String(n)), " " + text));
+    box.replaceChildren(
+      h("h2", {}, "When the layout changes ", h("small", {}, `— ${d.layouts} layouts of this scenario: the same objects, other start poses`)),
+      h("div", { class: "panel", style: "max-width:none;overflow-x:auto" },
+        h("div", { class: "muted", style: "max-width:980px;margin-bottom:8px" }, "For a tag group that is not a property of the policy, the value of a policy changes with the layout. This table gives a description that does not change: ",
+          h("b", {}, "a value"), " (the policy has it on 90 % of the layouts or more), ", h("b", {}, "rule: …"), " (a simple rule on the start poses predicts the object that the policy moves first), ",
+          h("b", {}, "follows the layout"), " (on each layout it has the value of most other policies), or ", h("b", {}, "own rule"), " (its value changes in its own way; a number marks policies that share the rule)."),
+        h("table", { class: "vocab" }, h("tr", {}, ["tag group", "role", "kind", "what the policies do (number of policies)", "rule that predicts the first object"].map((x) => h("th", {}, x))),
+          d.groups.map((g) => h("tr", {}, h("td", {}, h("b", {}, g.key)), h("td", {}, g.role), stabilityCell(g),
+            h("td", { style: "max-width:420px" }, list(g.tags)), h("td", { style: "max-width:360px" }, g.choice ? list(g.choice) : h("span", { class: "muted" }, "–"))))),
+        h("div", { class: "muted", style: "margin-top:8px" }, `Semantic strategies from these descriptions (plan groups): ${d.strategies.length} for ${d.strategies.reduce((a, [, n]) => a + n, 0)} policies. Most common: ${d.strategies.slice(0, 3).map(([text, n]) => `${text} (${n})`).join(" · ")}`)));
+  }).catch(() => {});
+  return box;
+}
+
 const VIEW_STATE = new Map();  // scenario -> selection and choices, kept when the tab changes
 async function pageViews(name, tab) {
   const app = $("#app");
@@ -1942,6 +1963,7 @@ async function pageViews(name, tab) {
           h("td", { title: g.role === "plan" ? "What the robot does. The plan groups define the semantic strategy." : g.role === "style" ? "How the robot does it. Not a part of the semantic strategy." : "A property of the program text." }, g.role === "plan" ? h("b", {}, "plan") : g.role), h("td", { style: "max-width:240px" }, g.question),
           h("td", { style: "max-width:460px" }, Object.entries(g.values).map(([v, text], k) => h("div", {}, h("span", { class: "dot", style: `background:${valueColour(k)};margin-right:5px` }), h("b", {}, `${v} (${runs.filter((r) => (r.tags || {})[g.key] === v).length})`), ": " + text))),
           h("td", { style: "max-width:280px" }, g.rule), h("td", {}, g.source), stabilityCell(g.stability))))) : agree,
+      d.semantic ? layoutRulesPanel(name) : null,
       h("h2", {}, "Runs and tags ", h("small", {}, "— hover a row for the numbers behind its tags; tick the tag groups that define a semantic strategy; click a tag group to sort")),
       h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
       cross, stripsPanel(name, runs), controls(), selection, note);
