@@ -1712,6 +1712,15 @@ const valueColour = (index) => index < 0 || index >= VALUE_VARS.length ? "var(--
 const hexOf = (colour) => { const m = /^var\((--[\w-]+)\)$/.exec(colour); return m ? cssVar(m[1]) : colour; };
 const effectiveNumber = (labels) => { const c = new Map(); labels.forEach((v) => c.set(v, (c.get(v) || 0) + 1)); let e = 0; for (const k of c.values()) e -= (k / labels.length) * Math.log2(k / labels.length); return [c.size, 2 ** e]; };
 
+// Does a tag group hold when the start scene changes? (semantic.stability on the server)
+const STABILITY_TEXT = { policy: "a property of the policy: the value holds on other start scenes", scene: "the start scene sets the value, and the policies follow it", mixed: "between the two: the value changes with the scene for a part of the policies" };
+function stabilityCell(st) {
+  if (!st || st.repeat == null) return h("td", { class: "muted", title: "No rule for an episode, or one start scene only." }, "–");
+  const colour = st.kind === "policy" ? "var(--ok)" : st.kind === "scene" ? "var(--no)" : "var(--fg2)";
+  return h("td", { title: `${STABILITY_TEXT[st.kind]}\nOne policy on two start scenes has the same value: ${fmt(st.repeat)} (${st.pairs} pairs, ${st.scenes} start scenes)\nTwo policies on one start scene have the same value: ${fmt(st.agree)}` },
+    h("b", { style: `color:${colour}` }, st.kind), h("span", { class: "muted" }, ` ${fmt(st.repeat)} · ${fmt(st.agree)}`));
+}
+
 const VIEW_STATE = new Map();  // scenario -> selection and choices, kept when the tab changes
 async function pageViews(name, tab) {
   const app = $("#app");
@@ -1927,11 +1936,12 @@ async function pageViews(name, tab) {
       h("div", { class: "tiles" }, cells[0], cells[2], cells[1]),
       insightsPanel(name),
       d.semantic ? h("h2", {}, "The tag groups") : null,
-      d.semantic ? h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, h("table", { class: "vocab" }, h("tr", {}, ["tag group", "role", "question", "values", "rule", "from"].map((x) => h("th", {}, x))),
+      d.semantic ? h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, h("table", { class: "vocab" }, h("tr", {}, ["tag group", "role", "question", "values", "rule", "from"].map((x) => h("th", {}, x)),
+          h("th", { title: "Does one policy keep its value on another start scene? First number: the chance that one policy has the same value on two start scenes. Second number: the chance that two policies have the same value on one start scene. policy = the value holds (0.9 or more): a property of the policy. scene = the start scene sets the value and the policies follow it. mixed = between the two." }, "holds over start scenes")),
         book.map((g) => h("tr", { style: "cursor:pointer", onclick: () => setColour("tag:" + g.key) }, h("td", {}, h("b", {}, g.key)),
           h("td", { title: g.role === "plan" ? "What the robot does. The plan groups define the semantic strategy." : g.role === "style" ? "How the robot does it. Not a part of the semantic strategy." : "A property of the program text." }, g.role === "plan" ? h("b", {}, "plan") : g.role), h("td", { style: "max-width:240px" }, g.question),
           h("td", { style: "max-width:460px" }, Object.entries(g.values).map(([v, text], k) => h("div", {}, h("span", { class: "dot", style: `background:${valueColour(k)};margin-right:5px` }), h("b", {}, `${v} (${runs.filter((r) => (r.tags || {})[g.key] === v).length})`), ": " + text))),
-          h("td", { style: "max-width:280px" }, g.rule), h("td", {}, g.source))))) : agree,
+          h("td", { style: "max-width:280px" }, g.rule), h("td", {}, g.source), stabilityCell(g.stability))))) : agree,
       h("h2", {}, "Runs and tags ", h("small", {}, "— hover a row for the numbers behind its tags; tick the tag groups that define a semantic strategy; click a tag group to sort")),
       h("div", { class: "panel", style: "max-width:none;overflow-x:auto" }, table),
       cross, stripsPanel(name, runs), controls(), selection, note);

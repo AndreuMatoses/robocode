@@ -283,8 +283,16 @@ def scenario_views(
         for run in runs:
             run["tags"] = tags["labels"].get(run["run_id"])
             run["evidence"] = tags.get("evidence", {}).get(run["run_id"])
+        # does a tag group hold when the start scene changes? (see semantic.stability)
+        scenes = semantic.load_scenes(name)
+        holds = (
+            {} if scenes is None else {s["key"]: s for s in semantic.stability(scenes)}
+        )
         out["semantic"] = {
-            "codebook": tags["codebook"],
+            "codebook": [
+                {**group, "stability": holds.get(group["key"])}
+                for group in tags["codebook"]
+            ],
             "provenance": tags["provenance"],
             "insights": tags.get("insights", []),
             "labelled": len(labelled),

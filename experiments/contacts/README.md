@@ -649,6 +649,52 @@ grows with their number: clutteredstorage2d has three plan groups and 15 strateg
 - The motion view has positions only. An angle (the pose of the T block in dynpusht2d)
   is not seen.
 
+### Do the tags hold on other layouts?
+
+Terms: a **variant** of a scenario is one number of objects, and a **layout** is one
+set of start poses of a variant. A start scene (`inst<k>`, the reset with seed k) is
+one layout of one variant. In 17 scenarios the seed also changes the number of
+objects, so the layouts of one variant need a fixed count (`record --count`).
+
+A tag is made on start scene 0. `python -m experiments.contacts.semantic --scenes
+<scenario ...>` runs the rules on the final policies on 20 layouts (start scenes 0 to
+19 with the object count of start scene 0) and writes
+`semantic/scenes/<scenario>.json`. `semantic.stability` gives two numbers for each tag
+group:
+
+- **repeat**: the chance that one policy has the same value on two layouts;
+- **agree**: the chance that two policies have the same value on one layout.
+
+A group is **scene** (repeat below agree: the layout sets the value and the policies
+follow it), **policy** (else, with a repeat of 0.9 or more: a property of the policy)
+or **mixed**. The Semantic: Tags tab shows this in the column "holds over start
+scenes".
+
+Result (143 tag groups, 20 layouts): 17 of 50 plan groups and 38 of 93 style groups
+are "policy"; 16 plan groups and 15 style groups are "scene". The "scene" groups
+mostly ask which object goes first or on which side the robot works. With the plan
+groups that hold only, 12 of 28 scenarios keep a plan group, and the most common
+strategy has 73 % of the runs there. Limit: the rules were checked with pictures on
+start scene 0 only, so a low repeat value can also come from a rule that is not valid
+on another layout.
+
+How many layouts: with 4 layouts the error of "repeat" is 0.01 to 0.03 for a stable
+group and up to 0.17 for an unstable one; with 10 it is 0.08 or less. 10 layouts are
+enough to compare two policies layout by layout, and 20 give a profile for one policy.
+The layout is not what limits a comparison of the cost of two strategies: one run
+changes by 6 to 10 % over its layouts, and two runs of one strategy differ by 21 to
+46 % (tossing3d, scooppour3d, rearrange3d).
+
+The layouts were recorded with (final policies, no video):
+
+```bash
+uv run python -m experiments.contacts.record '*/tossing3d/*' --commit -1 \
+    --instances 4 5 ... 19 --no-video --jobs 12
+# a scenario where the seed changes the object count: fix the count of start scene 0
+uv run python -m experiments.contacts.record '*/sweepsimple3d/*' --commit -1 \
+    --instances 1 4 5 ... 19 --count 5 --no-video --jobs 12
+```
+
 ### Tags over the commits
 
 `semantic.build_history` runs the rules of a scenario on each commit of each run that

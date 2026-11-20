@@ -269,10 +269,188 @@ def history_strategy(data: dict[str, Any]) -> dict[str, int]:
     return {"runs": runs, "kept": kept, "constant": constant}
 
 
+SCENES = LABELS / "scenes"
+STABLE = 0.9  # a tag group is a property of the policy from this repeatability on
+
+
+def _variant(scenario: str) -> int | None:
+    """The object count of start scene 0: the variant of the scenario that we study."""
+    # pylint: disable=import-outside-toplevel
+    from experiments.contacts import features
+    from experiments.contacts.trace import load_meta
+
+    runs = features.load_runs(scenario, "inst0")
+    if not runs:
+        return None
+    return load_meta(runs[0].directory)["metrics"].get("object_count")
+
+
+def build_scenes(scenario: str, instances: tuple[int, ...] = tuple(range(20))) -> dict:
+    """Run the rules on the final policies on several start scenes; write the file.
+
+    A start scene is one layout of the variant of start scene 0 (the same number of
+    objects). In some scenarios the seed also changes the number of objects; there
+    the layout was recorded with a fixed count (``record --count``), and that trace
+    is used. ``scenes[inst<k>][<run id>]`` has the tags (in the order of ``groups``),
+    the episode length and the number of movable objects of each final policy that
+    solves the layout. A rule that fails on a layout gives no row.
+    """
+    # pylint: disable=import-outside-toplevel
+    from experiments.contacts import features
+
+    rules = importlib.import_module(f"experiments.contacts.tag_rules.{scenario}")
+    keys = [group["key"] for group in rules.CODEBOOK]
+    variant = _variant(scenario)
+    scenes: dict[str, dict[str, Any]] = {}
+    sources: dict[str, str] = {}
+    for k in instances:
+        # the layout with the fixed count of the variant, if it was recorded; the
+        # trace without a fixed count if it has the same objects and more runs
+        names = [f"inst{k}"]
+        if variant is not None:
+            names.insert(0, f"inst{k}_count{variant}")
+        found: list[tuple[str, dict[str, Any]]] = []
+        for name in names:
+            rows = {}
+            try:
+                runs = features.load_runs(scenario, name)
+            except Exception:  # pylint: disable=broad-exception-caught
+                continue
+            for run in runs:
+                try:
+                    tags = rules.label(run)[0]
+                except Exception:  # pylint: disable=broad-exception-caught
+                    continue
+                rows[run.run_id] = {
+                    "tags": [tags[key] for key in keys],
+                    "steps": run.steps,
+                    "objects": len(run.objects),
+                }
+            if rows:
+                found.append((name, rows))
+        if not found:
+            continue
+        name, rows = found[0]
+        if len(found) == 2:
+            count = lambda r: Counter(v["objects"] for v in r.values()).most_common(1)[
+                0
+            ][0]
+            if count(found[1][1]) == count(rows) and len(found[1][1]) > len(rows):
+                name, rows = found[1]
+        scenes[f"inst{k}"] = rows
+        sources[f"inst{k}"] = name
+    data = {
+        "scenario": scenario,
+        "variant": variant,
+        "provenance": {
+            "reader": READER,
+            "date": datetime.date.today().isoformat(),
+            "status": "not checked by a person; the rules were checked on inst0 only",
+            "rules": f"experiments/contacts/tag_rules/{scenario}.py",
+        },
+        "groups": [
+            {"key": g["key"], "role": g["role"], "source": g["source"]}
+            for g in rules.CODEBOOK
+        ],
+        "traces": sources,
+        "scenes": scenes,
+    }
+    SCENES.mkdir(exist_ok=True)
+    (SCENES / f"{scenario}.json").write_text(json.dumps(data, indent=None) + "\n")
+    return data
+
+
+def load_scenes(scenario: str) -> dict[str, Any] | None:
+    """The tags on several start scenes, if the file exists."""
+    path = SCENES / f"{scenario}.json"
+    return json.loads(path.read_text()) if path.exists() else None
+
+
+def comparable_scenes(data: dict[str, Any]) -> list[str]:
+    """The start scenes with the number of objects of the first one.
+
+    Another number of objects is another task, so those scenes are left out.
+    """
+    order = sorted(data["scenes"], key=lambda scene: int(scene.removeprefix("inst")))
+    if not order:
+        return []
+
+    def count(scene: str) -> int:
+        values = Counter(row["objects"] for row in data["scenes"][scene].values())
+        return values.most_common(1)[0][0]
+
+    return [scene for scene in order if count(scene) == count(order[0])]
+
+
+def stability(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """For each tag group: is its value a property of the policy, or of the scene?
+
+    * ``repeat``: the chance that ONE policy has the same value on two start scenes;
+    * ``agree``: the chance that TWO policies have the same value on one start scene.
+
+    ``kind`` is "scene" (``repeat`` below ``agree``: the start scene sets the value
+    and the policies follow it), "policy" (else, with ``repeat`` of ``STABLE`` or
+    more: the value holds over the start scenes) or "mixed". A group that is read in the program text
+    has no rule for an episode, so it gets no numbers.
+    """
+    scenes = comparable_scenes(data)
+    out = []
+    for index, group in enumerate(data["groups"]):
+        row: dict[str, Any] = {"key": group["key"], "scenes": len(scenes)}
+        out.append(row)
+        if group.get("source") == "program" or len(scenes) < 2:
+            row.update(repeat=None, agree=None, pairs=0, kind=None)
+            continue
+        same = pairs = 0
+        for i, first in enumerate(scenes):
+            for second in scenes[i + 1 :]:
+                a, b = data["scenes"][first], data["scenes"][second]
+                for run_id in set(a) & set(b):
+                    pairs += 1
+                    same += a[run_id]["tags"][index] == b[run_id]["tags"][index]
+        equal = total = 0
+        for scene in scenes:
+            counts = Counter(r["tags"][index] for r in data["scenes"][scene].values())
+            runs = sum(counts.values())
+            equal += sum(v * (v - 1) for v in counts.values())
+            total += runs * (runs - 1)
+        repeat = same / pairs if pairs else None
+        agree = equal / total if total else None
+        kind = None
+        if repeat is not None and agree is not None:
+            # "scene" comes first: a value that all policies share on each layout is
+            # not a choice of a policy, also if it changes little between the layouts
+            kind = (
+                "scene" if repeat < agree else "policy" if repeat >= STABLE else "mixed"
+            )
+        row.update(
+            repeat=None if repeat is None else round(repeat, 3),
+            agree=None if agree is None else round(agree, 3),
+            pairs=pairs,
+            kind=kind,
+        )
+    return out
+
+
 def main() -> None:
-    """Build the tag files of the given scenarios (``--history``: over the commits)."""
+    """Build the tag files of the given scenarios.
+
+    ``--history``: the tags over the commits. ``--scenes``: the tags of the final
+    policies on start scenes 0 to 19, and the repeatability of each tag group.
+    """
     import sys  # pylint: disable=import-outside-toplevel
 
+    if "--scenes" in sys.argv:
+        for name in [a for a in sys.argv[1:] if a != "--scenes"]:
+            data = build_scenes(name)
+            counts = {scene: len(rows) for scene, rows in data["scenes"].items()}
+            print(f"{name}: {counts}; comparable {comparable_scenes(data)}")
+            for item, group in zip(stability(data), data["groups"]):
+                print(
+                    f"  {item['key']:14s} {group['role']:7s} repeat {item['repeat']}  "
+                    f"agree {item['agree']}  {item['kind']}"
+                )
+        return
     if "--history" in sys.argv:
         for name in [a for a in sys.argv[1:] if a != "--history"]:
             data = build_history(name)
