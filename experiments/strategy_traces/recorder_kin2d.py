@@ -33,7 +33,7 @@ from typing import Any
 import numpy as np
 from shapely.geometry import Point, Polygon
 
-from experiments.traces.entities import (
+from experiments.strategy_traces.entities import (
     BOX,
     MESH,
     SPHERE,
@@ -41,8 +41,8 @@ from experiments.traces.entities import (
     EntityMap,
     hash_text,
 )
-from experiments.traces.recorder import BaseRecorder
-from experiments.traces.recorder2d import object_centric_env
+from experiments.strategy_traces.recorder import BaseRecorder
+from experiments.strategy_traces.recorder2d import object_centric_env
 
 TOUCH = 0.01  # [world units] two solid shapes nearer than this touch (a step: 0.05)
 STEP_SECONDS = 0.1  # one env step, as in the MuJoCo scenarios (10 Hz control)

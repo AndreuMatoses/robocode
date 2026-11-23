@@ -33,8 +33,8 @@ DIFFERENT = 22  # [0-255] a pixel differs from the start picture by more than th
 def open_scene(directory: Path) -> tuple[Any, Any, dict[str, Any]]:
     """Rebuild the scene a trace was recorded in: (env, scene adapter, meta)."""
     # pylint: disable=import-outside-toplevel
-    from experiments.traces.catalog import make_env
-    from experiments.traces.recorder_bullet import scene_of
+    from experiments.strategy_traces.catalog import make_env
+    from experiments.strategy_traces.recorder_bullet import scene_of
     from robocode.utils.episode import reset_for_episode
 
     meta = json.loads((directory / "meta.json").read_text())
@@ -61,7 +61,7 @@ def contact_frames(
 ) -> Iterable[np.ndarray]:
     """The episode with every entity in a (non-resting) contact recoloured."""
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces.trace import active_entities_per_step
+    from experiments.strategy_traces.trace import active_entities_per_step
 
     cid = scene.client
     active = active_entities_per_step(directory)

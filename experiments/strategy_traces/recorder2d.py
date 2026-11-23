@@ -38,7 +38,7 @@ from typing import Any
 import numpy as np
 import pymunk
 
-from experiments.traces.entities import (
+from experiments.strategy_traces.entities import (
     BOX,
     MESH,
     SPHERE,
@@ -47,7 +47,7 @@ from experiments.traces.entities import (
     hash_text,
     local_points,
 )
-from experiments.traces.recorder import BaseRecorder
+from experiments.strategy_traces.recorder import BaseRecorder
 
 ROBOT_COLOUR = (0.45, 0.35, 0.75)
 BUSY_BODIES, BUSY_STRIDE = 12, 5  # from this many movable bodies: every 5th substep

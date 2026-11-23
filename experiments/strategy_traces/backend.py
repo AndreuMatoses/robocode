@@ -32,7 +32,7 @@ BACKEND_OF_SIMULATOR = {
 def backend_of_scenario(scenario: str) -> str:
     """The backend that records ``scenario``; raises if there is none yet."""
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces.catalog import scenario_tags
+    from experiments.strategy_traces.catalog import scenario_tags
 
     simulator = scenario_tags(scenario)["simulator"]
     if simulator not in BACKEND_OF_SIMULATOR:
@@ -51,21 +51,21 @@ def recording(backend: str) -> AbstractContextManager[list[Any]]:
     """The context manager that routes the simulator's substeps to a recorder."""
     if backend == "pymunk":
         # pylint: disable-next=import-outside-toplevel
-        from experiments.traces import recorder2d
+        from experiments.strategy_traces import recorder2d
 
         return recorder2d.recording()
     if backend == "kin2d":
         # pylint: disable-next=import-outside-toplevel
-        from experiments.traces import recorder_kin2d
+        from experiments.strategy_traces import recorder_kin2d
 
         return recorder_kin2d.recording()
     if backend == "bullet":
         # pylint: disable-next=import-outside-toplevel
-        from experiments.traces import recorder_bullet
+        from experiments.strategy_traces import recorder_bullet
 
         return recorder_bullet.recording()
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces import recorder
+    from experiments.strategy_traces import recorder
 
     return recorder.recording()
 
@@ -74,21 +74,21 @@ def make_recorder(backend: str, env: Any) -> Any:
     """A recorder for ``env`` (after a reset)."""
     if backend == "pymunk":
         # pylint: disable-next=import-outside-toplevel
-        from experiments.traces.recorder2d import PymunkRecorder
+        from experiments.strategy_traces.recorder2d import PymunkRecorder
 
         return PymunkRecorder(env)
     if backend == "kin2d":
         # pylint: disable-next=import-outside-toplevel
-        from experiments.traces.recorder_kin2d import Kin2DRecorder
+        from experiments.strategy_traces.recorder_kin2d import Kin2DRecorder
 
         return Kin2DRecorder(env)
     if backend == "bullet":
         # pylint: disable-next=import-outside-toplevel
-        from experiments.traces.recorder_bullet import BulletRecorder, scene_of
+        from experiments.strategy_traces.recorder_bullet import BulletRecorder, scene_of
 
         return BulletRecorder(scene_of(env))
     # pylint: disable=import-outside-toplevel
-    from experiments.traces.entities import robot_env
-    from experiments.traces.recorder import ContactRecorder
+    from experiments.strategy_traces.entities import robot_env
+    from experiments.strategy_traces.recorder import ContactRecorder
 
     return ContactRecorder(robot_env(env))

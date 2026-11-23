@@ -1,9 +1,11 @@
-# Traces of the dataset policies
+# Strategy traces of the dataset policies
 
 A **trace** is the record of one episode of a policy: the state and the action of
-each env step, and every contact with its exact on and off times. This folder
-records traces of the policies in the dataset `prpl-group/agentic-gentamp-runs` and
-draws an episode again from its trace, without the policy.
+each env step, and every contact with its exact on and off times. It has what is
+necessary to see the strategy of the policy: where the bodies go, and what touches
+what, in which order. This folder records traces of the policies in the dataset
+`prpl-group/agentic-gentamp-runs` and draws an episode again from its trace,
+without the policy.
 
 All files here are new. They use `experiments/render_run.py` (`open_rollout`) and
 `robocode.utils.episode`, and they change no file of the repository.
@@ -26,13 +28,13 @@ All files here are new. They use `experiments/render_run.py` (`open_rollout`) an
 ## The files of a trace
 
 ```
-outputs/traces/<method>/<env>/seed<N>/commit<k>/inst<seed>[_count<c>]/
+outputs/strategy_traces/<method>/<env>/seed<N>/commit<k>/inst<seed>[_count<c>]/
     trace.npz    contacts (keys, intervals, steps), qpos, ee, time, actions
     meta.json    run, commit, instance, outcome, the tables of the bodies
     motion.npz   positions of the robot base, the tool and each object (motion.py)
     video.mp4
-outputs/traces/<method>/<env>/seed<N>/commits.json    the policy key of each commit
-outputs/traces/_scenarios/<env>/                       pictures, diagrams, ghost videos
+outputs/strategy_traces/<method>/<env>/seed<N>/commits.json    the policy key of each commit
+outputs/strategy_traces/_scenarios/<env>/                       pictures, diagrams, ghost videos
 ```
 
 A contact key is (shape A, surface of A, shape B, surface of B). `intervals` has
@@ -49,20 +51,20 @@ Two records of one policy on one instance give the same trace.
 
 ```bash
 # the final policy of each run of a scenario on instance 0, with video
-uv run python -m experiments.traces.record '*/tossing3d/*' --instances 0
+uv run python -m experiments.strategy_traces.record '*/tossing3d/*' --instances 0
 # other options: --commit k, --count c (set the object count), --force, --no-video
 
 # each commit that changes the policy, and a sample of the others as a check
-uv run python -m experiments.traces.record '*/tossing3d/*' --commits sample \
+uv run python -m experiments.strategy_traces.record '*/tossing3d/*' --commits sample \
     --instances 0 --no-video --jobs 16
 
 # videos from traces (no policy code)
-uv run python -m experiments.traces.replay ghost <trace dir> <trace dir> ... -o out.mp4
-uv run python -m experiments.traces.replay contact <trace dir> -o out.mp4
+uv run python -m experiments.strategy_traces.replay ghost <trace dir> <trace dir> ... -o out.mp4
+uv run python -m experiments.strategy_traces.replay contact <trace dir> -o out.mp4
 
 # positions of the bodies, pictures of the scenarios
-uv run python -m experiments.traces.motion <trace dir> ...
-uv run python -m experiments.traces.catalog
+uv run python -m experiments.strategy_traces.motion <trace dir> ...
+uv run python -m experiments.strategy_traces.catalog
 ```
 
 ## Setup

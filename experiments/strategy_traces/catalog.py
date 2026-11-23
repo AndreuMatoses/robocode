@@ -3,8 +3,8 @@
 Tags are derived from each scenario's Hydra environment config. No policy is involved: a
 thumbnail is the render of a reset.
 
-python -m experiments.traces.catalog            # write missing thumbnails python -m
-experiments.traces.catalog --force
+    python -m experiments.strategy_traces.catalog          # write missing thumbnails
+    python -m experiments.strategy_traces.catalog --force
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from experiments.render_run import CONF_ROOT, DEFAULT_DATA, REPO, env_config_name
 
-DEFAULT_OUT = REPO / "outputs" / "traces"
+DEFAULT_OUT = REPO / "outputs" / "strategy_traces"
 SCENARIO_DIR = "_scenarios"
 
 # (simulator, robot, dimension, dynamics), keyed by a substring of the config's
@@ -159,7 +159,7 @@ def main() -> None:
     for name in names:
         if thumbnail_path(args.out, name).exists() and not args.force:
             continue
-        cmd = [sys.executable, "-m", "experiments.traces.catalog", name]
+        cmd = [sys.executable, "-m", "experiments.strategy_traces.catalog", name]
         cmd += ["--out", str(args.out), "--scene", args.scene]
         ok = subprocess.run(cmd, check=False, capture_output=True).returncode == 0
         print(f"{name}: {'ok' if ok else 'FAILED'}", flush=True)

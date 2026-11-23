@@ -14,7 +14,7 @@ from typing import Any
 
 import numpy as np
 
-from experiments.traces.entities import FACES
+from experiments.strategy_traces.entities import FACES
 
 # A pair that is on for (almost) the whole episode and involves no robot part is a
 # resting contact (a cube on the floor): background, hidden by default.

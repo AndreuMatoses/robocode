@@ -30,7 +30,7 @@ from typing import Any
 import numpy as np
 import pybullet as p
 
-from experiments.traces.entities import (
+from experiments.strategy_traces.entities import (
     BOX,
     CAPSULE,
     CYLINDER,
@@ -42,8 +42,8 @@ from experiments.traces.entities import (
     hash_text,
     local_points,
 )
-from experiments.traces.recorder import BaseRecorder
-from experiments.traces.recorder2d import object_centric_env
+from experiments.strategy_traces.recorder import BaseRecorder
+from experiments.strategy_traces.recorder2d import object_centric_env
 
 STEP_SECONDS = 0.1  # one env step, as in the MuJoCo scenarios (10 Hz control)
 TOUCH = 0.005  # [m] the placement distance of the kinematic3d environments
@@ -210,7 +210,7 @@ def scene_of(env: Any) -> Any:
     if inner is not None and hasattr(inner, "_object_centric_env"):
         return KinderScene(env)
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces import scenes_pddl
+    from experiments.strategy_traces import scenes_pddl
 
     return scenes_pddl.scene_of(env)
 

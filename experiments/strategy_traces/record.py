@@ -4,7 +4,7 @@ For each instance this rolls the policy out once (no rendering), logging every
 MuJoCo contact at substep resolution together with the simulator configuration at
 each env step, then renders the video from the recorded configurations. Output:
 
-    outputs/traces/<method>/<env>/seed<N>/commit<k>/inst<seed>[_count<c>]/
+    outputs/strategy_traces/<method>/<env>/seed<N>/commit<k>/inst<seed>[_count<c>]/
         trace.npz   contacts (see recorder.py) + qpos, actions, rewards
         meta.json   run, commit, instance, outcome, entity table
         video.mp4
@@ -13,10 +13,10 @@ Every run uses the same instance seeds, so traces are comparable across runs. Th
 are not the scored episodes (the dataset withholds the eval seed); each trace
 carries its own outcome. The policy is model-written code and runs in this process.
 
-    python -m experiments.traces.record opus55/tossing3d/seed24
-    python -m experiments.traces.record 'opus55/tossing3d/*' --instances 0 1 2
-    python -m experiments.traces.record '*/tossing3d/*' --commit 0 --count 2
-    python -m experiments.traces.record '*/tossing3d/*' --commits versions \
+    python -m experiments.strategy_traces.record opus55/tossing3d/seed24
+    python -m experiments.strategy_traces.record 'opus55/tossing3d/*' --instances 0 1 2
+    python -m experiments.strategy_traces.record '*/tossing3d/*' --commit 0 --count 2
+    python -m experiments.strategy_traces.record '*/tossing3d/*' --commits versions \
         --instances 0 --no-video --jobs 16
 
 ``--commits`` records the history of a run: ``versions`` = every commit that changes
@@ -44,13 +44,21 @@ import pandas as pd
 
 from experiments.render_run import DEFAULT_DATA, max_steps_for, open_rollout
 from experiments.results_viewer import _ActionRecorder
-from experiments.traces import render2d, replay_bullet
-from experiments.traces.backend import backend_of_scenario, make_recorder, recording
-from experiments.traces.catalog import DEFAULT_OUT
-from experiments.traces.commits import load_versions, matching_runs, select_commits
-from experiments.traces.entities import robot_env
-from experiments.traces.recorder import STEP_COLUMNS
-from experiments.traces.replay import (
+from experiments.strategy_traces import render2d, replay_bullet
+from experiments.strategy_traces.backend import (
+    backend_of_scenario,
+    make_recorder,
+    recording,
+)
+from experiments.strategy_traces.catalog import DEFAULT_OUT
+from experiments.strategy_traces.commits import (
+    load_versions,
+    matching_runs,
+    select_commits,
+)
+from experiments.strategy_traces.entities import robot_env
+from experiments.strategy_traces.recorder import STEP_COLUMNS
+from experiments.strategy_traces.replay import (
     render_camera_name,
     replay_frames,
     set_qpos,
@@ -248,7 +256,7 @@ def main() -> None:
 
     def work(task: tuple[str, int]) -> tuple[tuple[str, int], int, str]:
         run_id, commit = task
-        cmd = [sys.executable, "-m", "experiments.traces.record", run_id]
+        cmd = [sys.executable, "-m", "experiments.strategy_traces.record", run_id]
         cmd += ["--commit", str(commit), *passthrough]
         try:
             done = subprocess.run(

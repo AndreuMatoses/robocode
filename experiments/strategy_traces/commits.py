@@ -17,7 +17,7 @@ Imports built at run time and files read by a computed name are not seen. Record
 sample of "unchanged" commits (``record.py --commits sample``) to check that their
 traces are identical.
 
-    python -m experiments.traces.commits 'opus55/tossing3d/*'
+    python -m experiments.strategy_traces.commits 'opus55/tossing3d/*'
 """
 
 from __future__ import annotations
@@ -206,7 +206,7 @@ def matching_runs(data: Path, patterns: list[str]) -> list[str]:
 def main() -> None:
     """Print how many commits of each run change the policy."""
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces.catalog import DEFAULT_OUT
+    from experiments.strategy_traces.catalog import DEFAULT_OUT
 
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument("runs", nargs="+", help="run ids or globs")

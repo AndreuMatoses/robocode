@@ -9,7 +9,7 @@ reads this file and needs no simulator.
 MuJoCo and PyBullet give the positions by the forward kinematics of the scene. The 2D
 backends have them in the trace. No policy runs.
 
-python -m experiments.traces.motion <trace folder> ...
+    python -m experiments.strategy_traces.motion <trace folder> ...
 """
 
 from __future__ import annotations
@@ -67,8 +67,8 @@ def _from_poses(meta: dict[str, Any], data: Any) -> dict[str, np.ndarray]:
 def _from_mujoco(directories: list[Path]) -> dict[Path, dict[str, np.ndarray]]:
     """MuJoCo: forward kinematics of every recorded state, one scene for all traces."""
     # pylint: disable=import-outside-toplevel
-    from experiments.traces.entities import robot_env
-    from experiments.traces.replay import open_trace_env, set_qpos
+    from experiments.strategy_traces.entities import robot_env
+    from experiments.strategy_traces.replay import open_trace_env, set_qpos
 
     out: dict[Path, dict[str, np.ndarray]] = {}
     env, _, first = open_trace_env(directories[0])
@@ -100,7 +100,7 @@ def _from_bullet(directories: list[Path]) -> dict[Path, dict[str, np.ndarray]]:
     # pylint: disable=import-outside-toplevel
     import pybullet as p
 
-    from experiments.traces.replay_bullet import load_states, open_scene
+    from experiments.strategy_traces.replay_bullet import load_states, open_scene
 
     out: dict[Path, dict[str, np.ndarray]] = {}
     env, scene, first = open_scene(directories[0])

@@ -210,7 +210,7 @@ def episode_frames(
 def contact_frames(directory: Path, width: int, height: int) -> Iterable[np.ndarray]:
     """The episode with every entity in a (non-resting) contact lit up."""
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces.trace import active_entities_per_step
+    from experiments.strategy_traces.trace import active_entities_per_step
 
     meta, frames = load(directory)
     active = active_entities_per_step(directory)

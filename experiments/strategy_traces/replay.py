@@ -22,7 +22,7 @@ import imageio.v3 as iio
 import mujoco
 import numpy as np
 
-from experiments.traces.entities import EntityMap, build_entity_map, robot_env
+from experiments.strategy_traces.entities import EntityMap, build_entity_map, robot_env
 
 # pylint: disable=no-member  # mujoco is a C extension: pylint does not see its members
 
@@ -175,7 +175,7 @@ def open_trace_env(
     differ from the ids in the trace).
     """
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces.catalog import make_env
+    from experiments.strategy_traces.catalog import make_env
 
     # pylint: disable-next=import-outside-toplevel
     from robocode.utils.episode import reset_for_episode
@@ -278,7 +278,7 @@ ROBOT_TINT, OTHER_TINT = (1.0, 0.45, 0.05), (0.1, 0.75, 1.0)
 def contact_video(directory: Path, out: Path, width: int, height: int) -> None:
     """The episode with every entity in a (non-resting) contact lit up."""
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces.trace import active_entities_per_step
+    from experiments.strategy_traces.trace import active_entities_per_step
 
     env, emap, meta = open_trace_env(directory)
     try:
@@ -441,7 +441,7 @@ PALETTE = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951", "#ff8ab7"]
 def _main_2d(args: argparse.Namespace, meta: dict[str, Any]) -> None:
     """The four modes for a pymunk trace: drawn from the trace, with no env."""
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces import render2d
+    from experiments.strategy_traces import render2d
 
     fps, size = int(meta.get("fps", 10)), (args.width, args.height)
     if args.mode == "video":
@@ -473,7 +473,7 @@ def _main_2d(args: argparse.Namespace, meta: dict[str, Any]) -> None:
 def _main_bullet(args: argparse.Namespace, meta: dict[str, Any]) -> None:
     """The four modes for a kinematic PyBullet trace (needs the environment)."""
     # pylint: disable-next=import-outside-toplevel
-    from experiments.traces import replay_bullet
+    from experiments.strategy_traces import replay_bullet
 
     fps = int(meta.get("fps", 10))
     env, scene, _ = replay_bullet.open_scene(args.traces[0])

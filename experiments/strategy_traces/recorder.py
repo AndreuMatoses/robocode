@@ -28,7 +28,11 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from experiments.traces.entities import EntityMap, build_entity_map, local_points
+from experiments.strategy_traces.entities import (
+    EntityMap,
+    build_entity_map,
+    local_points,
+)
 
 # pylint: disable=no-member  # mujoco is a C extension: pylint does not see its members
 
