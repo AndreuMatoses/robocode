@@ -689,6 +689,7 @@ def _layout_rules(name: str) -> dict[str, Any]:
                 "agree": group["agree"],
                 "policies": len(group["policies"]),
                 "tags": tags.most_common(),
+                "majority_rule": (group.get("majority_rule") or {}).get("text"),
                 "choice": (
                     None
                     if mine is None

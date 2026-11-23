@@ -670,7 +670,7 @@ follow it), **policy** (else, with a repeat of 0.9 or more: a property of the po
 or **mixed**. The Semantic: Tags tab shows this in the column "holds over start
 scenes".
 
-Result (143 tag groups, 20 layouts): 17 of 50 plan groups and 38 of 93 style groups
+Result (143 tag groups, 20 layouts): 17 of 50 plan groups and 39 of 93 style groups
 are "policy"; 16 plan groups and 15 style groups are "scene". The "scene" groups
 mostly ask which object goes first or on which side the robot works. With the plan
 groups that hold only, 12 of 28 scenarios keep a plan group, and the most common
@@ -710,20 +710,52 @@ layout (`layouts.py`):
 - a **choice rule**, for the 10 tag groups that ask which object the robot moves first
   (`layouts.CHOICES`): the simple rule on the start poses that predicts the object
   ("the nearest to the robot base", "the smallest x", "always cube1", ...), if it is
-  correct on 85 % of the layouts of the policy or more.
+  correct on 85 % of the layouts of the policy or more;
+- a **layout rule**, for every tag group (a side, a count, a method): one measure of
+  the start poses and one limit that predict the value of the policy, as in
+  `fetch_spare if x of blocker > 4.5, else move_blocker`. The measures are the
+  coordinates of each body, the differences and distances of each pair of bodies, and
+  the sizes (2D). A policy has the rule if the rule is correct on 85 % of its layouts
+  or more, and if the best rule for shuffled values is that good in 5 % of 400
+  shuffles or less. The policies of a group share a rule where they can; the text of
+  the rule has the median of their limits. `majority_rule` is the same rule for the
+  most common value of each layout.
+
+A 3D trace has the poses of the robot and of the movable objects only, so the
+measures of a 3D scenario have no target region. basemotion3d has no measure.
 
 `layouts.invariant_tag` joins them into one tag for each policy and group, and
 `layouts.invariant_strategies` gives the semantic strategy from these tags. The
 Semantic: Tags tab shows the result in the table "When the layout changes".
 
 Result (33 plan groups that are not "policy", 1 035 policy-group pairs): a constant
-value 32 %, a named rule 11 %, follows the layout 20 %, an own rule that another
-policy shares 14 %, an own rule 22 %. So 78 % of the pairs get a description that
+value 32 %, a named rule 15 %, follows the layout 18 %, an own rule that another
+policy shares 13 %, an own rule 22 %. So 79 % of the pairs get a description that
 does not change with the layout. The choice rules explain 65 % of the policies in
-their 10 groups. Examples: dynamicshelf3d (16 policies take the cube nearest to the
+their 10 groups. The layout rules add 37 pairs in 9 groups: dynamo3d `pushes` (10
+policies), clutteredstorage2d `shelf_blocks` (9), pr2blocked `plan` (5), packing3d
+`placement` (5). With shuffled values, 1.9 % of 731 policy-group pairs get a layout
+rule (8 scenarios). Examples: dynamicshelf3d (16 policies take the cube nearest to the
 robot base, 9 always take cube1), obstruction3d (17 take the higher obstruction
 first), clutteredstorage2d (24 take the block nearest to block0 first). No simple
 rule explains obstruction2d and sortclutteredblocks3d.
+
+`follows the layout` is a choice that the policies share, not a property of the
+layout only. On 87 % of the layouts of such a policy (279 policy-group pairs, plan
+groups), a policy with another value solves the task too. So the group shows where
+the agents agree: a part of the strategy with no diversity.
+
+A value that comes from a search has no layout rule. Test: the `side` of
+pushpullhook2d on 100 layouts (`record --instances 20 ... 99`, 2 800 episodes, 2 681
+solved; log `outputs/contact_record_logs/layouts_20_99_pushpullhook2d.log`). 3 of 35
+policies get a rule. The best measure gives the side of a policy on 77 % of the
+layouts on average (the most common side has 61 %), and a tree of depth 1 to 3 gives
+66 to 68 % on layouts that it did not see. Two programs were read
+(`opus55/pushpullhook2d/seed444`, `astra/pushpullhook2d/seed42`) and show a cause:
+the policy tries the contact faces of the hook and several angles, and it takes the
+feasible one with the lowest cost. So the layout-invariant description of such a policy is
+its set of candidates and its cost, not a rule on the start poses. With 20 layouts,
+a rule must be correct on 95 % of the layouts to pass the test with shuffled values.
 
 Three rules used a position of start scene 0 and are now relative to the layout:
 the floor button of stickbutton2d, the side of pushpullhook2d, and the nearer cube of

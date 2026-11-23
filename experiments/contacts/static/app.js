@@ -1732,11 +1732,12 @@ function layoutRulesPanel(name) {
       h("h2", {}, "When the layout changes ", h("small", {}, `— ${d.layouts} layouts of this scenario: the same objects, other start poses`)),
       h("div", { class: "panel", style: "max-width:none;overflow-x:auto" },
         h("div", { class: "muted", style: "max-width:980px;margin-bottom:8px" }, "For a tag group that is not a property of the policy, the value of a policy changes with the layout. This table gives a description that does not change: ",
-          h("b", {}, "a value"), " (the policy has it on 90 % of the layouts or more), ", h("b", {}, "rule: …"), " (a simple rule on the start poses predicts the object that the policy moves first), ",
+          h("b", {}, "a value"), " (the policy has it on 90 % of the layouts or more), ", h("b", {}, "rule: …"), " (a simple rule on the start poses predicts the object that the policy moves first, or one measure of the start poses and one limit predict its value; the limit is the median of the policies with the rule), ",
           h("b", {}, "follows the layout"), " (on each layout it has the value of most other policies), or ", h("b", {}, "own rule"), " (its value changes in its own way; a number marks policies that share the rule)."),
-        h("table", { class: "vocab" }, h("tr", {}, ["tag group", "role", "kind", "what the policies do (number of policies)", "rule that predicts the first object"].map((x) => h("th", {}, x))),
+        h("table", { class: "vocab" }, h("tr", {}, ["tag group", "role", "kind", "what the policies do (number of policies)", "rule that predicts the first object", "rule that most policies share (the most common value of each layout)"].map((x) => h("th", {}, x))),
           d.groups.map((g) => h("tr", {}, h("td", {}, h("b", {}, g.key)), h("td", {}, g.role), stabilityCell(g),
-            h("td", { style: "max-width:420px" }, list(g.tags)), h("td", { style: "max-width:360px" }, g.choice ? list(g.choice) : h("span", { class: "muted" }, "–"))))),
+            h("td", { style: "max-width:420px" }, list(g.tags)), h("td", { style: "max-width:300px" }, g.choice ? list(g.choice) : h("span", { class: "muted" }, "–")),
+            h("td", { style: "max-width:300px" }, g.majority_rule || h("span", { class: "muted" }, "–"))))),
         h("div", { class: "muted", style: "margin-top:8px" }, `Semantic strategies from these descriptions (plan groups): ${d.strategies.length} for ${d.strategies.reduce((a, [, n]) => a + n, 0)} policies. Most common: ${d.strategies.slice(0, 3).map(([text, n]) => `${text} (${n})`).join(" · ")}`)));
   }).catch(() => {});
   return box;
