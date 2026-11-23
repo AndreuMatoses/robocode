@@ -2710,6 +2710,8 @@ pre{background:var(--code);border:1px solid var(--line);border-radius:9px;paddin
 .lb .vwrap{display:flex;flex-direction:column;gap:8px;cursor:default;max-width:92vw}
 .lb video{max-width:92vw;max-height:80vh;border-radius:10px;
   box-shadow:0 12px 48px rgba(0,0,0,.5);cursor:pointer}
+.lb .vwrap.big video,.lb .vwrap.big>img{width:92vw;height:80vh;max-height:80vh;
+  object-fit:contain;box-shadow:none}
 .vc{display:flex;gap:8px;align-items:center;background:var(--card);
   border:1px solid var(--line);border-radius:9px;padding:8px 12px}
 .vc input[type=range]{flex:1;margin:0}
@@ -2769,7 +2771,7 @@ function openLightbox(src){
  const img=h("img",{src,onclick:e=>e.stopPropagation()});
  const v=h("video",{src:src.replace("/api/gif?","/api/video?"),autoplay:"",loop:"",
   playsinline:"",preload:"auto",onclick:e=>{e.stopPropagation();toggle();},
-  title:"click: play/pause | ←/→: step (shift: ×10) | home/end: jump"});
+  title:"click: play/pause | ←/→: step (shift: ×10) | home/end: jump | f: fit to window"});
  v.muted=true;
  const nframes=()=>v.duration?Math.max(1,Math.round(v.duration*FPS)):0;
  const seek=f=>{v.pause();
@@ -2785,8 +2787,13 @@ function openLightbox(src){
  const ctr=h("div",{class:"vc"},playBtn,
   h("button",{title:"back one step (←)",onclick:e=>{e.stopPropagation();stepBy(-1);}},"◀"),
   h("button",{title:"forward one step (→)",onclick:e=>{e.stopPropagation();stepBy(1);}},"▶"),
-  bar,lbl);
+  bar,lbl,
+  h("button",{title:"fit video to window (f)",onclick:e=>{e.stopPropagation();toggleBig();}},"⤢"));
  const wrap=h("div",{class:"vwrap",onclick:e=>e.stopPropagation()},img,hint);
+ // Upscale to the window, keeping the aspect ratio; remembered across episodes.
+ const toggleBig=()=>{const big=wrap.classList.toggle("big");
+  try{localStorage.setItem("lbBig",big?"1":"");}catch(_){}};
+ try{if(localStorage.getItem("lbBig"))wrap.classList.add("big");}catch(_){}
  let ready=false;
  v.addEventListener("loadeddata",()=>{ready=true;img.replaceWith(v);hint.replaceWith(ctr);});
  v.addEventListener("error",()=>hint.remove()); // no mp4 => the gif stays
@@ -2802,7 +2809,8 @@ function openLightbox(src){
   else if(e.key==="ArrowLeft"){e.preventDefault();stepBy(e.shiftKey?-10:-1);}
   else if(e.key==="ArrowRight"){e.preventDefault();stepBy(e.shiftKey?10:1);}
   else if(e.key==="Home"){e.preventDefault();seek(0);}
-  else if(e.key==="End"){e.preventDefault();seek(nframes()-1);}};
+  else if(e.key==="End"){e.preventDefault();seek(nframes()-1);}
+  else if(e.key==="f"){e.preventDefault();toggleBig();}};
  document.addEventListener("keydown",keys);
  ov.append(wrap,h("button",{class:"lbx",onclick:close},"close (esc)"));
  document.body.append(ov);
